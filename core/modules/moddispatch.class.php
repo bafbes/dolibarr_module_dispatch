@@ -31,7 +31,7 @@ include_once DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php';
 /**
  *  Description and activation class for module MyModule
  */
-class modexpedition extends DolibarrModules
+class moddispatch extends DolibarrModules
 {
 	/**
 	 *   Constructor. Define names, constants, directories, boxes, permissions
@@ -48,7 +48,7 @@ class modexpedition extends DolibarrModules
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
 		$this->numero = 210008;
 		// Key text used to identify module (for permissions, menus, etc...)
-		$this->rights_class = 'expedition';
+		$this->rights_class = 'dispatch';
 
 		// Family can be 'crm','financial','hr','projects','products','ecm','technic','other'
 		// It is used to group modules in module setup page
@@ -95,14 +95,14 @@ class modexpedition extends DolibarrModules
 		$this->dirs = array();
 
 		// Config pages. Put here list of php page, stored into mymodule/admin directory, to use to setup module.
-		$this->config_page_url = array("index.php@expedition");
+		$this->config_page_url = array("index.php@dispatch");
 
 		// Dependencies
 		$this->depends = array();		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(3,0);	// Minimum version of Dolibarr required by module
-		$this->langfiles = array("expedition@expedition");
+		$this->langfiles = array("dispatch@dispatch");
 
 		// Constants
 		// List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
@@ -136,8 +136,8 @@ class modexpedition extends DolibarrModules
 		// 'categories_x'	  to add a tab in category view (replace 'x' by type of category (0=product, 1=supplier, 2=customer, 3=member)
 
         // Dictionnaries
-        if (! isset($conf->expedition->enabled)){
-        	$conf->expedition->enabled=0;
+        if (! isset($conf->dispatch->enabled)){
+        	$conf->dispatch->enabled=0;
 		}
 		$this->dictionnaries=array();
         /* Example:
@@ -250,7 +250,7 @@ class modexpedition extends DolibarrModules
 
 		$result=$this->load_tables();
 
-		$url ='http://'.$_SERVER['SERVER_NAME']. DOL_URL_ROOT_ALT."/expedition/script/create-maj-base.php";
+		$url ='http://'.$_SERVER['SERVER_NAME']. DOL_URL_ROOT_ALT."/dispatch/script/create-maj-base.php";
 		file_get_contents($url);
 
 		return $this->_init($sql, $options);
@@ -282,7 +282,7 @@ class modexpedition extends DolibarrModules
 	 */
 	function load_tables()
 	{
-		return $this->_load_tables('/expedition/sql/');
+		return $this->_load_tables('/dispatch/sql/');
 	}
 }
 

@@ -1,6 +1,6 @@
 <?php
 
-class TExpedition extends TObjetStd {
+class TDispatch extends TObjetStd {
 	function __construct() { /* declaration */
 		global $langs;
 		

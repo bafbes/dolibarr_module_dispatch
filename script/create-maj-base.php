@@ -6,10 +6,10 @@
  	define('INC_FROM_CRON_SCRIPT', true);
 	
 	require('../config.php');
-	require('../class/expedition.class.php');
+	require('../class/dispatch.class.php');
 
 	$ATMdb=new TPDOdb;
 	$ATMdb->debug=true;
 
-	$o=new TExpedition;
+	$o=new TDispatch;
 	$o->init_db_by_vars($ATMdb);
