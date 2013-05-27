@@ -451,8 +451,25 @@
 	 */
 	
 	if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "add"){
-		
 		?>
+		<script type="text/javascript">
+			function add_line(id_line){
+				i = Number($('.equipement_'+id_line+':last').attr('id').substring($('.equipement_'+id_line+':last').attr('id').length - 1));
+				$('.ligne_'+id_line+':first').clone(true).insertAfter($('.ligne_'+id_line+':last'));
+				$('.ligne_'+id_line+' a:last').remove();
+				j = i + 1;
+				$('.equipement_'+id_line+":last").attr('id','equipement_'+id_line+"_"+String(j));
+				$('.poids_'+id_line+":last").attr('id','poids_'+id_line+"_"+String(j));
+				$('.unitepoids_'+id_line+":last").attr('id','unitepoids_'+id_line+"_"+String(j));
+				$('.poidsreel_'+id_line+":last").attr('id','poidsreel_'+id_line+"_"+String(j));
+				$('.unitereel_'+id_line+":last").attr('id','unitereel_'+id_line+"_"+String(j));
+				$('.tare_'+id_line+":last").attr('id','tare_'+id_line+"_"+String(j));
+				$('.unitetare_'+id_line+":last").attr('id','unitetare_'+id_line+"_"+String(j));
+				$('#equipement_'+id_line+'_'+String(j)).after('&nbsp;<a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="$(this).parent().parent().remove();"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
+				i = i+1;
+			}
+		</script>
+		
 		<table class="notopnoleftnoright" width="100%" border="0" style="margin-bottom: 2px;" summary="">
 		<tbody><tr>
 		<td class="nobordernopadding" valign="middle"><div class="titre">Nouvelle expédition</div></td>
@@ -461,16 +478,93 @@
 		
 		<form action="" method="POST">
 			<input type="hidden" name="action" value="add_conditionnement">
-			<input type="hidden" name="id" value="'.$object->id.'">
-			<table class="border" width="100%">
-			<?php
-			foreach($commande->lines as $line){
-				$product = new Product($db);
-				$product->fetch($line->fk_product);
-				print '<tr>';
+			<input type="hidden" name="id" value="<?=$commande->id; ?>">
+			<table class="liste" width="100%">
+				<tr class="liste_titre">
+					<td>Produit</td>
+					<td align="center">Lot</td>
+					<td align="center">Poids</td>
+					<td align="center">Qté commandée</td>
+					<td align="center">Qté expédiée</td>
+					<td align="center">Qté à expédier</td>
+					<td align="center">Qté stock/entrepôt</td>
+				</tr>
+				<?php
+				foreach($commande->lines as $line){
+					$product = new Product($db);
+					$product->fetch($line->fk_product);
+					
+					$ATMdb->Execute('SELECT asset_lot, poids, tarif_poids FROM '.MAIN_DB_PREFIX.'commandedet WHERE rowid = '.$line->rowid);
+					$ATMdb->Get_line();
+					
+					//Unite de poids
+					switch($ATMdb->Get_field('poids')){
+						case -6:
+							$unite = 'mg';
+							break;
+						case -3:
+							$unite = 'g';
+							break;
+						case 0:
+							$unite = 'kg';
+							break;
+					}
+				
+				/*
+				 * LIGNE RECAP PRODUIT
+				 */
+				print '<tr class="impair" style="height:50px;">';
 				print '<td>'.$product->ref." - ".$product->label.'</td>';
-				print '<td>'.$product->ref." - ".$product->label.'</td>';
+				print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
+				print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+				print '<td align="center">'.$line->qty.'</td>';
+				print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
+				print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
+				print '<td align="center">'.$product->stock_reel.'</td>';
 				print '</tr>';
+				
+				/*
+				 * LIGNE RECAP PRODUIT
+				 */
+				
+				?>
+				<tr class="ligne_<?=$line->rowid;?>">
+					<td colspan="2" align="left">
+						<span style="padding-left: 25px;">Equipement lié :</span>
+						<select id="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
+						<?php
+						//Chargement des équipement lié au produit
+						$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+						 		 FROM ".MAIN_DB_PREFIX."asset
+						 		 WHERE fk_product = ".$line->fk_product."
+						 		 ORDER BY contenance_value DESC";
+						$ATMdb->Execute($sql);
+						
+						while($ATMdb->Get_line()){
+							switch($ATMdb->Get_field('contenance_units')){
+								case -6:
+									$unite = 'mg';
+									break;
+								case -3:
+									$unite = 'g';
+									break;
+								case 0:
+									$unite = 'kg';
+									break;
+							}
+							?>
+							<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
+							<?php	
+						}
+						?>
+						</select>
+						<a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a>
+					</td>
+					<td colspan="2">poids : <input type="text" id="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
+					<td colspan="2">poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
+					<td colspan="2">tare : <input type="text" id="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
+				</tr>
+				<?php
 			}
 			?>
 			</table>
@@ -478,6 +572,12 @@
 			<input type="submit" class="button" value="Annuler" name="back"></center>
 		<br></form>
 		<?php		
+	}
+	elseif(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "add_conditionnement"){
+		
+		echo '<pre>';
+		print_r($_POST);
+		echo '</pre>';
 	}
 	else{
 		
