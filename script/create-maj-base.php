@@ -13,3 +13,9 @@
 
 	$o=new TDispatch;
 	$o->init_db_by_vars($ATMdb);
+	
+	$o=new TDispatchdet;
+	$o->init_db_by_vars($ATMdb);
+	
+	$o=new TDispatchdet_asset;
+	$o->init_db_by_vars($ATMdb);
