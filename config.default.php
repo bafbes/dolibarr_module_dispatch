@@ -22,3 +22,5 @@
 	define('USE_TBS', true);
 
 	require(COREROOT.'inc.core.php');
+
+	define('DOL_ADMIN_USER','admin');

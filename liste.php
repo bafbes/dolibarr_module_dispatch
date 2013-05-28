@@ -6,6 +6,7 @@
 	require_once DOL_DOCUMENT_ROOT.'/custom/asset/class/asset.class.php';
 	require_once(DOL_DOCUMENT_ROOT."/core/lib/order.lib.php");
 	require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
 	
 	$langs->load('orders');
 	$langs->load("companies");
@@ -33,6 +34,7 @@
 	 */
 	
 	$form = new Form($db);
+	$formproduct = new FormProduct($db);
 	$soc = new Societe($db);
 	$soc->fetch($commande->socid);
 	$product_static=new Product($db);
@@ -224,224 +226,6 @@
 	print '</tr>';
 
 	print '</table><br>';
-	
-	/**
-	 *  Lignes de commandes avec quantite livrees et reste a livrer
-	 *  Les quantites livrees sont stockees dans $commande->expeditions[fk_product]
-	 */
-	print '<table class="liste" width="100%">';
-
-	$sql = "SELECT cd.rowid, cd.fk_product, cd.product_type, cd.label, cd.description,";
-	$sql.= " cd.price, cd.tva_tx, cd.subprice,";
-	$sql.= " cd.qty,";
-	$sql.= ' cd.date_start,';
-	$sql.= ' cd.date_end,';
-	$sql.= ' p.label as product_label, p.ref, p.fk_product_type, p.rowid as prodid,';
-	$sql.= ' p.description as product_desc, p.fk_product_type as product_type';
-	$sql.= " FROM ".MAIN_DB_PREFIX."commandedet as cd";
-	$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON cd.fk_product = p.rowid";
-	$sql.= " WHERE cd.fk_commande = ".$commande->id;
-	$sql.= " ORDER BY cd.rang, cd.rowid";
-
-	//print $sql;
-	dol_syslog("shipment.php sql=".$sql, LOG_DEBUG);
-	$resql = $db->query($sql);
-	if ($resql)
-	{
-		$num = $db->num_rows($resql);
-		$i = 0;
-
-		print '<tr class="liste_titre">';
-		print '<td>'.$langs->trans("Description").'</td>';
-		print '<td align="center">'.$langs->trans("QtyOrdered").'</td>';
-		print '<td align="center">Quantité expédié</td>';
-		print '<td align="center">Quantité à expédié</td>';
-		if (! empty($conf->stock->enabled))
-		{
-			print '<td align="center">Stock entrepôt</td>';
-		}
-		else
-		{
-			print '<td>&nbsp;</td>';
-		}
-		print "</tr>\n";
-
-		$var=true;
-		$toBeShipped=array();
-		$toBeShippedTotal=0;
-		while ($i < $num)
-		{
-			$objp = $db->fetch_object($resql);
-			$var=!$var;
-
-			// Show product and description
-			$type=$objp->product_type?$objp->product_type:$objp->fk_product_type;
-			// Try to enhance type detection using date_start and date_end for free lines where type
-			// was not saved.
-			if (! empty($objp->date_start)) $type=1;
-			if (! empty($objp->date_end)) $type=1;
-
-			print "<tr ".$bc[$var].">";
-
-			// Product label
-			if ($objp->fk_product > 0)
-			{
-				// Define output language
-				if (! empty($conf->global->MAIN_MULTILANGS) && ! empty($conf->global->PRODUIT_TEXTS_IN_THIRDPARTY_LANGUAGE))
-				{
-					$commande->fetch_thirdparty();
-					$prod = new Product($db, $objp->fk_product);
-					$outputlangs = $langs;
-					$newlang='';
-					if (empty($newlang) && ! empty($_REQUEST['lang_id'])) $newlang=$_REQUEST['lang_id'];
-					if (empty($newlang)) $newlang=$commande->client->default_lang;
-					if (! empty($newlang))
-					{
-						$outputlangs = new Translate("",$conf);
-						$outputlangs->setDefaultLang($newlang);
-					}
-
-					$label = (! empty($prod->multilangs[$outputlangs->defaultlang]["label"])) ? $prod->multilangs[$outputlangs->defaultlang]["label"] : $objp->product_label;
-				}
-				else
-					$label = (! empty($objp->label)?$objp->label:$objp->product_label);
-
-				print '<td>';
-				print '<a name="'.$objp->rowid.'"></a>'; // ancre pour retourner sur la ligne
-
-				// Show product and description
-				$product_static->type=$objp->fk_product_type;
-				$product_static->id=$objp->fk_product;
-				$product_static->ref=$objp->ref;
-				$text=$product_static->getNomUrl(1);
-				$text.= ' - '.$label;
-				$description=($conf->global->PRODUIT_DESC_IN_FORM?'':dol_htmlentitiesbr($objp->description));
-				print $form->textwithtooltip($text,$description,3,'','',$i);
-
-				// Show range
-				print_date_range($db->jdate($objp->date_start),$db->jdate($objp->date_end));
-
-				// Add description in form
-				if (! empty($conf->global->PRODUIT_DESC_IN_FORM))
-				{
-					print ($objp->description && $objp->description!=$objp->product_label)?'<br>'.dol_htmlentitiesbr($objp->description):'';
-				}
-
-				print '</td>';
-			}
-			else
-			{
-				print "<td>";
-				if ($type==1) $text = img_object($langs->trans('Service'),'service');
-				else $text = img_object($langs->trans('Product'),'product');
-
-				if (! empty($objp->label)) {
-					$text.= ' <strong>'.$objp->label.'</strong>';
-					print $form->textwithtooltip($text,$objp->description,3,'','',$i);
-				} else {
-					print $text.' '.nl2br($objp->description);
-				}
-
-				// Show range
-				print_date_range($db->jdate($objp->date_start),$db->jdate($objp->date_end));
-				print "</td>\n";
-			}
-
-			// Qty ordered
-			print '<td align="center">'.$objp->qty.'</td>';
-
-			// Qty already shipped
-			$qtyProdCom=$objp->qty;
-			print '<td align="center">';
-			// Nb of sending products for this line of order
-			$qtyAlreadyShipped = (! empty($commande->expeditions[$objp->rowid])?$commande->expeditions[$objp->rowid]:0);
-			print $qtyAlreadyShipped;
-			print '</td>';
-
-			// Qty remains to ship
-			print '<td align="center">';
-			if ($type == 0 || ! empty($conf->global->STOCK_SUPPORTS_SERVICES))
-			{
-				$toBeShipped[$objp->fk_product] = $objp->qty - $qtyAlreadyShipped;
-				$toBeShippedTotal += $toBeShipped[$objp->fk_product];
-				print $toBeShipped[$objp->fk_product];
-			}
-			else
-			{
-				print '0 ('.$langs->trans("Service").')';
-			}
-			print '</td>';
-
-			if ($objp->fk_product > 0)
-			{
-				$product = new Product($db);
-				$product->fetch($objp->fk_product);
-			}
-
-			if ($objp->fk_product > 0 && $type == 0 && ! empty($conf->stock->enabled))
-			{
-				print '<td align="center">';
-				print $product->stock_reel;
-				if ($product->stock_reel < $toBeShipped[$objp->fk_product])
-				{
-					print ' '.img_warning($langs->trans("StockTooLow"));
-				}
-				print '</td>';
-			}
-			else
-			{
-				print '<td>&nbsp;</td>';
-			}
-			print "</tr>\n";
-
-			// Show subproducts details
-			if ($objp->fk_product > 0 && ! empty($conf->global->PRODUIT_SOUSPRODUITS))
-			{
-				// Set tree of subproducts in product->sousprods
-				$product->get_sousproduits_arbo();
-				//var_dump($product->sousprods);exit;
-
-				// Define a new tree with quantiies recalculated
-				$prods_arbo = $product->get_arbo_each_prod($qtyProdCom);
-				//var_dump($prods_arbo);
-				if (count($prods_arbo) > 0)
-				{
-					foreach($prods_arbo as $key => $value)
-					{
-						print '<tr><td colspan="4">';
-
-						$img='';
-						if ($value['stock'] < $value['stock_alert'])
-						{
-							$img=img_warning($langs->trans("StockTooLow"));
-						}
-						print '<tr><td>&nbsp; &nbsp; &nbsp; -> <a href="'.DOL_URL_ROOT."/product/fiche.php?id=".$value['id'].'">'.$value['fullpath'].'</a> ('.$value['nb'].')</td>';
-						print '<td align="center"> '.$value['nb_total'].'</td>';
-						print '<td>&nbsp</td>';
-						print '<td>&nbsp</td>';
-						print '<td align="center">'.$value['stock'].' '.$img.'</td></tr>'."\n";
-
-						print '</td></tr>'."\n";
-					}
-				}
-			}
-
-			$i++;
-		}
-		$db->free($resql);
-
-		if (! $num)
-		{
-			print '<tr '.$bc[false].'><td colspan="5">'.$langs->trans("NoArticleOfTypeProduct").'<br>';
-		}
-
-		print "</table>";
-	}
-	else
-	{
-		dol_print_error($db);
-	}
-
 	print '</div>';
 	
 	
@@ -450,7 +234,11 @@
 	 * 
 	 */
 	
+	
+	// Formulaire de création
 	if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "add"){
+		
+		/* JS permettant de cloner les lignes équipements */
 		?>
 		<script type="text/javascript">
 			function add_line(id_line){
@@ -459,25 +247,42 @@
 				$('.ligne_'+id_line+' a:last').remove();
 				j = i + 1;
 				$('.equipement_'+id_line+":last").attr('id','equipement_'+id_line+"_"+String(j));
+				$('.equipement_'+id_line+":last").attr('name','equipement_'+id_line+"_"+String(j));
 				$('.poids_'+id_line+":last").attr('id','poids_'+id_line+"_"+String(j));
+				$('.poids_'+id_line+":last").attr('name','poids_'+id_line+"_"+String(j));
 				$('.unitepoids_'+id_line+":last").attr('id','unitepoids_'+id_line+"_"+String(j));
+				$('.unitepoids_'+id_line+":last").attr('name','unitepoids_'+id_line+"_"+String(j));
 				$('.poidsreel_'+id_line+":last").attr('id','poidsreel_'+id_line+"_"+String(j));
+				$('.poidsreel_'+id_line+":last").attr('name','poidsreel_'+id_line+"_"+String(j));
 				$('.unitereel_'+id_line+":last").attr('id','unitereel_'+id_line+"_"+String(j));
+				$('.unitereel_'+id_line+":last").attr('name','unitereel_'+id_line+"_"+String(j));
 				$('.tare_'+id_line+":last").attr('id','tare_'+id_line+"_"+String(j));
+				$('.tare_'+id_line+":last").attr('name','tare_'+id_line+"_"+String(j));
 				$('.unitetare_'+id_line+":last").attr('id','unitetare_'+id_line+"_"+String(j));
-				$('#equipement_'+id_line+'_'+String(j)).after('&nbsp;<a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="$(this).parent().parent().remove();"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
+				$('.unitetare_'+id_line+":last").attr('name','unitetare_'+id_line+"_"+String(j));
+				$('#equipement_'+id_line+'_'+String(j)).after('&nbsp;<a alt="Supprimer l\'équipement" title="Supprimer l\'équipement" style="cursor:pointer;" onclick="$(this).parent().parent().remove();"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
 				i = i+1;
 			}
 		</script>
 		
-		<table class="notopnoleftnoright" width="100%" border="0" style="margin-bottom: 2px;" summary="">
-		<tbody><tr>
-		<td class="nobordernopadding" valign="middle"><div class="titre">Nouvelle expédition</div></td>
-		</tr></tbody>
-		</table>
-		
 		<form action="" method="POST">
-			<input type="hidden" name="action" value="add_conditionnement">
+			<table class="notopnoleftnoright" width="100%" border="0" style="margin-bottom: 2px;" summary="">
+			<tbody><tr>
+			<td class="nobordernopadding" valign="middle"><div class="titre">Nouvelle expédition</div></td>
+			</tr></tbody>
+			</table>
+			<br>
+			<table class="border" width="100%">
+				<tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe"></td></tr>
+				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date(date('Y-m-d'),'date_livraison',0,0);?></td></tr>
+				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'));?></td></tr>
+				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur"> cm</td></tr>
+				<tr><td align="left">Largeur</td><td><input type="text" name="largeur"> cm</td></tr>
+				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general"><select id="unitepoid_general" name="unitepoid_general"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td></tr>
+				<tr><td align="left">Entrepôt</td><td><?=$formproduct->selectWarehouses($tmpentrepot_id,'entrepot'.$indiceAsked,'',1,0,$line->fk_product);?></td></tr>
+			</table>
+			<br>
+			<input type="hidden" name="action" value="add_expedition">
 			<input type="hidden" name="id" value="<?=$commande->id; ?>">
 			<table class="liste" width="100%">
 				<tr class="liste_titre">
@@ -531,7 +336,7 @@
 				<tr class="ligne_<?=$line->rowid;?>">
 					<td colspan="2" align="left">
 						<span style="padding-left: 25px;">Equipement lié :</span>
-						<select id="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
+						<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
 						<?php
 						//Chargement des équipement lié au produit
 						$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
@@ -560,9 +365,9 @@
 						</select>
 						<a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a>
 					</td>
-					<td colspan="2">poids : <input type="text" id="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
-					<td colspan="2">poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
-					<td colspan="2">tare : <input type="text" id="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
+					<td colspan="2">poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
+					<td colspan="2">poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
+					<td colspan="2">tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/><select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td>
 				</tr>
 				<?php
 			}
@@ -573,13 +378,38 @@
 		<br></form>
 		<?php		
 	}
-	elseif(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "add_conditionnement"){
+
+	//Traitement Création et Modification
+	elseif(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  ($_REQUEST['action'] == "add_expedition" || $_REQUEST['action'] == "update_expedition")){
 		
-		echo '<pre>';
-		print_r($_POST);
-		echo '</pre>';
+		$dispatch = new TDispatch;
+		$TLigneToDispatch = $dispatch->FormParser($_POST);
+		
+		$dispatch->ref = $TLigneToDispatch['ref_expe'];
+		$dispatch->date_livraison = $TLigneToDispatch['date_livraison'];
+		$dispatch->type_expedition = $TLigneToDispatch['methode_dispatch'];
+		$dispatch->height = $TLigneToDispatch['hauteur'];
+		$dispatch->width = $TLigneToDispatch['largeur'];
+		$dispatch->weight = $TLigneToDispatch['poid_general'];
+		$dispatch->fk_entrepot = $TLigneToDispatch['entrepot'];
+		$dispatch->fk_commande = $commande->id;
+		$dispatch->save($ATMdb);
+		$dispatch->addLines($TLigneToDispatch,$commande,&$ATMdb);
+		
+		/*echo '<pre>';
+		print_r($TLigneToDispatch);
+		echo '</pre>';*/
 	}
+	
+	//Liste des expéditions
 	else{
+		
+		//Traitement Suppression
+		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "delete"){
+			$dispatch = new TDispatch;
+			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->delete(&$ATMdb);
+		}	
 		
 		print '<div class="tabsAction">
 				<a class="butAction" href="?action=add&fk_commande='.$commande->id.'">Ajouter une expédition</a>
@@ -590,7 +420,7 @@
 		<?php
 		$TDispatch = array();
 		
-		$sql = "SELECT rowid AS 'id', ref AS 'ref', fk_statut AS 'statut', date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
+		$sql = "SELECT rowid AS 'id', ref AS 'ref', date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
 				FROM ".MAIN_DB_PREFIX."dispatch
 				ORDER BY date_expedition ASC";
 		
@@ -600,8 +430,7 @@
 			'limit'=>array('nbLine'=>1000)
 			,'title'=>array(
 				'ref'=>'Référence expédition'
-				,'statut' => 'Statut'
-				,'date_expedition'=>'Date expédition;'
+				,'date_expedition'=>'Date expédition'
 				,'date_livraison'=>'Date livraison'
 				,'Supprimer' => 'Supprimer'
 			)
@@ -610,7 +439,7 @@
 				'id'
 			)
 			,'link'=>array(
-				'Supprimer'=>'<a href="?fk_commande=@id@&action=delete&fk_dispatch='.$object->id.'"><img src="img/delete.png"></a>'
+				'Supprimer'=>'<a href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch=@id@"><img src="img/delete.png"></a>'
 			)
 		));
 		
