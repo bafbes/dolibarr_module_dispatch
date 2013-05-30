@@ -14,6 +14,8 @@ class TDispatch extends TObjetStd {
 		
 		parent::_init_vars();
 		parent::start();
+		
+		$lines = array();
 	}
 	
 	//Parse les varibales passé par le formulaire de création d'une expédition
@@ -35,13 +37,37 @@ class TDispatch extends TObjetStd {
 		return $TLigneToDispatch;
 	}
 	
-	function addLines($TLigneToDispatch,&$commande,&$ATMdb){
+	function loadLines($ATMdb,$id_commandedet){
+		$this->lines = array();
+		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."dispatchdet WHERE fk_dispatch = ".$this->rowid." AND fk_commandedet = ".$id_commandedet." ORDER BY rowid ASC";
+		$ATMdb->Execute($sql);
 		
+		while($ATMdb->Get_line()){
+			$ATMdb2 = new Tdb;
+			$sql2 = "SELECT rowid FROM ".MAIN_DB_PREFIX."dispatchdet_asset WHERE fk_dispatchdet = ".$ATMdb->Get_field('rowid')." ORDER BY fk_dispatchdet, rang ASC";
+			$ATMdb2->Execute($sql2);
+			
+			while($ATMdb2->Get_line()){
+				$ATMdb3 = new Tdb;
+				$disatchdet_asset = new TDispatchdet_asset;
+				$disatchdet_asset->load(&$ATMdb3,$ATMdb2->Get_field('rowid'));
+				$this->lines[] = $disatchdet_asset;
+				$ATMdb3->close();
+			}
+			$ATMdb2->close();
+		}
+	}
+	
+	function addLines($TLigneToDispatch,&$commande,&$ATMdb,$action = ""){
 		foreach($TLigneToDispatch as $cle=>$val){
 			
 			if(is_numeric($cle)){
 				//Création de l'association Dispatch => Dispatchdet
 				$TDispatchdet = new TDispatchdet;
+				
+				if($action == "update_expedition")
+					$TDispatchdet->loadBy(&$ATMdb,$cle,"fk_commandedet");
+				
 				$TDispatchdet->fk_dispatch = $this->rowid;
 				$TDispatchdet->fk_commandedet = $cle;
 				$TDispatchdet->save($ATMdb);
@@ -49,6 +75,10 @@ class TDispatch extends TObjetStd {
 				//Création des associations Dispatchdet => Asset
 				foreach($TLigneToDispatch[$cle] as $name=>$value){
 					$Tdispatchdet_asset =  new TDispatchdet_asset;
+					
+					if($action == "update_expedition")
+						$Tdispatchdet_asset->load(&$ATMdb,$value['idDispatchdetAsset']);
+					
 					$Tdispatchdet_asset->fk_dispatchdet = $TDispatchdet->rowid; 
 					$Tdispatchdet_asset->fk_asset = $value['equipement'];
 					$Tdispatchdet_asset->rang = $name;
