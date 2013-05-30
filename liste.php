@@ -551,6 +551,7 @@
 				?>
 			</table>
 			<center><br><input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
+			<input type="submit" class="button" value="Valider" name="valider">&nbsp;
 			<input type="submit" class="button" value="Annuler" name="back"></center>
 		<br></form>
 		<?php
@@ -561,7 +562,25 @@
 		/*
 		 * TRAITEMENT DES ACTIONS 
 		 */
-		 
+		
+		//Validation
+		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['valider'])){
+			$dispatch = new TDispatch;
+			$dispatch->load(&$ATMdb, $_REQUEST['fk_dispatch']);
+	        $text = $langs->trans("ConfirmValidateSending",$dispatch->ref);
+	
+	        if (! empty($conf->notification->enabled))
+	        {
+	            require_once DOL_DOCUMENT_ROOT .'/core/class/notify.class.php';
+	            $notify=new Notify($db);
+	            $text.='<br>';
+	            $text.=$notify->confirmMessage('SHIPPING_VALIDATE',$dispatch->fk_soc);
+	        }
+	
+	        $ret=$form->form_confirm($_SERVER['PHP_SELF'].'?fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid,$langs->trans('ValidateSending'),$text,'confirm_valid','',0,1);
+	        if ($ret == 'html') print '<br>';
+		}
+		 		 
 		//Traitement création et modification 
 		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['save']) &&  ($_REQUEST['action'] == "add_expedition" || $_REQUEST['action'] == "update_expedition")){
 			
@@ -570,7 +589,8 @@
 			
 			if($_REQUEST['action'] == "update_expedition")
 				$dispatch->load(&$ATMdb, $_REQUEST['fk_dispatch']);
-							
+			
+			$dispatch->statut = 0; //Brouillon				
 			$dispatch->ref = $TLigneToDispatch['ref_expe'];
 			$dispatch->date_livraison = $TLigneToDispatch['date_livraison'];
 			$dispatch->type_expedition = $TLigneToDispatch['methode_dispatch'];
@@ -592,7 +612,14 @@
 			$dispatch = new TDispatch;
 			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
 			$dispatch->delete(&$ATMdb);
-		}	
+		}
+		
+		//Traitement Validation	
+		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['confirm_valid']) && $_REQUEST['confirm'] == "yes"){
+			$dispatch = new TDispatch;
+			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->valider(&$ATMdb, $commande);
+		}
 		
 		print '<div class="tabsAction">
 				<a class="butAction" href="?action=add&fk_commande='.$commande->id.'">Ajouter une expédition</a>

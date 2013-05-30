@@ -9,7 +9,7 @@ class TDispatch extends TObjetStd {
 		parent::add_champs('note_private, note_public, model_pdf','type=chaine;');
 		parent::add_champs('height,width,entity, weight_units, weight','type=entier;');
 		parent::add_champs('fk_soc,fk_user_author,entity, fk_expedition_method, fk_commande','type=entier;index;');
-		parent::add_champs('fk_entrepot, type_expedition','type=entier;');
+		parent::add_champs('fk_entrepot, type_expedition,statut','type=entier;');
 		parent::add_champs('date_valid,date_expedition,date_livraison','type=date;');
 		
 		parent::_init_vars();
@@ -90,6 +90,25 @@ class TDispatch extends TObjetStd {
 					$Tdispatchdet_asset->tare_unit = $value['unitetare'];
 					$Tdispatchdet_asset->save($ATMdb);
 				}
+			}
+		}
+	}
+	
+	function valider(&$ATMdb,$commande){
+		require_once DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php";
+		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+		
+		$this->statut = 1; //Validé
+		$this->save($ATMdb);
+		
+		foreach($commande->lines as $line){
+			//Cahrge les équipements lié à la ligne de commande
+			$this->loadLines($ATMdb, $line->rowid);
+			
+			//Ajoute une sortie de stock pour chaque equipement lié à l'expédition de la commande
+			foreach($this->lines as $lineAsset){
+				$mvt_asset = new TAssetStock;
+				$mvt_asset->mouvement_stock(&$ATMdb,$lineAsset->fk_asset,-$lineAsset->weight_reel,"Expedition",$this->rowid);
 			}
 		}
 	}
