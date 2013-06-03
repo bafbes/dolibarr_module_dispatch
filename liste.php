@@ -238,26 +238,50 @@
 		?>
 		<script type="text/javascript">
 			function add_line(id_line){
-				i = Number($('.equipement_'+id_line+':last').attr('id').substring($('.equipement_'+id_line+':last').attr('id').length - 1));
-				$('.ligne_'+id_line+':first').clone(true).insertAfter($('.ligne_'+id_line+':last'));
-				$('.ligne_'+id_line+' a:last').remove();
-				j = i + 1;
-				$('.equipement_'+id_line+":last").attr('id','equipement_'+id_line+"_"+String(j));
-				$('.equipement_'+id_line+":last").attr('name','equipement_'+id_line+"_"+String(j));
-				$('.poids_'+id_line+":last").attr('id','poids_'+id_line+"_"+String(j));
-				$('.poids_'+id_line+":last").attr('name','poids_'+id_line+"_"+String(j));
-				$('.unitepoids_'+id_line+":last").attr('id','unitepoids_'+id_line+"_"+String(j));
-				$('.unitepoids_'+id_line+":last").attr('name','unitepoids_'+id_line+"_"+String(j));
-				$('.poidsreel_'+id_line+":last").attr('id','poidsreel_'+id_line+"_"+String(j));
-				$('.poidsreel_'+id_line+":last").attr('name','poidsreel_'+id_line+"_"+String(j));
-				$('.unitereel_'+id_line+":last").attr('id','unitereel_'+id_line+"_"+String(j));
-				$('.unitereel_'+id_line+":last").attr('name','unitereel_'+id_line+"_"+String(j));
-				$('.tare_'+id_line+":last").attr('id','tare_'+id_line+"_"+String(j));
-				$('.tare_'+id_line+":last").attr('name','tare_'+id_line+"_"+String(j));
-				$('.unitetare_'+id_line+":last").attr('id','unitetare_'+id_line+"_"+String(j));
-				$('.unitetare_'+id_line+":last").attr('name','unitetare_'+id_line+"_"+String(j));
-				$('#equipement_'+id_line+'_'+String(j)).after('&nbsp;<a alt="Supprimer l\'équipement" title="Supprimer l\'équipement" style="cursor:pointer;" onclick="$(this).parent().parent().remove();"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
-				i = i+1;
+				nb_line = $('tr[class=ligne_'+id_line+']:hidden').length;
+				if(nb_line == 1)
+					$('tr[class=ligne_'+id_line+']').show();
+				else{
+					i = Number($('.equipement_'+id_line+':last').attr('id').substring($('.equipement_'+id_line+':last').attr('id').length - 1));
+					$('.ligne_'+id_line+':first').clone(true).insertAfter($('.ligne_'+id_line+':last'));
+					$('.ligne_'+id_line+' a:last').remove();
+					j = i + 1;
+					$('.equipement_'+id_line+":last").attr('id','equipement_'+id_line+"_"+String(j));
+					$('.equipement_'+id_line+":last").attr('name','equipement_'+id_line+"_"+String(j));
+					$('.poids_'+id_line+":last").attr('id','poids_'+id_line+"_"+String(j));
+					$('.poids_'+id_line+":last").attr('name','poids_'+id_line+"_"+String(j));
+					$('.unitepoids_'+id_line+":last").attr('id','unitepoids_'+id_line+"_"+String(j));
+					$('.unitepoids_'+id_line+":last").attr('name','unitepoids_'+id_line+"_"+String(j));
+					$('.poidsreel_'+id_line+":last").attr('id','poidsreel_'+id_line+"_"+String(j));
+					$('.poidsreel_'+id_line+":last").attr('name','poidsreel_'+id_line+"_"+String(j));
+					$('.unitereel_'+id_line+":last").attr('id','unitereel_'+id_line+"_"+String(j));
+					$('.unitereel_'+id_line+":last").attr('name','unitereel_'+id_line+"_"+String(j));
+					$('.tare_'+id_line+":last").attr('id','tare_'+id_line+"_"+String(j));
+					$('.tare_'+id_line+":last").attr('name','tare_'+id_line+"_"+String(j));
+					$('.unitetare_'+id_line+":last").attr('id','unitetare_'+id_line+"_"+String(j));
+					$('.unitetare_'+id_line+":last").attr('name','unitetare_'+id_line+"_"+String(j));
+					$('.ligne_'+id_line+":last input:text").val('');
+					$('#equipement_'+id_line+'_'+String(j)).after('&nbsp;<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="$(this).parent().parent().remove();"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
+					i = i+1;
+				}
+			}
+			
+			function delete_line(ligne, id_line, id_dispatchdet_asset = ''){
+				nb_line = $('tr[class=ligne_'+id_line+']').length;
+				if(nb_line>1)
+					$(ligne).parent().parent().remove();
+				else
+					$(ligne).parent().parent().hide();
+				
+				if(id_dispatchdet_asset != ""){
+					$.ajax({
+						type: "POST"
+						,url:'script/ajax.delete_line.php'
+						,data:{
+							id_dispatchdet_asset : id_dispatchdet_asset
+						}
+					});
+				}
 			}
 		</script>
 		<?php
@@ -318,79 +342,80 @@
 							break;
 					}
 				
-				/*
-				 * LIGNE RECAP PRODUIT
-				 */
-				print '<tr class="impair" style="height:50px;">';
-				print '<td>'.$product->ref." - ".$product->label.'</td>';
-				print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-				print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
-				print '<td align="center">'.$line->qty.'</td>';
-				print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-				print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-				print '<td align="center">'.$product->stock_reel.'</td>';
-				print '</tr>';
-				
-				?>
-				<tr class="ligne_<?=$line->rowid;?>">
-					<td colspan="2" align="left">
-						<span style="padding-left: 25px;">Equipement lié :</span>
-						<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
-						<?php
-						//Chargement des équipement lié au produit
-						$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
-						 		 FROM ".MAIN_DB_PREFIX."asset
-						 		 WHERE fk_product = ".$line->fk_product."
-						 		 ORDER BY contenance_value DESC";
-						$ATMdb->Execute($sql);
-						
-						while($ATMdb->Get_line()){
-							switch($ATMdb->Get_field('contenance_units')){
-								case -6:
-									$unite = 'mg';
-									break;
-								case -3:
-									$unite = 'g';
-									break;
-								case 0:
-									$unite = 'kg';
-									break;
+					/*
+					 * LIGNE RECAP PRODUIT
+					 */
+					print '<tr class="impair" style="height:50px;">';
+					print '<td>'.$product->ref." - ".$product->label.'</td>';
+					print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
+					print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+					print '<td align="center">'.$line->qty.'</td>';
+					print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
+					print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
+					print '<td align="center">'.$product->stock_reel.'</td>';
+					print '</tr>';
+					
+					?>
+					<tr class="ligne_<?=$line->rowid;?>">
+						<td colspan="2" align="left">
+							<span style="padding-left: 25px;">Equipement lié :</span>
+							<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
+							<?php
+							//Chargement des équipement lié au produit
+							$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+							 		 FROM ".MAIN_DB_PREFIX."asset
+							 		 WHERE fk_product = ".$line->fk_product."
+							 		 ORDER BY contenance_value DESC";
+							$ATMdb->Execute($sql);
+							
+							while($ATMdb->Get_line()){
+								switch($ATMdb->Get_field('contenance_units')){
+									case -6:
+										$unite = 'mg';
+										break;
+									case -3:
+										$unite = 'g';
+										break;
+									case 0:
+										$unite = 'kg';
+										break;
+								}
+								?>
+								<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
+								<?php	
 							}
 							?>
-							<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
-							<?php	
-						}
-						?>
-						</select>
-						<a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a>
-					</td>
-					<td colspan="2">
-						poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
-						<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+							</select>
+							<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
+						</td>
+						<td colspan="2">
+							poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
+							<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+									<option value="-6">mg</option>
+									<option value="-3">g</option>
+									<option value="0">kg</option>
+							</select>
+						</td>
+						<td colspan="2">
+							poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
+							<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
 								<option value="-6">mg</option>
 								<option value="-3">g</option>
 								<option value="0">kg</option>
-						</select>
-					</td>
-					<td colspan="2">
-						poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
-						<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
-							<option value="-6">mg</option>
-							<option value="-3">g</option>
-							<option value="0">kg</option>
-						</select>
-					</td>
-					<td colspan="2">
-						tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
-						<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
-							<option value="-6">mg</option>
-							<option value="-3">g</option>
-							<option value="0">kg</option>
-						</select>
-					</td>
-				</tr>
-				<?php
-			}
+							</select>
+						</td>
+						<td colspan="2">
+							tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
+							<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
+								<option value="-6">mg</option>
+								<option value="-3">g</option>
+								<option value="0">kg</option>
+							</select>
+						</td>
+					</tr>
+					<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une liaison d'équipement :</span><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
+					<?php
+				}
 			?>
 			</table>
 			<center><br><input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
@@ -476,14 +501,79 @@
 					print '<td align="center">'.$product->stock_reel.'</td>';
 					print '</tr>';
 					
-					$dispatch->loadLines(&$ATMdb,$line->rowid);
-					foreach($dispatch->lines as $dispatchline){
+					$res = $dispatch->loadLines(&$ATMdb,$line->rowid);
+					
+					//Il existe au moin une ligne d'équipement associé à la ligne de commande
+					if($res){
+						foreach($dispatch->lines as $dispatchline){
+							?>
+							<tr class="ligne_<?=$line->rowid;?>">
+								<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
+								<td colspan="2" align="left">
+									<span style="padding-left: 25px;">Equipement lié :</span>
+									<select id="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="equipement_<?=$line->rowid;?>">
+									<?php
+									//Chargement des équipement lié au produit
+									$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+									 		 FROM ".MAIN_DB_PREFIX."asset
+									 		 WHERE fk_product = ".$line->fk_product."
+									 		 ORDER BY contenance_value DESC";
+									$ATMdb->Execute($sql);
+									
+									while($ATMdb->Get_line()){
+										switch($ATMdb->Get_field('contenance_units')){
+											case -6:
+												$unite = 'mg';
+												break;
+											case -3:
+												$unite = 'g';
+												break;
+											case 0:
+												$unite = 'kg';
+												break;
+										}
+										?>
+										<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
+										<?php	
+									}
+									?>
+									</select>
+									<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>,<?=$dispatchline->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
+								</td>
+								<td colspan="2">
+									poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight; ?>"/>
+									<select id="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitepoids_<?=$line->rowid;?>">
+											<option value="-6" <?php echo ($dispatchline->weight_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
+											<option value="-3" <?php echo ($dispatchline->weight_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
+											<option value="0" <?php echo ($dispatchline->weight_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+									</select>
+								</td>
+								<td colspan="2">
+									poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight_reel; ?>"/>
+									<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
+										<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
+										<option value="-3" <?php echo ($dispatchline->weight_reel_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
+										<option value="0" <?php echo ($dispatchline->weight_reel_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+									</select>
+								</td>
+								<td colspan="2">
+									tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->tare; ?>"/>
+									<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
+										<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
+										<option value="-3" <?php echo ($dispatchline->tare_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
+										<option value="0" <?php echo ($dispatchline->tare_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+									</select>
+								</td>
+							</tr>
+							<?php
+						}
+					}
+					else{ //il n'existe aucune ligne d'équipemen associé => création d'une ligne caché
 						?>
-						<tr class="ligne_<?=$line->rowid;?>">
-							<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
+						<tr class="ligne_<?=$line->rowid;?>" style="display: none;">
 							<td colspan="2" align="left">
 								<span style="padding-left: 25px;">Equipement lié :</span>
-								<select id="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="equipement_<?=$line->rowid;?>">
+								<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
 								<?php
 								//Chargement des équipement lié au produit
 								$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
@@ -505,53 +595,48 @@
 											break;
 									}
 									?>
-									<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
+									<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
 									<?php	
 								}
 								?>
 								</select>
-								<?php
-								if($dispatchline->rang == 1){
-									?><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a><?php
-								} 	
-								else{
-									?><a alt="Supprimer l\'équipement" title="Supprimer l\'équipement" style="cursor:pointer;" onclick="$(this).parent().parent().remove();"><img src="img/supprimer.png" style="cursor:pointer;" /></a><?php
-								}
-								?>	
-									
+								<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
 							</td>
 							<td colspan="2">
-								poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight; ?>"/>
-								<select id="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitepoids_<?=$line->rowid;?>">
-										<option value="-6" <?php echo ($dispatchline->weight_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
-										<option value="-3" <?php echo ($dispatchline->weight_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
-										<option value="0" <?php echo ($dispatchline->weight_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+								poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
+								<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+										<option value="-6">mg</option>
+										<option value="-3">g</option>
+										<option value="0">kg</option>
 								</select>
 							</td>
 							<td colspan="2">
-								poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight_reel; ?>"/>
-								<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
-									<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
-									<option value="-3" <?php echo ($dispatchline->weight_reel_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
-									<option value="0" <?php echo ($dispatchline->weight_reel_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+								poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
+								<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
+									<option value="-6">mg</option>
+									<option value="-3">g</option>
+									<option value="0">kg</option>
 								</select>
 							</td>
 							<td colspan="2">
-								tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->tare; ?>"/>
-								<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
-									<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
-									<option value="-3" <?php echo ($dispatchline->tare_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
-									<option value="0" <?php echo ($dispatchline->tare_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+								tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
+								<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
+									<option value="-6">mg</option>
+									<option value="-3">g</option>
+									<option value="0">kg</option>
 								</select>
 							</td>
 						</tr>
-						<?php
+					<?php
 					}
+					?>
+					<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une liaison d'équipement :</span><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
+					<?php
 				}
 				?>
 			</table>
-			<center><br><input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
-			<input type="submit" class="button" value="Valider" name="valider">&nbsp;
+			<center><br><input type="submit" class="button" value="Enregistrer et Valider" name="valider" onclick="confirm('Êtes-vous sûr de vouloir valider cette expédition sous la référence <?=$dispatch->ref; ?>?');">&nbsp;
+			<input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
 			<input type="submit" class="button" value="Annuler" name="back"></center>
 		<br></form>
 		<?php
@@ -562,46 +647,12 @@
 		/*
 		 * TRAITEMENT DES ACTIONS 
 		 */
-		
-		//Validation
-		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['valider'])){
-			$dispatch = new TDispatch;
-			$dispatch->load(&$ATMdb, $_REQUEST['fk_dispatch']);
-	        $text = $langs->trans("ConfirmValidateSending",$dispatch->ref);
-	
-	        if (! empty($conf->notification->enabled))
-	        {
-	            require_once DOL_DOCUMENT_ROOT .'/core/class/notify.class.php';
-	            $notify=new Notify($db);
-	            $text.='<br>';
-	            $text.=$notify->confirmMessage('SHIPPING_VALIDATE',$dispatch->fk_soc);
-	        }
-	
-	        $ret=$form->form_confirm($_SERVER['PHP_SELF'].'?fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid,$langs->trans('ValidateSending'),$text,'confirm_valid','',0,1);
-	        if ($ret == 'html') print '<br>';
-		}
 		 		 
 		//Traitement création et modification 
 		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['save']) &&  ($_REQUEST['action'] == "add_expedition" || $_REQUEST['action'] == "update_expedition")){
 			
 			$dispatch = new TDispatch;
-			$TLigneToDispatch = $dispatch->FormParser($_POST);
-			
-			if($_REQUEST['action'] == "update_expedition")
-				$dispatch->load(&$ATMdb, $_REQUEST['fk_dispatch']);
-			
-			$dispatch->statut = 0; //Brouillon				
-			$dispatch->ref = $TLigneToDispatch['ref_expe'];
-			$dispatch->date_livraison = $TLigneToDispatch['date_livraison'];
-			$dispatch->type_expedition = $TLigneToDispatch['methode_dispatch'];
-			$dispatch->height = $TLigneToDispatch['hauteur'];
-			$dispatch->width = $TLigneToDispatch['largeur'];
-			$dispatch->weight = $TLigneToDispatch['poid_general'];
-			$dispatch->fk_entrepot = $TLigneToDispatch['entrepot'];
-			$dispatch->fk_commande = $commande->id;
-			$dispatch->save($ATMdb);
-			$dispatch->addLines($TLigneToDispatch,$commande,&$ATMdb,$_REQUEST['action']);
-			
+			$dispatch->enregistrer(&$ATMdb, $commande, $_REQUEST);
 			/*echo '<pre>';
 			print_r($TLigneToDispatch);
 			echo '</pre>';*/
@@ -615,9 +666,10 @@
 		}
 		
 		//Traitement Validation	
-		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['confirm_valid']) && $_REQUEST['confirm'] == "yes"){
+		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['valider']) && $_REQUEST['action'] == "update_expedition"){
 			$dispatch = new TDispatch;
 			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->enregistrer(&$ATMdb, $commande, $_REQUEST);
 			$dispatch->valider(&$ATMdb, $commande);
 		}
 		

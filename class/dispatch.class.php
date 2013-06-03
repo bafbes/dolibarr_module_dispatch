@@ -15,7 +15,7 @@ class TDispatch extends TObjetStd {
 		parent::_init_vars();
 		parent::start();
 		
-		$lines = array();
+		$lines = array(); //Tableau d'objet Idspatchdet_asset
 	}
 	
 	//Parse les varibales passé par le formulaire de création d'une expédition
@@ -29,8 +29,10 @@ class TDispatch extends TObjetStd {
 			
 			$Tcle = explode("_",$cle);
 			
-			if(is_numeric($Tcle[1]))
-				$TLigneToDispatch[$Tcle[1]][$Tcle[2]][$Tcle[0]] = $val;
+			if(is_numeric($Tcle[1])){
+				if($Tvar["poids_".$Tcle[1]."_".$Tcle[2]] != "" && $Tvar["poidsreel_".$Tcle[1]."_".$Tcle[2]] != "" && $Tvar["tare_".$Tcle[1]."_".$Tcle[2]] != "")
+					$TLigneToDispatch[$Tcle[1]][$Tcle[2]][$Tcle[0]] = $val;
+			}
 			else
 				$TLigneToDispatch[$cle] = $val; 
 		}
@@ -56,6 +58,11 @@ class TDispatch extends TObjetStd {
 			}
 			$ATMdb2->close();
 		}
+		
+		if(count($this->lines) > 0)
+			return true;
+		else
+			return false;
 	}
 	
 	function addLines($TLigneToDispatch,&$commande,&$ATMdb,$action = ""){
@@ -92,6 +99,25 @@ class TDispatch extends TObjetStd {
 				}
 			}
 		}
+	}
+	
+	function enregistrer(&$ATMdb,$commande,$_REQUEST){
+		$TLigneToDispatch = $this->FormParser($_POST);
+			
+		if($_REQUEST['action'] == "update_expedition")
+			$this->load(&$ATMdb, $_REQUEST['fk_dispatch']);
+		
+		$this->statut = 0; //Brouillon				
+		$this->ref = $TLigneToDispatch['ref_expe'];
+		$this->date_livraison = $TLigneToDispatch['date_livraison'];
+		$this->type_expedition = $TLigneToDispatch['methode_dispatch'];
+		$this->height = $TLigneToDispatch['hauteur'];
+		$this->width = $TLigneToDispatch['largeur'];
+		$this->weight = $TLigneToDispatch['poid_general'];
+		$this->fk_entrepot = $TLigneToDispatch['entrepot'];
+		$this->fk_commande = $commande->id;
+		$this->save($ATMdb);
+		$this->addLines($TLigneToDispatch,$commande,&$ATMdb,$_REQUEST['action']);
 	}
 	
 	function valider(&$ATMdb,$commande){
