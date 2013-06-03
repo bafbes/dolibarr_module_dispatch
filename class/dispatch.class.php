@@ -133,8 +133,10 @@ class TDispatch extends TObjetStd {
 			
 			//Ajoute une sortie de stock pour chaque equipement lié à l'expédition de la commande
 			foreach($this->lines as $lineAsset){
-				$mvt_asset = new TAssetStock;
-				$mvt_asset->mouvement_stock(&$ATMdb,$lineAsset->fk_asset,-$lineAsset->weight_reel,"Expedition",$this->rowid);
+				$asset = new TAsset;
+				$asset->load(&$ATMdb,$lineAsset->fk_asset);
+				$asset->contenancereel_value = $asset->contenancereel_value - $lineAsset->weight_reel;
+				$asset->save(&$ATMdb,"Expedition");
 			}
 		}
 	}
