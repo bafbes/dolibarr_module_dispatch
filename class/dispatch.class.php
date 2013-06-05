@@ -7,10 +7,11 @@ class TDispatch extends TObjetStd {
 		parent::set_table(MAIN_DB_PREFIX.'dispatch');
 		parent::add_champs('ref','type=chaine;index;');
 		parent::add_champs('note_private, note_public, model_pdf','type=chaine;');
-		parent::add_champs('height,width,entity, weight_units, weight','type=entier;');
+		parent::add_champs('entity, weight_units, weight','type=entier;');
 		parent::add_champs('fk_soc,fk_user_author,entity, fk_expedition_method, fk_commande','type=entier;index;');
 		parent::add_champs('fk_entrepot, type_expedition,statut','type=entier;');
 		parent::add_champs('date_valid,date_expedition,date_livraison','type=date;');
+		parent::add_champs('height,width','type=float;');
 		
 		parent::_init_vars();
 		parent::start();

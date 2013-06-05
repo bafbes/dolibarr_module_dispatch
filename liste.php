@@ -22,8 +22,10 @@
 	
 	$ATMdb = new Tdb;	
 	$commande = new Commande($db);
-	if(isset($_GET['fk_commande']) && !empty($_GET['fk_commande']))
+	
+	if(isset($_GET['fk_commande']) && !empty($_GET['fk_commande'])){
 		$commande->fetch($_GET['fk_commande']);
+	}
 	else{
 		echo "BadParametreCommandeId"; exit;
 	}
@@ -45,6 +47,11 @@
 	dol_fiche_head($head, 'tabExpedition1', $titre, 0, $picto);
 	
 	print '<table class="border" width="100%">';
+	
+	if($commande->statut < 1){
+		echo "Votre commande doit être validé avant de pouvoir l'expédier."; exit;
+		print '</table>';
+	}
 	
 	// Ref
 	print '<tr><td width="18%">'.$langs->trans('Ref').'</td>';
@@ -228,7 +235,6 @@
 	print '</table><br>';
 	print '</div>';
 	
-	
 	/*
 	 * LISTE DES EXPEDITIONS ET ACTIONS EXPEDITIONS
 	 * 
@@ -324,253 +330,41 @@
 				<?php
 				foreach($commande->lines as $line){
 					$product = new Product($db);
-					$product->fetch($line->fk_product);
-					
-					$ATMdb->Execute('SELECT asset_lot, poids, tarif_poids FROM '.MAIN_DB_PREFIX.'commandedet WHERE rowid = '.$line->rowid);
-					$ATMdb->Get_line();
-					
-					//Unite de poids
-					switch($ATMdb->Get_field('poids')){
-						case -6:
-							$unite = 'mg';
-							break;
-						case -3:
-							$unite = 'g';
-							break;
-						case 0:
-							$unite = 'kg';
-							break;
-					}
-				
-					/*
-					 * LIGNE RECAP PRODUIT
-					 */
-					print '<tr class="impair" style="height:50px;">';
-					print '<td>'.$product->ref." - ".$product->label.'</td>';
-					print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-					print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
-					print '<td align="center">'.$line->qty.'</td>';
-					print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-					print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-					print '<td align="center">'.$product->stock_reel.'</td>';
-					print '</tr>';
-					
-					?>
-					<tr class="ligne_<?=$line->rowid;?>">
-						<td colspan="2" align="left">
-							<span style="padding-left: 25px;">Equipement lié :</span>
-							<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
-							<?php
-							//Chargement des équipement lié au produit
-							$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
-							 		 FROM ".MAIN_DB_PREFIX."asset
-							 		 WHERE fk_product = ".$line->fk_product."
-							 		 ORDER BY contenance_value DESC";
-							$ATMdb->Execute($sql);
-							
-							while($ATMdb->Get_line()){
-								switch($ATMdb->Get_field('contenance_units')){
-									case -6:
-										$unite = 'mg';
-										break;
-									case -3:
-										$unite = 'g';
-										break;
-									case 0:
-										$unite = 'kg';
-										break;
-								}
-								?>
-								<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
-								<?php	
-							}
-							?>
-							</select>
-							<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
-						</td>
-						<td colspan="2">
-							poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
-							<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
-									<option value="-6">mg</option>
-									<option value="-3">g</option>
-									<option value="0">kg</option>
-							</select>
-						</td>
-						<td colspan="2">
-							poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
-							<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
-								<option value="-6">mg</option>
-								<option value="-3">g</option>
-								<option value="0">kg</option>
-							</select>
-						</td>
-						<td colspan="2">
-							tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
-							<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
-								<option value="-6">mg</option>
-								<option value="-3">g</option>
-								<option value="0">kg</option>
-							</select>
-						</td>
-					</tr>
-					<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une liaison d'équipement :</span><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
-					<?php
-				}
-			?>
-			</table>
-			<center><br><input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
-			<input type="submit" class="button" value="Annuler" name="back"></center>
-		<br></form>
-		<?php		
-	}
-	
-	/*
-	 * FORMULAIRE DE MODIFICATION
-	 */
-	elseif(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  ($_REQUEST['action'] == "update")){
-		$dispatch = new TDispatch;
-		$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
-		?>
-		<form action="" method="POST">
-			<table class="notopnoleftnoright" width="100%" border="0" style="margin-bottom: 2px;" summary="">
-			<tbody><tr>
-			<td class="nobordernopadding" valign="middle"><div class="titre">Modification expédition</div></td>
-			</tr></tbody>
-			</table>
-			<br>
-			<table class="border" width="100%">
-				<tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe" value="<?=$dispatch->ref; ?>"></td></tr>
-				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date($dispatch->date_livraison,'date_livraison',0,0);?></td></tr>
-				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'),$dispatch->type_expedition);?></td></tr>
-				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur" value="<?=$dispatch->height; ?>"> cm</td></tr>
-				<tr><td align="left">Largeur</td><td><input type="text" name="largeur" value="<?=$dispatch->width; ?>"> cm</td></tr>
-				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general" value="<?=$dispatch->weight; ?>">
-															<select id="unitepoid_general" name="unitepoid_general">
-																<option value="-6" <?php echo ($dispatch->weight_units == "-6")? 'selected="selected"' : ""; ?>>mg</option>
-																<option value="-3" <?php echo ($dispatch->weight_units == "-3")? 'selected="selected"' : ""; ?>>g</option>
-																<option value="0" <?php echo ($dispatch->weight_units == "0")? 'selected="selected"' : ""; ?>>kg</option>
-															</select>
-														</td></tr>
-				<tr><td align="left">Entrepôt</td><td><?=$formproduct->selectWarehouses($dispatch->fk_entrepot,'entrepot','',1,0,$line->fk_product);?></td></tr>
-			</table>
-			<br>
-			<input type="hidden" name="action" value="update_expedition">
-			<input type="hidden" name="id" value="<?=$commande->id; ?>">
-			<input type="hidden" name="fk_dispatch" value="<?=$dispatch->rowid; ?>">
-			<table class="liste" width="100%">
-				<tr class="liste_titre">
-					<td>Produit</td>
-					<td align="center">Lot</td>
-					<td align="center">Poids</td>
-					<td align="center">Qté commandée</td>
-					<td align="center">Qté expédiée</td>
-					<td align="center">Qté à expédier</td>
-					<td align="center">Qté stock/entrepôt</td>
-				</tr>
-				<?php
-				foreach($commande->lines as $line){
-					$product = new Product($db);
-					$product->fetch($line->fk_product);
-					
-					$ATMdb->Execute('SELECT asset_lot, poids, tarif_poids FROM '.MAIN_DB_PREFIX.'commandedet WHERE rowid = '.$line->rowid);
-					$ATMdb->Get_line();
-					
-					//Unite de poids
-					switch($ATMdb->Get_field('poids')){
-						case -6:
-							$unite = 'mg';
-							break;
-						case -3:
-							$unite = 'g';
-							break;
-						case 0:
-							$unite = 'kg';
-							break;
-					}
-				
-					/*
-					 * LIGNE RECAP PRODUIT
-					 */
-					print '<tr class="impair" style="height:50px;">';
-					print '<td>'.$product->ref." - ".$product->label.'</td>';
-					print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-					print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
-					print '<td align="center">'.$line->qty.'</td>';
-					print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-					print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-					print '<td align="center">'.$product->stock_reel.'</td>';
-					print '</tr>';
-					
-					$res = $dispatch->loadLines(&$ATMdb,$line->rowid);
-					
-					//Il existe au moin une ligne d'équipement associé à la ligne de commande
-					if($res){
-						foreach($dispatch->lines as $dispatchline){
-							?>
-							<tr class="ligne_<?=$line->rowid;?>">
-								<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
-								<td colspan="2" align="left">
-									<span style="padding-left: 25px;">Equipement lié :</span>
-									<select id="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="equipement_<?=$line->rowid;?>">
-									<?php
-									//Chargement des équipement lié au produit
-									$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
-									 		 FROM ".MAIN_DB_PREFIX."asset
-									 		 WHERE fk_product = ".$line->fk_product."
-									 		 ORDER BY contenance_value DESC";
-									$ATMdb->Execute($sql);
-									
-									while($ATMdb->Get_line()){
-										switch($ATMdb->Get_field('contenance_units')){
-											case -6:
-												$unite = 'mg';
-												break;
-											case -3:
-												$unite = 'g';
-												break;
-											case 0:
-												$unite = 'kg';
-												break;
-										}
-										?>
-										<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
-										<?php	
-									}
-									?>
-									</select>
-									<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>,<?=$dispatchline->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
-								</td>
-								<td colspan="2">
-									poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight; ?>"/>
-									<select id="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitepoids_<?=$line->rowid;?>">
-											<option value="-6" <?php echo ($dispatchline->weight_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
-											<option value="-3" <?php echo ($dispatchline->weight_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
-											<option value="0" <?php echo ($dispatchline->weight_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
-									</select>
-								</td>
-								<td colspan="2">
-									poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight_reel; ?>"/>
-									<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
-										<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
-										<option value="-3" <?php echo ($dispatchline->weight_reel_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
-										<option value="0" <?php echo ($dispatchline->weight_reel_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
-									</select>
-								</td>
-								<td colspan="2">
-									tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->tare; ?>"/>
-									<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
-										<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
-										<option value="-3" <?php echo ($dispatchline->tare_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
-										<option value="0" <?php echo ($dispatchline->tare_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
-									</select>
-								</td>
-							</tr>
-							<?php
+					if($line->fk_product > 0) //Ligne de commande lié à un produit
+					{
+						$product->fetch($line->fk_product);
+						
+						$ATMdb->Execute('SELECT asset_lot, poids, tarif_poids FROM '.MAIN_DB_PREFIX.'commandedet WHERE rowid = '.$line->rowid);
+						$ATMdb->Get_line();
+						
+						//Unite de poids
+						switch($ATMdb->Get_field('poids')){
+							case -6:
+								$unite = 'mg';
+								break;
+							case -3:
+								$unite = 'g';
+								break;
+							case 0:
+								$unite = 'kg';
+								break;
 						}
-					}
-					else{ //il n'existe aucune ligne d'équipemen associé => création d'une ligne caché
+					
+						/*
+						 * LIGNE RECAP PRODUIT
+						 */
+						print '<tr class="impair" style="height:50px;">';
+						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
+						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
+						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.$line->qty.'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
+						print '<td align="center">'.$product->stock_reel.'</td>';
+						print '</tr>';
+						
 						?>
-						<tr class="ligne_<?=$line->rowid;?>" style="display: none;">
+						<tr class="ligne_<?=$line->rowid;?>">
 							<td colspan="2" align="left">
 								<span style="padding-left: 25px;">Equipement lié :</span>
 								<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
@@ -627,11 +421,281 @@
 								</select>
 							</td>
 						</tr>
-					<?php
+						<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une liaison d'équipement :</span><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
+						<?php
 					}
-					?>
-					<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une liaison d'équipement :</span><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
-					<?php
+
+					//Ligne de commande libre
+					else{
+						$ATMdb->Execute("SELECT tarif_poids, poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->rowid);
+						$ATMdb->Get_line();
+						switch($ATMdb->Get_field('poids')){
+							case -6:
+								$unite = 'mg';
+								break;
+							case -3:
+								$unite = 'g';
+								break;
+							case 0:
+								$unite = 'kg';
+								break;
+						}
+						print '<tr class="impair" style="height:50px;">';
+						print '<td style="padding-left:5px;">'.$line->desc.'</td>';
+						print '<td align="center">aucun</td>';
+						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.$line->qty.'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
+						print '<td align="center">hors stock </td>';
+						print '</tr>';
+					}
+				}
+			?>
+			</table>
+			<center><br><input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
+			<input type="submit" class="button" value="Annuler" name="back"></center>
+		<br></form>
+		<?php		
+	}
+	
+	/*
+	 * FORMULAIRE DE MODIFICATION
+	 */
+	elseif(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  ($_REQUEST['action'] == "update")){
+		$dispatch = new TDispatch;
+		$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
+		?>
+		<form action="" method="POST">
+			<table class="notopnoleftnoright" width="100%" border="0" style="margin-bottom: 2px;" summary="">
+			<tbody><tr>
+			<td class="nobordernopadding" valign="middle"><div class="titre">Modification expédition</div></td>
+			</tr></tbody>
+			</table>
+			<br>
+			<table class="border" width="100%">
+				<tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe" value="<?=$dispatch->ref; ?>"></td></tr>
+				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date($dispatch->date_livraison,'date_livraison',0,0);?></td></tr>
+				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'),$dispatch->type_expedition);?></td></tr>
+				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur" value="<?=$dispatch->height; ?>"> cm</td></tr>
+				<tr><td align="left">Largeur</td><td><input type="text" name="largeur" value="<?=$dispatch->width; ?>"> cm</td></tr>
+				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general" value="<?=$dispatch->weight; ?>">
+															<select id="unitepoid_general" name="unitepoid_general">
+																<option value="-6" <?php echo ($dispatch->weight_units == "-6")? 'selected="selected"' : ""; ?>>mg</option>
+																<option value="-3" <?php echo ($dispatch->weight_units == "-3")? 'selected="selected"' : ""; ?>>g</option>
+																<option value="0" <?php echo ($dispatch->weight_units == "0")? 'selected="selected"' : ""; ?>>kg</option>
+															</select>
+														</td></tr>
+				<tr><td align="left">Entrepôt</td><td><?=$formproduct->selectWarehouses($dispatch->fk_entrepot,'entrepot','',1,0,$line->fk_product);?></td></tr>
+			</table>
+			<br>
+			<input type="hidden" name="action" value="update_expedition">
+			<input type="hidden" name="id" value="<?=$commande->id; ?>">
+			<input type="hidden" name="fk_dispatch" value="<?=$dispatch->rowid; ?>">
+			<table class="liste" width="100%">
+				<tr class="liste_titre">
+					<td>Produit</td>
+					<td align="center">Lot</td>
+					<td align="center">Poids</td>
+					<td align="center">Qté commandée</td>
+					<td align="center">Qté expédiée</td>
+					<td align="center">Qté à expédier</td>
+					<td align="center">Qté stock/entrepôt</td>
+				</tr>
+				<?php
+				foreach($commande->lines as $line){
+					$product = new Product($db);
+					if($line->fk_product > 0) //Ligne de commande lié à un produit
+					{
+						$product->fetch($line->fk_product); 
+						
+						$ATMdb->Execute('SELECT asset_lot, poids, tarif_poids FROM '.MAIN_DB_PREFIX.'commandedet WHERE rowid = '.$line->rowid);
+						$ATMdb->Get_line();
+						
+						//Unite de poids
+						switch($ATMdb->Get_field('poids')){
+							case -6:
+								$unite = 'mg';
+								break;
+							case -3:
+								$unite = 'g';
+								break;
+							case 0:
+								$unite = 'kg';
+								break;
+						}
+					
+						/*
+						 * LIGNE RECAP PRODUIT
+						 */
+						print '<tr class="impair" style="height:50px;">';
+						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
+						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
+						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.$line->qty.'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
+						print '<td align="center">'.$product->stock_reel.'</td>';
+						print '</tr>';
+						
+						$res = $dispatch->loadLines(&$ATMdb,$line->rowid);
+						
+						//Il existe au moin une ligne d'équipement associé à la ligne de commande
+						if($res){
+							foreach($dispatch->lines as $dispatchline){
+								?>
+								<tr class="ligne_<?=$line->rowid;?>">
+									<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
+									<td colspan="2" align="left">
+										<span style="padding-left: 25px;">Equipement lié :</span>
+										<select id="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="equipement_<?=$line->rowid;?>">
+										<?php
+										//Chargement des équipement lié au produit
+										$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+										 		 FROM ".MAIN_DB_PREFIX."asset
+										 		 WHERE fk_product = ".$line->fk_product."
+										 		 ORDER BY contenance_value DESC";
+										$ATMdb->Execute($sql);
+										
+										while($ATMdb->Get_line()){
+											switch($ATMdb->Get_field('contenance_units')){
+												case -6:
+													$unite = 'mg';
+													break;
+												case -3:
+													$unite = 'g';
+													break;
+												case 0:
+													$unite = 'kg';
+													break;
+											}
+											?>
+											<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
+											<?php	
+										}
+										?>
+										</select>
+										<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>,<?=$dispatchline->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
+									</td>
+									<td colspan="2">
+										poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight; ?>"/>
+										<select id="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitepoids_<?=$line->rowid;?>">
+												<option value="-6" <?php echo ($dispatchline->weight_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
+												<option value="-3" <?php echo ($dispatchline->weight_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
+												<option value="0" <?php echo ($dispatchline->weight_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+										</select>
+									</td>
+									<td colspan="2">
+										poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight_reel; ?>"/>
+										<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
+											<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
+											<option value="-3" <?php echo ($dispatchline->weight_reel_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
+											<option value="0" <?php echo ($dispatchline->weight_reel_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+										</select>
+									</td>
+									<td colspan="2">
+										tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->tare; ?>"/>
+										<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
+											<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
+											<option value="-3" <?php echo ($dispatchline->tare_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
+											<option value="0" <?php echo ($dispatchline->tare_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
+										</select>
+									</td>
+								</tr>
+								<?php
+							}
+						}
+						else{ //il n'existe aucune ligne d'équipemen associé => création d'une ligne caché
+							?>
+							<tr class="ligne_<?=$line->rowid;?>" style="display: none;">
+								<td colspan="2" align="left">
+									<span style="padding-left: 25px;">Equipement lié :</span>
+									<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
+									<?php
+									//Chargement des équipement lié au produit
+									$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+									 		 FROM ".MAIN_DB_PREFIX."asset
+									 		 WHERE fk_product = ".$line->fk_product."
+									 		 ORDER BY contenance_value DESC";
+									$ATMdb->Execute($sql);
+									
+									while($ATMdb->Get_line()){
+										switch($ATMdb->Get_field('contenance_units')){
+											case -6:
+												$unite = 'mg';
+												break;
+											case -3:
+												$unite = 'g';
+												break;
+											case 0:
+												$unite = 'kg';
+												break;
+										}
+										?>
+										<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
+										<?php	
+									}
+									?>
+									</select>
+									<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
+								</td>
+								<td colspan="2">
+									poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
+									<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+											<option value="-6">mg</option>
+											<option value="-3">g</option>
+											<option value="0">kg</option>
+									</select>
+								</td>
+								<td colspan="2">
+									poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
+									<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
+										<option value="-6">mg</option>
+										<option value="-3">g</option>
+										<option value="0">kg</option>
+									</select>
+								</td>
+								<td colspan="2">
+									tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
+									<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
+										<option value="-6">mg</option>
+										<option value="-3">g</option>
+										<option value="0">kg</option>
+									</select>
+								</td>
+							</tr>
+						<?php
+						}
+						?>
+						<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une liaison d'équipement :</span><a alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
+						<?php
+					}
+
+					//Ligne de commande libre
+					else{
+						$ATMdb->Execute("SELECT tarif_poids, poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->rowid);
+						$ATMdb->Get_line();
+						switch($ATMdb->Get_field('poids')){
+							case -6:
+								$unite = 'mg';
+								break;
+							case -3:
+								$unite = 'g';
+								break;
+							case 0:
+								$unite = 'kg';
+								break;
+						}
+						print '<tr class="impair" style="height:50px;">';
+						print '<td style="padding-left:5px;">'.$line->desc.'</td>';
+						print '<td align="center">aucun</td>';
+						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.$line->qty.'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
+						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
+						print '<td align="center">hors stock </td>';
+						print '</tr>';
+					}
 				}
 				?>
 			</table>
