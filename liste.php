@@ -3,6 +3,7 @@
 	require('class/dispatch.class.php');
 	require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 	require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/custom/dispatch/class/dispatch.class.php';
 	require_once DOL_DOCUMENT_ROOT.'/custom/asset/class/asset.class.php';
 	require_once(DOL_DOCUMENT_ROOT."/core/lib/order.lib.php");
 	require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
@@ -321,11 +322,10 @@
 				<tr class="liste_titre">
 					<td>Produit</td>
 					<td align="center">Lot</td>
-					<td align="center">Poids</td>
+					<td align="center">Poids commandé</td>
 					<td align="center">Qté commandée</td>
 					<td align="center">Qté expédiée</td>
 					<td align="center">Qté à expédier</td>
-					<td align="center">Qté stock/entrepôt</td>
 				</tr>
 				<?php
 				foreach($commande->lines as $line){
@@ -349,7 +349,14 @@
 								$unite = 'kg';
 								break;
 						}
-					
+						
+						//Récupération des quantitées déjà expédiées
+						$ATMdb2 = new Tdb;
+						$dispatch = new TDispatch;
+						$qte_expedie = $dispatch->get_qte_expedie(&$ATMdb2,$line->rowid);
+						($qte_expedie == 0) ? $qte_expedie = 0.00 : "";
+						$ATMdb2->close();
+						
 						/*
 						 * LIGNE RECAP PRODUIT
 						 */
@@ -358,9 +365,8 @@
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
 						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-						print '<td align="center">'.$product->stock_reel.'</td>';
+						print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
+						print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
 						print '</tr>';
 						
 						?>
@@ -370,14 +376,19 @@
 								<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
 								<?php
 								//Chargement des équipement lié au produit
-								$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+								$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
 								 		 FROM ".MAIN_DB_PREFIX."asset
-								 		 WHERE fk_product = ".$line->fk_product."
-								 		 ORDER BY contenance_value DESC";
+								 		 WHERE fk_product = ".$line->fk_product;
+								
+								($ATMdb->Get_field('asset_lot') != NULL) ? $sql.= " AND lot_number = ".$ATMdb->Get_field('asset_lot') : "";
+								
+								$sql.=" ORDER BY contenance_value DESC";
+								
 								$ATMdb->Execute($sql);
 								
+								$cpt = 0;
 								while($ATMdb->Get_line()){
-									switch($ATMdb->Get_field('contenance_units')){
+									switch($ATMdb->Get_field('contenancereel_units')){
 										case -6:
 											$unite = 'mg';
 											break;
@@ -388,9 +399,19 @@
 											$unite = 'kg';
 											break;
 									}
+									
+									if($ATMdb->Get_field('contenancereel_value') > 0){
+										$cpt++;
+										?>
+										<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+										<?php
+									}	
+								}
+								
+								if($cpt == 0){
 									?>
-									<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
-									<?php	
+									<option value="null">Aucun équipement utilisable pour ce produit</option>
+									<?php
 								}
 								?>
 								</select>
@@ -404,7 +425,7 @@
 										<option value="0">kg</option>
 								</select>
 							</td>
-							<td colspan="2">
+							<td>
 								poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
 								<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
 									<option value="-6">mg</option>
@@ -412,7 +433,7 @@
 									<option value="0">kg</option>
 								</select>
 							</td>
-							<td colspan="2">
+							<td>
 								tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 								<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
 									<option value="-6">mg</option>
@@ -441,13 +462,12 @@
 								break;
 						}
 						print '<tr class="impair" style="height:50px;">';
-						print '<td style="padding-left:5px;">'.$line->desc.'</td>';
-						print '<td align="center">aucun</td>';
+						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
+						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
 						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-						print '<td align="center">hors stock </td>';
+						print '<td align="center"></td>';
+						print '<td align="center"></td>';
 						print '</tr>';
 					}
 				}
@@ -496,11 +516,10 @@
 				<tr class="liste_titre">
 					<td>Produit</td>
 					<td align="center">Lot</td>
-					<td align="center">Poids</td>
+					<td align="center">Poids commandé</td>
 					<td align="center">Qté commandée</td>
 					<td align="center">Qté expédiée</td>
 					<td align="center">Qté à expédier</td>
-					<td align="center">Qté stock/entrepôt</td>
 				</tr>
 				<?php
 				foreach($commande->lines as $line){
@@ -525,6 +544,12 @@
 								break;
 						}
 					
+						//Récupération des quantitées déjà expédiées
+						$ATMdb2 = new Tdb;
+						$qte_expedie = $dispatch->get_qte_expedie(&$ATMdb2,$line->rowid);
+						($qte_expedie == 0) ? $qte_expedie = 0.00 : "";
+						$ATMdb2->close();
+						
 						/*
 						 * LIGNE RECAP PRODUIT
 						 */
@@ -533,9 +558,8 @@
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
 						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-						print '<td align="center">'.$product->stock_reel.'</td>';
+						print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
+						print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
 						print '</tr>';
 						
 						$res = $dispatch->loadLines(&$ATMdb,$line->rowid);
@@ -551,14 +575,15 @@
 										<select id="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="equipement_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="equipement_<?=$line->rowid;?>">
 										<?php
 										//Chargement des équipement lié au produit
-										$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+										$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
 										 		 FROM ".MAIN_DB_PREFIX."asset
 										 		 WHERE fk_product = ".$line->fk_product."
 										 		 ORDER BY contenance_value DESC";
 										$ATMdb->Execute($sql);
 										
+										$cpt = 0;
 										while($ATMdb->Get_line()){
-											switch($ATMdb->Get_field('contenance_units')){
+											switch($ATMdb->Get_field('contenancereel_units')){
 												case -6:
 													$unite = 'mg';
 													break;
@@ -569,9 +594,20 @@
 													$unite = 'kg';
 													break;
 											}
+											
+											
+											if($ATMdb->Get_field('contenancereel_value') > 0){
+												$cpt++;
+												?>
+												<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+												<?php
+											}	
+										}
+
+										if($cpt == 0){
 											?>
-											<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
-											<?php	
+											<option value="null">Aucun équipement utilisable pour ce produit</option>
+											<?php
 										}
 										?>
 										</select>
@@ -585,7 +621,7 @@
 												<option value="0" <?php echo ($dispatchline->weight_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
 										</select>
 									</td>
-									<td colspan="2">
+									<td>
 										poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight_reel; ?>"/>
 										<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
 											<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
@@ -593,7 +629,7 @@
 											<option value="0" <?php echo ($dispatchline->weight_reel_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
 										</select>
 									</td>
-									<td colspan="2">
+									<td>
 										tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->tare; ?>"/>
 										<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
 											<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
@@ -605,7 +641,7 @@
 								<?php
 							}
 						}
-						else{ //il n'existe aucune ligne d'équipemen associé => création d'une ligne caché
+						else{ //il n'existe aucune ligne d'équipement associé => création d'une ligne caché
 							?>
 							<tr class="ligne_<?=$line->rowid;?>" style="display: none;">
 								<td colspan="2" align="left">
@@ -613,14 +649,15 @@
 									<select id="equipement_<?=$line->rowid;?>_1" name="equipement_<?=$line->rowid;?>_1" class="equipement_<?=$line->rowid;?>">
 									<?php
 									//Chargement des équipement lié au produit
-									$sql = "SELECT rowid, serial_number, lot_number, contenance_value, contenance_units
+									$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
 									 		 FROM ".MAIN_DB_PREFIX."asset
 									 		 WHERE fk_product = ".$line->fk_product."
 									 		 ORDER BY contenance_value DESC";
 									$ATMdb->Execute($sql);
 									
+									$cpt = 0;
 									while($ATMdb->Get_line()){
-										switch($ATMdb->Get_field('contenance_units')){
+										switch($ATMdb->Get_field('contenancereel_value')){
 											case -6:
 												$unite = 'mg';
 												break;
@@ -631,9 +668,19 @@
 												$unite = 'kg';
 												break;
 										}
+
+										if($ATMdb->Get_field('contenancereel_value') > 0){
+											$cpt++;
+											?>
+											<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+											<?php
+										}	
+									}
+									
+									if($cpt == 0){
 										?>
-										<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenance_value')." ".$unite; ?></option>	
-										<?php	
+										<option value="null">Aucun équipement utilisable pour ce produit</option>
+										<?php
 									}
 									?>
 									</select>
@@ -647,7 +694,7 @@
 											<option value="0">kg</option>
 									</select>
 								</td>
-								<td colspan="2">
+								<td>
 									poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
 									<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
 										<option value="-6">mg</option>
@@ -655,7 +702,7 @@
 										<option value="0">kg</option>
 									</select>
 								</td>
-								<td colspan="2">
+								<td>
 									tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 									<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
 										<option value="-6">mg</option>
@@ -687,21 +734,32 @@
 								break;
 						}
 						print '<tr class="impair" style="height:50px;">';
-						print '<td style="padding-left:5px;">'.$line->desc.'</td>';
-						print '<td align="center">aucun</td>';
+						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
+						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
 						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$commande->expeditions[$line->rowid]:0).'</td>';
-						print '<td align="center">'.(! empty($commande->expeditions[$line->rowid])?$line->qty - $commande->expeditions[$line->rowid]:$line->qty).'</td>';
-						print '<td align="center">hors stock </td>';
+						print '<td align="center"></td>';
+						print '<td align="center"></td>';
 						print '</tr>';
 					}
 				}
 				?>
 			</table>
-			<center><br><input type="submit" class="button" value="Enregistrer et Valider" name="valider" onclick="confirm('Êtes-vous sûr de vouloir valider cette expédition sous la référence <?=$dispatch->ref; ?>?');">&nbsp;
-			<input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
-			<input type="submit" class="button" value="Annuler" name="back"></center>
+			<center><br>
+				<?php
+				if($dispatch->statut == 0){
+					?>
+					<input type="submit" class="button" value="Valider" name="valider" onclick="confirm('Êtes-vous sûr de vouloir valider cette expédition sous la référence <?=$dispatch->ref; ?>?');">&nbsp;
+					<input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
+					<input type="submit" class="button" value="Annuler" name="back">
+					<?php
+				}
+				elseif($dispatch->statut == 1){
+					?>
+					<input type="submit" class="button" value="Annuler" name="back">
+					<?php
+				}
+				?></center>
 		<br></form>
 		<?php
 	}
@@ -746,8 +804,13 @@
 		<?php
 		$TDispatch = array();
 		
-		$sql = "SELECT rowid AS 'id', ref AS 'ref', date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
+		/*echo '<pre>';
+		print_r($commande);
+		echo '</pre>';*/
+		
+		$sql = "SELECT rowid AS 'id', ref AS 'ref', statut AS statut, etat as etat, date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
 				FROM ".MAIN_DB_PREFIX."dispatch
+				WHERE fk_commande = ".$commande->id."
 				ORDER BY date_expedition ASC";
 		
 		$r = new TSSRenderControler(new TDispatch);
@@ -756,9 +819,15 @@
 			'limit'=>array('nbLine'=>1000)
 			,'title'=>array(
 				'ref'=>'Référence expédition'
+				,'statut'=>'Statut'
+				,'etat' => 'Etat commande'
 				,'date_expedition'=>'Date expédition'
 				,'date_livraison'=>'Date livraison'
 				,'Supprimer' => 'Supprimer'
+			)
+			,'translate'=>array(
+				'statut'=>array(1=>'Validé',0=>'Brouillon')
+				,'etat'=>array(1=>'Expédition complète',0=>'Expédition partielle')
 			)
 			,'type'=>array('date_expedition'=>'date','date_livraison'=>'date')
 			,'hide'=>array(

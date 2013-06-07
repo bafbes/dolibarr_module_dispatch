@@ -9,9 +9,9 @@ class TDispatch extends TObjetStd {
 		parent::add_champs('note_private, note_public, model_pdf','type=chaine;');
 		parent::add_champs('entity, weight_units, weight','type=entier;');
 		parent::add_champs('fk_soc,fk_user_author,entity, fk_expedition_method, fk_commande','type=entier;index;');
-		parent::add_champs('fk_entrepot, type_expedition,statut','type=entier;');
+		parent::add_champs('fk_entrepot, type_expedition,statut, etat','type=entier;');
 		parent::add_champs('date_valid,date_expedition,date_livraison','type=date;');
-		parent::add_champs('height,width','type=float;');
+		parent::add_champs('height, width','type=float;');
 		
 		parent::_init_vars();
 		parent::start();
@@ -126,6 +126,7 @@ class TDispatch extends TObjetStd {
 		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 		
 		$this->statut = 1; //Validé
+		$this->etat = 0; //Expédition partielle
 		$this->save($ATMdb);
 		
 		foreach($commande->lines as $line){
@@ -153,6 +154,18 @@ class TDispatch extends TObjetStd {
 		$ATMdb->Execute("DELETE FROM ".MAIN_DB_PREFIX."dispatchdet WHERE fk_dispatch = ".$this->rowid);
 		
 		parent::delete($ATMdb);
+	}
+	
+	function get_qte_expedie($ATMdb,$fk_commandedet){
+		$sql = "SELECT SUM(dda.weight) as total
+				FROM ".MAIN_DB_PREFIX."dispatchdet_asset as dda
+					LEFT JOIN ".MAIN_DB_PREFIX."dispatchdet as dd ON dd.rowid = dda.fk_dispatchdet
+				WHERE dd.fk_commandedet = ".$fk_commandedet;
+		
+		$ATMdb->Execute($sql);
+		$ATMdb->Get_line();
+		
+		return $ATMdb->Get_field('total');
 	}
 }
 
