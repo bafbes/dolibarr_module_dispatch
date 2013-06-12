@@ -103,7 +103,7 @@ class TDispatch extends TObjetStd {
 	}
 	
 	function enregistrer(&$ATMdb,$commande,$_REQUEST){
-		$TLigneToDispatch = $this->FormParser($_POST);
+		$TLigneToDispatch = $this->FormParser($_REQUEST);
 			
 		if($_REQUEST['action'] == "update_expedition")
 			$this->load(&$ATMdb, $_REQUEST['fk_dispatch']);
