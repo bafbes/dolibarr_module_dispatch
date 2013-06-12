@@ -46,7 +46,7 @@
 		 * 
 		 */
 			
-		$head=dispatch_prepare_head($commande);
+		$head=dispatch_prepare_head($commande,$dispatch);
 	    dol_fiche_head($head, 'shipping', $langs->trans("Sending"), 0, 'sending');
 		
 		print '<table class="border" width="100%">';
