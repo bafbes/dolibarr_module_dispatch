@@ -186,7 +186,7 @@
 								//Chargement des équipement lié au produit
 								$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
 								 		 FROM ".MAIN_DB_PREFIX."asset
-								 		 WHERE fk_product = ".$line->fk_product."
+								 		 WHERE rowid = ".$dispatchline->fk_asset."
 								 		 ORDER BY contenance_value DESC";
 								$ATMdb->Execute($sql);
 								
@@ -208,7 +208,7 @@
 									if($ATMdb->Get_field('contenancereel_value') > 0){
 										$cpt++;
 										?>
-										<?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?>
+										<?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite."<br>"; ?>
 										<?php
 									}	
 								}
@@ -330,7 +330,7 @@
 							tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 							<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
 								<option value="-6">mg</option>
-								<option value="-3">g</option>
+								<option value="-3" selected="selected">g</option>
 								<option value="0">kg</option>
 							</select>
 						</td>
@@ -563,7 +563,7 @@
 								tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 								<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
 									<option value="-6">mg</option>
-									<option value="-3">g</option>
+									<option value="-3" selected="selected">g</option>
 									<option value="0">kg</option>
 								</select>
 							</td>
@@ -832,7 +832,7 @@
 									tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 									<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
 										<option value="-6">mg</option>
-										<option value="-3">g</option>
+										<option value="-3" selected="selected">g</option>
 										<option value="0">kg</option>
 									</select>
 								</td>

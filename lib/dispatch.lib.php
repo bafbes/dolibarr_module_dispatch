@@ -29,7 +29,7 @@ function dispatch_prepare_head($commande,$dispatch)
 	$head[$h][2] = 'shipping';
 	$h++;
 	
-	$head[$h][0] = DOL_URL_ROOT."/custom/odtdocs/expedition.php?id=".$dispatch->rowid."&fk_commande=".$commande->id;
+	$head[$h][0] = DOL_URL_ROOT."/custom/odtdocs/dispatch.php?id=".$dispatch->rowid."&fk_commande=".$commande->id;
 	$head[$h][1] = "Edition personnalisée";
 	$head[$h][2] = 'delivery';
 	$h++;
