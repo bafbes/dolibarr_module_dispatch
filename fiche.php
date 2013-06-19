@@ -174,7 +174,7 @@
 				($qte_expedie == 0) ? $qte_expedie = 0.00 : "";
 				$ATMdb2->close();
 				
-				$res = $dispatch->loadLines(&$ATMdb,$line->rowid);
+				$res = $dispatch->loadLines(new Tdb,$line->rowid);
 				
 				//Il existe au moin une ligne d'équipement associé à la ligne de commande
 				if($res){
@@ -743,7 +743,7 @@
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 						
-						$res = $dispatch->loadLines(&$ATMdb,$line->rowid);
+						$res = $dispatch->loadLines(new Tdb,$line->rowid);
 						
 						//Il existe au moin une ligne d'équipement associé à la ligne de commande
 						if($res){
@@ -752,6 +752,7 @@
 								<tr class="ligne_<?=$line->rowid;?>">
 									<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
 									<?php
+									//echo $product->ref."<br><br>";
 									print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 									print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
 									print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
