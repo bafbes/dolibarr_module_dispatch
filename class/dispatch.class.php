@@ -6,15 +6,17 @@ class TDispatch extends TObjetStd {
 		
 		parent::set_table(MAIN_DB_PREFIX.'dispatch');
 		parent::add_champs('ref','type=chaine;index;');
-		parent::add_champs('note_private, note_public, model_pdf','type=chaine;');
+		parent::add_champs('num_transporteur, note_private, note_public, model_pdf','type=chaine;');
 		parent::add_champs('entity, weight_units, weight','type=entier;');
 		parent::add_champs('fk_soc,fk_user_author,entity, fk_expedition_method, fk_commande','type=entier;index;');
-		parent::add_champs('fk_entrepot, type_expedition,statut, etat','type=entier;');
+		parent::add_champs('type_expedition,statut, etat','type=entier;');
 		parent::add_champs('date_valid,date_expedition,date_livraison','type=date;');
 		parent::add_champs('height, width','type=float;');
 		
 		parent::_init_vars();
 		parent::start();
+		
+		$this->prefix = "SH";
 		
 		$lines = array(); //Tableau d'objet Idspatchdet_asset
 	}
@@ -109,13 +111,13 @@ class TDispatch extends TObjetStd {
 			$this->load(&$ATMdb, $_REQUEST['fk_dispatch']);
 		
 		$this->statut = 0; //Brouillon				
-		$this->ref = $TLigneToDispatch['ref_expe'];
+		$this->ref = ($TLigneToDispatch['ref_expe'] != "") ? $TLigneToDispatch['ref_expe'] : $this->getNextValue();
 		$this->date_livraison = $TLigneToDispatch['date_livraison'];
 		$this->type_expedition = $TLigneToDispatch['methode_dispatch'];
 		$this->height = $TLigneToDispatch['hauteur'];
 		$this->width = $TLigneToDispatch['largeur'];
 		$this->weight = $TLigneToDispatch['poid_general'];
-		$this->fk_entrepot = $TLigneToDispatch['entrepot'];
+		$this->num_transporteur = $TLigneToDispatch['num_transporteur'];
 		$this->fk_commande = $commande->id;
 		$this->save($ATMdb);
 		$this->addLines($TLigneToDispatch,$commande,&$ATMdb,$_REQUEST['action']);
@@ -127,6 +129,7 @@ class TDispatch extends TObjetStd {
 		
 		$this->statut = 1; //Validé
 		$this->etat = 0; //Expédition partielle
+		$this->ref = $this->getNextValue();
 		$this->save($ATMdb);
 		
 		foreach($commande->lines as $line){
@@ -166,6 +169,38 @@ class TDispatch extends TObjetStd {
 		$ATMdb->Get_line();
 		
 		return $ATMdb->Get_field('total');
+	}
+	
+	/**
+	 *	Return next value
+	 *
+	 *	@param	Societe		$objsoc     Third party object
+	 *	@param	Object		$shipment	Shipment object
+	 *	@return string      			Value if OK, 0 if KO
+	 */
+	function getNextValue()
+	{
+		global $db,$conf;
+
+		$posindice=8;
+		$sql = "SELECT MAX(SUBSTRING(ref FROM ".$posindice.")) as max";
+		$sql.= " FROM ".MAIN_DB_PREFIX."dispatch";
+		$sql.= " WHERE ref like '".$this->prefix."____-%'";
+
+		$resql=$db->query($sql);
+		if ($resql)
+		{
+			$obj = $db->fetch_object($resql);
+			if ($obj) $max = intval($obj->max);
+			else $max=0;
+		}
+
+		$date=time();
+		$yymm = strftime("%y%m",$date);
+		$num = sprintf("%04s",$max+1);
+
+		dol_syslog("mod_expedition_safor::getNextValue return ".$this->prefix.$yymm."-".$num);
+		return $this->prefix.$yymm."-".$num;
 	}
 }
 

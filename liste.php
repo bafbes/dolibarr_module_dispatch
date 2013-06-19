@@ -95,8 +95,6 @@
 	if ($soc->remise_client) print $langs->trans("CompanyHasRelativeDiscount",$soc->remise_client);
 	else print $langs->trans("CompanyHasNoRelativeDiscount");
 	print '. ';
-	$absolute_discount=$soc->getAvailableDiscounts('','fk_facture_source IS NULL');
-	$absolute_creditnote=$soc->getAvailableDiscounts('','fk_facture_source IS NOT NULL');
 	$absolute_discount=price2num($absolute_discount,'MT');
 	$absolute_creditnote=price2num($absolute_creditnote,'MT');
 	if ($absolute_discount)

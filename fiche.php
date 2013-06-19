@@ -73,8 +73,7 @@
 	
 		// Date
 		print '<tr><td>Date commande</td>';
-		print '<td colspan="2">'.dol_print_date($commande->date,'daytext').'</td>';
-		print '<td width="50%">'.$langs->trans('Source').' : '.$commande->getLabelSource().'</td>';
+		print '<td colspan="3">'.dol_print_date($commande->date,'daytext').'</td>';
 		print '</tr>';
 		
 		// Date Expédition
@@ -439,7 +438,7 @@
 				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur"> cm</td></tr>
 				<tr><td align="left">Largeur</td><td><input type="text" name="largeur"> cm</td></tr>
 				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general"><select id="unitepoid_general" name="unitepoid_general"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td></tr>
-				<tr><td align="left">Entrepôt</td><td><?=$formproduct->selectWarehouses($tmpentrepot_id,'entrepot'.$indiceAsked,'',1,0,$line->fk_product);?></td></tr>
+				<tr><td align="left">N° suivis transporteur</td><td><input type="text" name="num_transporteur"></td></tr>
 			</table>
 			<br>
 			<input type="hidden" name="action" value="add_expedition">
@@ -600,7 +599,7 @@
 			?>
 			</table>
 			<center><br><input type="submit" class="button" value="Enregistrer" name="save">&nbsp;
-			<input type="submit" class="button" value="Annuler" name="back"></center>
+			<input type="button" class="button" value="Annuler" name="back" onclick="window.location = 'liste.php?fk_commande=<?php echo $commande->id;?>';"></center>
 		<br></form>
 		<?php		
 	}
@@ -632,7 +631,7 @@
 																<option value="0" <?php echo ($dispatch->weight_units == "0")? 'selected="selected"' : ""; ?>>kg</option>
 															</select>
 														</td></tr>
-				<tr><td align="left">Entrepôt</td><td><?=$formproduct->selectWarehouses($dispatch->fk_entrepot,'entrepot','',1,0,$line->fk_product);?></td></tr>
+				<tr><td align="left">N° suivis transporteur</td><td><input type="text" name="num_transporteur" value="<?=$dispatch->num_transporteur; ?>"></td></tr>
 			</table>
 			<br>
 			<input type="hidden" name="action" value="update_expedition">
@@ -901,9 +900,11 @@
 			//echo "ok"; exit;
 			$dispatch = new TDispatch;
 			$dispatch->enregistrer(&$ATMdb, $commande, $_REQUEST);
-			/*echo '<pre>';
-			print_r($TLigneToDispatch);
-			echo '</pre>';*/
+			?>
+			<script type="text/javascript">
+				window.location = 'fiche.php?action=view&fk_commande=<?php echo $commande->id;?>&fk_dispatch=<?php echo $dispatch->rowid; ?>';
+			</script>
+			<?php
 		}
 		
 		//Traitement Suppression
@@ -911,6 +912,11 @@
 			$dispatch = new TDispatch;
 			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
 			$dispatch->delete(&$ATMdb);
+			?>
+			<script type="text/javascript">
+				window.location = 'liste.php?fk_commande=<?php echo $commande->id;?>';
+			</script>
+			<?php
 		}
 		
 		//Traitement Validation	
@@ -922,7 +928,7 @@
 		}
 		
 		print '<div class="tabsAction">
-				<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a><a class="butAction" href="?action=add&fk_commande='.$commande->id.'">Ajouter une expédition</a>
+				<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a><a class="butAction" href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch='.$dispatch->rowid.'" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');">Supprimer</a>
 			</div><br>';
 		
 		?>
