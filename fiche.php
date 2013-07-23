@@ -430,7 +430,7 @@
 			}
 		}
 		
-		function delete_line(ligne, id_line, id_dispatchdet_asset = ''){
+		function delete_line(ligne, id_line, id_dispatchdet_asset){
 			nb_line = $('tr[class=ligne_'+id_line+']').length;
 			if(nb_line>1)
 				$(ligne).parent().parent().remove();
