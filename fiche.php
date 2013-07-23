@@ -406,7 +406,8 @@
 				$('tr[class=ligne_'+id_line+']').show();
 			}
 			else{
-				i = Number($('.equipement_'+id_line+':last').attr('id').substring($('.equipement_'+id_line+':last').attr('id').length - 1));
+				if(i >= 10) num = 2; else num = 1;
+				i = Number($('.equipement_'+id_line+':last').attr('id').substring($('.equipement_'+id_line+':last').attr('id').length - num));
 				$('.ligne_'+id_line+':first').clone(true).insertAfter($('.ligne_'+id_line+':last'));
 				$('.ligne_'+id_line+' a:last').remove();
 				j = i + 1;
