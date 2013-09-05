@@ -470,7 +470,7 @@
 			</table>
 			<br>
 			<table class="border" width="100%">
-				<tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe"></td></tr>
+				<!-- <tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe"></td></tr> -->
 				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date(date('Y-m-d'),'date_livraison',0,0);?></td></tr>
 				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'));?></td></tr>
 				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur"> cm</td></tr>
@@ -670,7 +670,7 @@
 			</table>
 			<br>
 			<table class="border" width="100%">
-				<tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe" value="<?=$dispatch->ref; ?>"></td></tr>
+				<!--<tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe" value="<?=$dispatch->ref; ?>"></td></tr>-->
 				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date($dispatch->date_livraison,'date_livraison',0,0);?></td></tr>
 				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'),$dispatch->type_expedition);?></td></tr>
 				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur" value="<?=$dispatch->height; ?>"> cm</td></tr>
@@ -958,7 +958,7 @@
 				<?php
 				if($dispatch->statut == 0){
 					?>
-					<input type="submit" class="button" value="Expédier" name="valider" onclick="confirm('Êtes-vous sûr de vouloir valider cette expédition sous la référence <?=$dispatch->ref; ?>?');">&nbsp;
+					<input type="submit" class="button" value="Valider" name="valider" onclick="confirm('Êtes-vous sûr de vouloir valider cette expédition sous la référence <?=$dispatch->ref; ?>?');">&nbsp;
 					<input type="submit" class="button" value="Sauvegarder" name="save">&nbsp;
 					<input type="submit" class="button" value="Annuler" name="back">
 					<?php

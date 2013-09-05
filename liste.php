@@ -280,7 +280,7 @@
 			'id'
 		)
 		,'link'=>array(
-			'ref'=>'<a href="fiche.php?fk_commande='.$commande->id.'&action=update&fk_dispatch=@id@">@val@</a>'
+			'ref'=>'<a href="fiche.php?fk_commande='.$commande->id.'&action=view&fk_dispatch=@id@">@val@</a>'
 			,'Supprimer'=>'<a href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch=@id@" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');"><img src="img/delete.png"></a>'
 		)
 	));
