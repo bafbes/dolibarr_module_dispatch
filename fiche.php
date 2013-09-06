@@ -618,7 +618,7 @@
 								</select>
 							</td>
 						</tr>
-						<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon :</span><a alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
+						<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d'expédition:</span><a alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
 						<?php
 					}
 
@@ -923,7 +923,7 @@
 						<?php
 						}
 						?>
-						<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon :</span><a alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
+						<tr><td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d'expédition :</span><a alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line(<?=$line->rowid;?>);"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td></tr>
 						<?php
 					}
 
