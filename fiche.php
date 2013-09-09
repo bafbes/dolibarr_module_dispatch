@@ -186,10 +186,10 @@
 								<?php
 								print '<td style="padding-left:5px; height: 30px;">'.$product->ref." - ".$product->label.'</td>';
 								print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-								print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+								print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 								print '<td align="center">'.$line->qty.'</td>';
-								print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-								print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+								print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+								print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 								?>
 								<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
 								<td align="left">
@@ -220,14 +220,14 @@
 										if($ATMdb->Get_field('contenancereel_value') > 0){
 											$cpt++;
 											?>
-											<?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite."<br>"; ?>
+											<?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".number_format($ATMdb->Get_field('contenancereel_value'),2,",","")." ".$unite."<br>"; ?>
 											<?php
 										}	
 									}
 									?>
 								</td>
 								<td>
-									poids : <?=$dispatchline->weight; ?>
+									poids : <?=number_format($dispatchline->weight,2,",",''); ?>
 									<?php
 									switch($dispatchline->weight_unit){
 											case -6:
@@ -243,7 +243,7 @@
 									?>
 								</td>
 								<td>
-									poids réel : <?=$dispatchline->weight_reel; ?>
+									poids réel : <?=number_format($dispatchline->weight_reel,2,",",''); ?>
 									<?php
 									switch($dispatchline->weight_reel_unit){
 											case -6:
@@ -259,7 +259,7 @@
 									?>
 								</td>
 								<td>
-									tare : <?=$dispatchline->tare; ?>
+									tare : <?=number_format($dispatchline->tare,2,",",''); ?>
 									<?php
 									switch($dispatchline->tare_unit){
 											case -6:
@@ -286,10 +286,10 @@
 						print '<tr class="impair" style="height:50px;">';
 						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-						print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+						print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+						print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 					}
@@ -325,7 +325,7 @@
 								if($ATMdb->Get_field('contenancereel_value') > 0){
 									$cpt++;
 									?>
-									<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+									<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".number_format($ATMdb->Get_field('contenancereel_value'),2,",","")." ".$unite; ?></option>	
 									<?php
 								}	
 							}
@@ -385,7 +385,7 @@
 				print '<tr class="impair" style="height:50px;">';
 				print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 				print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-				print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+				print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",","")." ".$unite.'</td>';
 				print '<td align="center">'.$line->qty.'</td>';
 				print '<td align="center"></td>';
 				print '<td align="center"></td>';
@@ -530,10 +530,10 @@
 						print '<tr class="impair" style="height:50px; display:none;">';
 						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-						print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+						print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+						print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 						
@@ -542,10 +542,10 @@
 							<?php
 							print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 							print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-							print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+							print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 							print '<td align="center">'.$line->qty.'</td>';
-							print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-							print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+							print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+							print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 							?>
 							<td align="left">
 								<span style="padding-left: 25px;">Flacon lié :</span>
@@ -579,7 +579,7 @@
 									if($ATMdb->Get_field('contenancereel_value') > 0){
 										$cpt++;
 										?>
-										<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+										<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".number_format($ATMdb->Get_field('contenancereel_value'),2,",","")." ".$unite; ?></option>	
 										<?php
 									}	
 								}
@@ -640,7 +640,7 @@
 						print '<tr class="impair" style="height:50px;">';
 						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",","")." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
 						print '<td align="center"></td>';
 						print '<td align="center"></td>';
@@ -736,10 +736,10 @@
 						print '<tr class="impair" style="height:50px;display:none;">';
 						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
-						print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-						print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+						print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+						print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 						
@@ -755,10 +755,10 @@
 									//echo $product->ref."<br><br>";
 									print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 									print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-									print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+									print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 									print '<td align="center">'.$line->qty.'</td>';
-									print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-									print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+									print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+									print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 									?>
 									<td align="left">
 										<span style="padding-left: 25px;">Flacon lié :</span>
@@ -789,7 +789,7 @@
 											if($ATMdb->Get_field('contenancereel_value') > 0){
 												$cpt++;
 												?>
-												<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+												<option value="<?=$ATMdb->Get_field('rowid'); ?>" <?php echo ($dispatchline->fk_asset == $ATMdb->Get_field('rowid')) ? 'selected="selected"' : ""; ?>><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".number_format($ATMdb->Get_field('contenancereel_value'),2,",","")." ".$unite; ?></option>	
 												<?php
 											}	
 										}
@@ -804,7 +804,7 @@
 										<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line(this,<?=$line->rowid;?>,<?=$dispatchline->rowid;?>);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>
 									</td>
 									<td>
-										poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight; ?>"/>
+										poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=number_format($dispatchline->weight,2,",",''); ?>"/>
 										<select id="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitepoids_<?=$line->rowid;?>">
 												<option value="-6" <?php echo ($dispatchline->weight_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
 												<option value="-3" <?php echo ($dispatchline->weight_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
@@ -812,7 +812,7 @@
 										</select>
 									</td>
 									<td>
-										poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->weight_reel; ?>"/>
+										poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=number_format($dispatchline->weight_reel,2,",",''); ?>"/>
 										<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
 											<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
 											<option value="-3" <?php echo ($dispatchline->weight_reel_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
@@ -820,7 +820,7 @@
 										</select>
 									</td>
 									<td>
-										tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=$dispatchline->tare; ?>"/>
+										tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=number_format($dispatchline->tare,2,",",''); ?>"/>
 										<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
 											<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
 											<option value="-3" <?php echo ($dispatchline->tare_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
@@ -836,10 +836,10 @@
 							print '<tr class="impair" style="height:50px;">';
 							print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 							print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-							print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+							print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 							print '<td align="center">'.$line->qty.'</td>';
-							print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-							print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+							print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+							print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 							print '<td align="center" colspan="4"> </td>';
 							print '</tr>';
 							
@@ -848,10 +848,10 @@
 								<?php
 								print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 								print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-								print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+								print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",","")." ".$unite.'</td>';
 								print '<td align="center">'.$line->qty.'</td>';
-								print '<td align="center">'.number_format($qte_expedie,2).' '.$unite.'</td>';
-								print '<td align="center">'.($ATMdb->Get_field('tarif_poids') - $qte_expedie)." ".$unite.'</td>';
+								print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
+								print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
 								?>
 								<td align="left">
 									<span style="padding-left: 25px;">Flacon lié :</span>
@@ -881,7 +881,7 @@
 										if($ATMdb->Get_field('contenancereel_value') > 0){
 											$cpt++;
 											?>
-											<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".$ATMdb->Get_field('contenancereel_value')." ".$unite; ?></option>	
+											<option value="<?=$ATMdb->Get_field('rowid'); ?>"><?=$ATMdb->Get_field('serial_number')." - Lot n° ".$ATMdb->Get_field('lot_number')." - ".number_format($ATMdb->Get_field('contenancereel_value'),2,",","")." ".$unite; ?></option>	
 											<?php
 										}	
 									}
@@ -945,7 +945,7 @@
 						print '<tr class="impair" style="height:50px;">';
 						print '<td style="padding-left:5px;">'.$product->ref." - ".$product->label.'</td>';
 						print '<td align="center" >'.$ATMdb->Get_field('asset_lot').'</td>';
-						print '<td align="center">'.$ATMdb->Get_field('tarif_poids')." ".$unite.'</td>';
+						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
 						print '<td align="center"></td>';
 						print '<td align="center"></td>';

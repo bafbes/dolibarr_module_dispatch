@@ -92,12 +92,16 @@ class TDispatch extends TObjetStd {
 					$Tdispatchdet_asset->fk_dispatchdet = $TDispatchdet->rowid; 
 					$Tdispatchdet_asset->fk_asset = $value['equipement'];
 					$Tdispatchdet_asset->rang = $name;
-					$Tdispatchdet_asset->weight = $value['poids'];
-					$Tdispatchdet_asset->weight_reel = $value['poidsreel'];
-					$Tdispatchdet_asset->tare = $value['tare'];
+					$Tdispatchdet_asset->weight = floatval(str_replace(",", ".", $value['poids']));
+					$Tdispatchdet_asset->weight_reel = floatval(str_replace(",", ".", $value['poidsreel']));
+					$Tdispatchdet_asset->tare = floatval(str_replace(",", ".", $value['tare']));
 					$Tdispatchdet_asset->weight_unit = $value['unitepoids'];
 					$Tdispatchdet_asset->weight_reel_unit = $value['unitereel'];
 					$Tdispatchdet_asset->tare_unit = $value['unitetare'];
+					
+					/*echo '<pre>';
+					print_r($Tdispatchdet_asset);
+					echo '</pre>';exit;*/
 					$Tdispatchdet_asset->save($ATMdb);
 				}
 			}
