@@ -53,22 +53,29 @@
 		
 		//Réf expédition
 	    print '<tr><td>Réf. expédition</td>';
-	    print '<td colspan="3">';
+	    print '<td colspan="2">';
 	    print $dispatch->ref;
+	    print "</td>\n";
+	    print '</tr>';
+		
+		//Statut expédition
+	    print '<tr><td>Statut</td>';
+	    print '<td colspan="2">';
+	    print ($dispatch->statut) ? '<b>Validé</b>' : "<b>Brouillon</b>";
 	    print "</td>\n";
 	    print '</tr>';
 		
 		//Réf commande
 	    print '<tr><td>';
 	    print $langs->trans("RefOrder").'</td>';
-	    print '<td colspan="3">';
+	    print '<td colspan="2">';
 	    print $commande->getNomUrl(1,'commande');
 	    print "</td>\n";
 	    print '</tr>';
 	
 		// Third party
 		print '<tr><td>'.$langs->trans('Company').'</td>';
-		print '<td colspan="3">'.$soc->getNomUrl(1).'</td>';
+		print '<td colspan="2">'.$soc->getNomUrl(1).'</td>';
 		print '</tr>';
 		
 		// Date Expédition
@@ -78,33 +85,33 @@
 		
 		// Delivery date planned
 		print '<tr><td>Date de livraison</td>';
-		print '<td colspan="3">'.dol_print_date($dispatch->date_livraison,'daytext').'</td>';
+		print '<td colspan="2">'.dol_print_date($dispatch->date_livraison,'daytext').'</td>';
 		print '</tr>';
 		
 		// Méthod dispatch
 		print '<tr><td>Méthode d\'expédition</td>';
-		print '<td colspan="3">';
+		print '<td colspan="2">';
 		print ($dispatch->fk_expedition_method == 0) ? "Enlèvement par le client" : "Transporteur" ;
 		print '</td>';
 		print '</tr>';
 		
 		// Hauteur
 		print '<tr><td>Hauteur</td>';
-		print '<td colspan="3">';
+		print '<td colspan="2">';
 		print $dispatch->height." cm";
 		print '</td>';
 		print '</tr>';
 		
 		// Largeur
 		print '<tr><td>Hauteur</td>';
-		print '<td colspan="3">';
+		print '<td colspan="2">';
 		print $dispatch->width." cm";
 		print '</td>';
 		print '</tr>';
 		
 		// Poids
 		print '<tr><td>Poids du colis</td>';
-		print '<td colspan="3">';
+		print '<td colspan="2">';
 		print $dispatch->weight." ";
 		switch($dispatch->weight_units){
 			case 0:
@@ -122,7 +129,7 @@
 		
 		// Num transporteur
 		print '<tr><td>N° suivis transporteur</td>';
-		print '<td colspan="3">';
+		print '<td colspan="2">';
 		print $dispatch->num_transporteur;
 		print '</td>';
 		print '</tr>';
@@ -471,7 +478,7 @@
 			<br>
 			<table class="border" width="100%">
 				<!-- <tr><td align="left" width="300px;">Référence de l'expédition</td><td><input type="text" name="ref_expe"></td></tr> -->
-				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date(date('Y-m-d'),'date_livraison',0,0);?></td></tr>
+				<tr><td align="left">Date de livraison prévue</td><td><?=$form->select_date($commande->date_livraison,'date_livraison',0,0);?></td></tr>
 				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'));?></td></tr>
 				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur"> cm</td></tr>
 				<tr><td align="left">Largeur</td><td><input type="text" name="largeur"> cm</td></tr>
@@ -1054,7 +1061,7 @@
 				'id'
 			)
 			,'link'=>array(
-				'ref'=>'<a href="?fk_commande='.$commande->id.'&action=update&fk_dispatch=@id@">@val@</a>'
+				'ref'=>'<a href="?fk_commande='.$commande->id.'&action=view&fk_dispatch=@id@">@val@</a>'
 				,'Supprimer'=>'<a href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch=@id@" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');"><img src="img/delete.png"></a>'
 			)
 		));
