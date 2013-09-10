@@ -1041,10 +1041,10 @@
 			$facture->type = 0;
 			$facture->date = date('Y-m-d H:i:s');
 			$facture->socid = $_REQUEST['socid'];
-			$facture->remise_absolue = 0;
-			$facture->remise_percent = 0;
-			$facture->cond_reglement_id = 1;
-			$facture->mode_reglement_id = 0;
+			$facture->remise_absolue = $commande->remise_absolue;
+			$facture->remise_percent = $commande->remise_percent;
+			$facture->cond_reglement_id = $commande->cond_reglement_id;
+			$facture->mode_reglement_id = $commande->mode_reglement_id;
 			
 			$facture->create($user);
 			
@@ -1054,30 +1054,37 @@
 					WHERE dd.fk_dispatch = ".$dispatch->rowid."
 					ORDER BY rang ASC";
 			
-			$ATMdb->Execute($sql);
-			while($ATMdb->Get_line()){
+			$resql = $db->query($sql);
+			while($res = $db->fetch_object($resql)){
 				$commandedet = new OrderLine($db);
-				$commandedet->fetch($ATMdb->Get_field('fk_commandedet'));
+				$commandedet->fetch($res->fk_commandedet);
 				
 				/*echo '<pre>';
 				print_r($commandedet);
 				echo '</pre>';exit;*/
 				$id_factureline = $facture->addline($facture->id, $commandedet->desc, $commandedet->subprice, 1, $commandedet->tva_tx,0,0,($commandedet->fk_product)?$commandedet->fk_product:0,$commandedet->remise_percent);
 				
-				$ATMdb->Execute("UPDATE ".MAIN_DB_PREFIX."facturedet SET poids = ".$ATMdb->Get_field('weight_unit').", tarif_poids = ".$ATMdb->Get_field('weight')." WHERE rowid = ".$id_factureline);
+				$ATMdb->Execute("UPDATE ".MAIN_DB_PREFIX."facturedet SET poids = ".$res->weight_unit.", tarif_poids = ".$res->weight." WHERE rowid = ".$id_factureline);
+				
+				$factureLine = new FactureLigne($db);
+				$factureLine->fetch($id_factureline);
+				$factureLine->total_ht = $commandedet->subprice;
+				$factureLine->total_tva = ($commandedet->subprice * (1 + ($factureLine->tva_tx/100))) - $factureLine->total_ht;
+				$factureLine->total_ttc = $factureLine->total_ht + $factureLine->total_tva;
+				$factureLine->update_total();
 			}
-			
-			/*?>
+			$facture->update_price();
+			?>
 			<script type="text/javascript">
 				window.location = '<?php echo DOL_URL_ROOT; ?>/compta/facture.php?facid=<?php echo $facture->id; ?>';
 			</script>
-			<?php*/
+			<?php
 			
 		}
 		
 		print '<div class="tabsAction">';
 		if($dispatch->statut == 1){
-			print '<a class="butAction" href="?action=facturer&fk_dispatch='.$dispatch->rowid.'&socid='.$commande->socid.'&fk_commande='.$commande->id.'">Facturer</a>';
+			print '<a class="butAction" href="?action=facturer&fk_dispatch='.$dispatch->rowid.'&socid='.$commande->socid.'&fk_commande='.$commande->id.'&notrigger=1">Facturer</a>';
 		}
 		print		'<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a><a class="butAction" href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch='.$dispatch->rowid.'" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');">Supprimer</a>';
 		print '</div><br>';
