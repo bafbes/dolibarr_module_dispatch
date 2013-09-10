@@ -132,7 +132,6 @@ class TDispatch extends TObjetStd {
 		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 		
 		$this->statut = 1; //Validé
-		$this->etat = 0; //Expédition partielle
 		$this->ref = $this->getNextValue();
 		$this->save($ATMdb);
 		
@@ -145,10 +144,32 @@ class TDispatch extends TObjetStd {
 				$asset = new TAsset;
 				$asset->load(&$ATMdb,$lineAsset->fk_asset);
 				$asset->contenancereel_value = $asset->contenancereel_value - $lineAsset->weight_reel;
-				$asset->save(&$ATMdb,"Expedition");
+				$asset->save(&$ATMdb,"Validation Expedition");
 			}
 		}
 	}
+	
+	function reouvrir(&$ATMdb,$commande){
+		require_once DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php";
+		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+		
+		$this->statut = 0; //Validé
+		$this->save($ATMdb);
+		
+		foreach($commande->lines as $line){
+			//Cahrge les équipements lié à la ligne de commande
+			$this->loadLines($ATMdb, $line->rowid);
+			
+			//Retirer une sortie de stock pour chaque equipement lié à l'expédition de la commande
+			foreach($this->lines as $lineAsset){
+				$asset = new TAsset;
+				$asset->load(&$ATMdb,$lineAsset->fk_asset);
+				$asset->contenancereel_value = $asset->contenancereel_value + $lineAsset->weight_reel;
+				$asset->save(&$ATMdb,"Annulation Expedition");
+			}
+		}
+	}
+	
 	
 	function delete($ATMdb){
 		$ATMdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."dispatchdet WHERE fk_dispatch = ".$this->rowid);

@@ -3,6 +3,7 @@
 	require('class/dispatch.class.php');
 	require_once DOL_DOCUMENT_ROOT.'/product/class/product.class.php';
 	require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 	require_once DOL_DOCUMENT_ROOT.'/custom/dispatch/class/dispatch.class.php';
 	require_once DOL_DOCUMENT_ROOT.'/custom/asset/class/asset.class.php';
 	require_once(DOL_DOCUMENT_ROOT."/core/lib/order.lib.php");
@@ -16,6 +17,8 @@
 	$langs->load('propal');
 	$langs->load('deliveries');
 	$langs->load('stocks');
+	
+	global $db,$user,$conf;
 	
 	llxHeader('','Expédition de la commande','','');
 	
@@ -196,7 +199,7 @@
 								print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 								print '<td align="center">'.$line->qty.'</td>';
 								print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-								print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+								print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 								?>
 								<input type="hidden" name="idDispatchdetAsset_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" value="<?=$dispatchline->rowid;?>" />
 								<td align="left">
@@ -296,7 +299,7 @@
 						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
 						print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-						print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+						print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 					}
@@ -540,7 +543,7 @@
 						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
 						print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-						print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+						print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 						
@@ -552,7 +555,7 @@
 							print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 							print '<td align="center">'.$line->qty.'</td>';
 							print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-							print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+							print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 							?>
 							<td align="left">
 								<span style="padding-left: 25px;">Flacon lié :</span>
@@ -746,7 +749,7 @@
 						print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 						print '<td align="center">'.$line->qty.'</td>';
 						print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-						print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+						print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 						print '<td align="center" colspan="4"> </td>';
 						print '</tr>';
 						
@@ -765,7 +768,7 @@
 									print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 									print '<td align="center">'.$line->qty.'</td>';
 									print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-									print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+									print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 									?>
 									<td align="left">
 										<span style="padding-left: 25px;">Flacon lié :</span>
@@ -846,7 +849,7 @@
 							print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",",'')." ".$unite.'</td>';
 							print '<td align="center">'.$line->qty.'</td>';
 							print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-							print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+							print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 							print '<td align="center" colspan="4"> </td>';
 							print '</tr>';
 							
@@ -858,7 +861,7 @@
 								print '<td align="center">'.number_format($ATMdb->Get_field('tarif_poids'),2,",","")." ".$unite.'</td>';
 								print '<td align="center">'.$line->qty.'</td>';
 								print '<td align="center">'.number_format($qte_expedie,2,",","").' '.$unite.'</td>';
-								print '<td align="center">'.number_format(($ATMdb->Get_field('tarif_poids') - $qte_expedie),2,",","")." ".$unite.'</td>';
+								print '<td align="center">'.number_format((($ATMdb->Get_field('tarif_poids') * $line->qty) - $qte_expedie),2,",","")." ".$unite.'</td>';
 								?>
 								<td align="left">
 									<span style="padding-left: 25px;">Flacon lié :</span>
@@ -972,6 +975,7 @@
 				}
 				elseif($dispatch->statut == 1){
 					?>
+					<input type="submit" class="button" value="Réouvrir" name="reouvrir">
 					<input type="submit" class="button" value="Annuler" name="back">
 					<?php
 				}
@@ -1021,9 +1025,62 @@
 			$dispatch->valider(&$ATMdb, $commande);
 		}
 		
-		print '<div class="tabsAction">
-				<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a><a class="butAction" href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch='.$dispatch->rowid.'" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');">Supprimer</a>
-			</div><br>';
+		//Traitement Réouverture	
+		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['reouvrir']) && $_REQUEST['action'] == "update_expedition"){
+			$dispatch = new TDispatch;
+			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->reouvrir(&$ATMdb, $commande);
+		}
+		
+		//Traitement Facturer
+		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['fk_dispatch']) && $_REQUEST['action'] == "facturer"){
+			
+			$facture = new Facture($db);
+			
+			$facture->entity = $conf->entity;
+			$facture->type = 0;
+			$facture->date = date('Y-m-d H:i:s');
+			$facture->socid = $_REQUEST['socid'];
+			$facture->remise_absolue = 0;
+			$facture->remise_percent = 0;
+			$facture->cond_reglement_id = 1;
+			$facture->mode_reglement_id = 0;
+			
+			$facture->create($user);
+			
+			$sql = "SELECT dd.fk_commandedet, dda.rang, dda.weight, dda.weight_unit
+					FROM ".MAIN_DB_PREFIX."dispatchdet_asset AS dda
+						LEFT JOIN ".MAIN_DB_PREFIX."dispatchdet AS dd ON (dd.rowid = dda.fk_dispatchdet) 
+					WHERE dd.fk_dispatch = ".$dispatch->rowid."
+					ORDER BY rang ASC";
+			
+			$ATMdb->Execute($sql);
+			while($ATMdb->Get_line()){
+				$commandedet = new OrderLine($db);
+				$commandedet->fetch($ATMdb->Get_field('fk_commandedet'));
+				
+				/*echo '<pre>';
+				print_r($commandedet);
+				echo '</pre>';exit;*/
+				$id_factureline = $facture->addline($facture->id, $commandedet->desc, $commandedet->subprice, 1, $commandedet->tva_tx,0,0,($commandedet->fk_product)?$commandedet->fk_product:0,$commandedet->remise_percent);
+				
+				$ATMdb->Execute("UPDATE ".MAIN_DB_PREFIX."facturedet SET poids = ".$ATMdb->Get_field('weight_unit').", tarif_poids = ".$ATMdb->Get_field('weight')." WHERE rowid = ".$id_factureline);
+			}
+			
+			/*?>
+			<script type="text/javascript">
+				window.location = '<?php echo DOL_URL_ROOT; ?>/compta/facture.php?facid=<?php echo $facture->id; ?>';
+			</script>
+			<?php*/
+			
+		}
+		
+		print '<div class="tabsAction">';
+		if($dispatch->statut == 1){
+			print '<a class="butAction" href="?action=facturer&fk_dispatch='.$dispatch->rowid.'&socid='.$commande->socid.'&fk_commande='.$commande->id.'">Facturer</a>';
+		}
+		print		'<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a><a class="butAction" href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch='.$dispatch->rowid.'" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');">Supprimer</a>';
+		print '</div><br>';
 		
 		?>
 		<div class="titre">Liste des expéditions pour la commande : <?php  print $commande->getNomUrl(1,'commande'); ?></div>
@@ -1035,7 +1092,7 @@
 		print_r($commande);
 		echo '</pre>';*/
 		
-		$sql = "SELECT rowid AS 'id', ref AS 'ref', statut AS statut, etat as etat, date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
+		$sql = "SELECT rowid AS 'id', ref AS 'ref', statut AS statut, date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
 				FROM ".MAIN_DB_PREFIX."dispatch
 				WHERE fk_commande = ".$commande->id."
 				ORDER BY date_expedition ASC";
@@ -1047,7 +1104,6 @@
 			,'title'=>array(
 				'ref'=>'Référence expédition'
 				,'statut'=>'Statut'
-				,'etat' => 'Etat expédition'
 				,'date_expedition'=>'Date expédition'
 				,'date_livraison'=>'Date livraison'
 				,'Supprimer' => 'Supprimer'

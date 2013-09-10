@@ -254,7 +254,7 @@
 	print_r($commande);
 	echo '</pre>';*/
 	
-	$sql = "SELECT rowid AS 'id', ref AS 'ref', statut AS statut, etat as etat, date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
+	$sql = "SELECT rowid AS 'id', ref AS 'ref', statut AS statut, date_expedition AS 'date_expedition', date_livraison AS 'date_livraison', '' AS 'Supprimer'
 			FROM ".MAIN_DB_PREFIX."dispatch
 			WHERE fk_commande = ".$commande->id."
 			ORDER BY date_expedition ASC";
@@ -266,7 +266,6 @@
 		,'title'=>array(
 			'ref'=>'Référence expédition'
 			,'statut'=>'Statut'
-			,'etat' => 'Etat commande'
 			,'date_expedition'=>'Date expédition'
 			,'date_livraison'=>'Date livraison'
 			,'Supprimer' => 'Supprimer'
