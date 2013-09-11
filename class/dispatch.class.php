@@ -76,7 +76,7 @@ class TDispatch extends TObjetStd {
 				$TDispatchdet = new TDispatchdet;
 				
 				if($action == "update_expedition")
-					$TDispatchdet->loadBy(&$ATMdb,$cle,"fk_commandedet");
+					$TDispatchdet->loadBy($ATMdb,$cle,"fk_commandedet");
 				
 				$TDispatchdet->fk_dispatch = $this->rowid;
 				$TDispatchdet->fk_commandedet = $cle;
@@ -87,7 +87,7 @@ class TDispatch extends TObjetStd {
 					$Tdispatchdet_asset =  new TDispatchdet_asset;
 					
 					if($action == "update_expedition")
-						$Tdispatchdet_asset->load(&$ATMdb,$value['idDispatchdetAsset']);
+						$Tdispatchdet_asset->load($ATMdb,$value['idDispatchdetAsset']);
 					
 					$Tdispatchdet_asset->fk_dispatchdet = $TDispatchdet->rowid; 
 					$Tdispatchdet_asset->fk_asset = $value['equipement'];
@@ -112,7 +112,7 @@ class TDispatch extends TObjetStd {
 		$TLigneToDispatch = $this->FormParser($_REQUEST);
 			
 		if($_REQUEST['action'] == "update_expedition")
-			$this->load(&$ATMdb, $_REQUEST['fk_dispatch']);
+			$this->load($ATMdb, $_REQUEST['fk_dispatch']);
 		
 		$this->statut = 0; //Brouillon				
 		$this->ref = ($TLigneToDispatch['ref_expe'] != "") ? $TLigneToDispatch['ref_expe'] : $this->getNextValue();
@@ -124,7 +124,7 @@ class TDispatch extends TObjetStd {
 		$this->num_transporteur = $TLigneToDispatch['num_transporteur'];
 		$this->fk_commande = $commande->id;
 		$this->save($ATMdb);
-		$this->addLines($TLigneToDispatch,$commande,&$ATMdb,$_REQUEST['action']);
+		$this->addLines($TLigneToDispatch,$commande,$ATMdb,$_REQUEST['action']);
 	}
 	
 	function valider(&$ATMdb,$commande){
@@ -142,9 +142,9 @@ class TDispatch extends TObjetStd {
 			//Ajoute une sortie de stock pour chaque equipement lié à l'expédition de la commande
 			foreach($this->lines as $lineAsset){
 				$asset = new TAsset;
-				$asset->load(&$ATMdb,$lineAsset->fk_asset);
+				$asset->load($ATMdb,$lineAsset->fk_asset);
 				$asset->contenancereel_value = $asset->contenancereel_value - $lineAsset->weight_reel;
-				$asset->save(&$ATMdb,"Validation Expedition");
+				$asset->save($ATMdb,"Validation Expedition");
 			}
 		}
 	}
@@ -163,9 +163,9 @@ class TDispatch extends TObjetStd {
 			//Retirer une sortie de stock pour chaque equipement lié à l'expédition de la commande
 			foreach($this->lines as $lineAsset){
 				$asset = new TAsset;
-				$asset->load(&$ATMdb,$lineAsset->fk_asset);
+				$asset->load($ATMdb,$lineAsset->fk_asset);
 				$asset->contenancereel_value = $asset->contenancereel_value + $lineAsset->weight_reel;
-				$asset->save(&$ATMdb,"Annulation Expedition");
+				$asset->save($ATMdb,"Annulation Expedition");
 			}
 		}
 	}
