@@ -108,11 +108,11 @@ class TDispatch extends TObjetStd {
 		}
 	}
 	
-	function enregistrer(&$ATMdb,$commande,$_REQUEST){
-		$TLigneToDispatch = $this->FormParser($_REQUEST);
+	function enregistrer(&$ATMdb,$commande,$request){
+		$TLigneToDispatch = $this->FormParser($request);
 			
-		if($_REQUEST['action'] == "update_expedition")
-			$this->load($ATMdb, $_REQUEST['fk_dispatch']);
+		if($request['action'] == "update_expedition")
+			$this->load($ATMdb, $request['fk_dispatch']);
 		
 		$this->statut = 0; //Brouillon				
 		$this->ref = ($TLigneToDispatch['ref_expe'] != "") ? $TLigneToDispatch['ref_expe'] : $this->getNextValue();
@@ -124,7 +124,7 @@ class TDispatch extends TObjetStd {
 		$this->num_transporteur = $TLigneToDispatch['num_transporteur'];
 		$this->fk_commande = $commande->id;
 		$this->save($ATMdb);
-		$this->addLines($TLigneToDispatch,$commande,$ATMdb,$_REQUEST['action']);
+		$this->addLines($TLigneToDispatch,$commande,$ATMdb,$request['action']);
 	}
 	
 	function valider(&$ATMdb,$commande){
