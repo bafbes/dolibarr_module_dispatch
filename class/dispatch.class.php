@@ -55,7 +55,7 @@ class TDispatch extends TObjetStd {
 			while($ATMdb2->Get_line()){
 				$ATMdb3 = new Tdb;
 				$disatchdet_asset = new TDispatchdet_asset;
-				$disatchdet_asset->load(&$ATMdb3,$ATMdb2->Get_field('rowid'));
+				$disatchdet_asset->load($ATMdb3,$ATMdb2->Get_field('rowid'));
 				$this->lines[] = $disatchdet_asset;
 				$ATMdb3->close();
 			}
