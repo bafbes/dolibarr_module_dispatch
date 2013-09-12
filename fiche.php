@@ -167,6 +167,9 @@
 				
 				//Unite de poids
 				switch($ATMdb->Get_field('poids')){
+					case -9:
+						$unite = 'μg';
+						break;
 					case -6:
 						$unite = 'mg';
 						break;
@@ -215,6 +218,9 @@
 									$cpt = 0;
 									while($ATMdb->Get_line()){
 										switch($ATMdb->Get_field('contenancereel_units')){
+											case -9:
+												$unite = 'μg';
+												break;	
 											case -6:
 												$unite = 'mg';
 												break;
@@ -240,6 +246,9 @@
 									poids : <?=number_format($dispatchline->weight,2,",",''); ?>
 									<?php
 									switch($dispatchline->weight_unit){
+											case -9:
+												$unite = 'μg';
+												break;
 											case -6:
 												echo ' mg';
 												break;
@@ -256,6 +265,9 @@
 									poids réel : <?=number_format($dispatchline->weight_reel,2,",",''); ?>
 									<?php
 									switch($dispatchline->weight_reel_unit){
+											case -9:
+												$unite = 'μg';
+												break;
 											case -6:
 												echo ' mg';
 												break;
@@ -272,6 +284,9 @@
 									tare : <?=number_format($dispatchline->tare,2,",",''); ?>
 									<?php
 									switch($dispatchline->tare_unit){
+											case -9:
+												$unite = 'μg';
+												break;
 											case -6:
 												echo ' mg';
 												break;
@@ -321,6 +336,9 @@
 							$cpt = 0;
 							while($ATMdb->Get_line()){
 								switch($ATMdb->Get_field('contenancereel_value')){
+									case -9:
+										$unite = 'μg';
+										break;
 									case -6:
 										$unite = 'mg';
 										break;
@@ -351,6 +369,7 @@
 						<td colspan="2">
 							poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
 							<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+									<option value="-9">μg</option>
 									<option value="-6">mg</option>
 									<option value="-3">g</option>
 									<option value="0">kg</option>
@@ -359,6 +378,7 @@
 						<td>
 							poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
 							<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
+								<option value="-9">μg</option>
 								<option value="-6">mg</option>
 								<option value="-3">g</option>
 								<option value="0">kg</option>
@@ -367,6 +387,7 @@
 						<td>
 							tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 							<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
+								<option value="-9">μg</option>
 								<option value="-6">mg</option>
 								<option value="-3" selected="selected">g</option>
 								<option value="0">kg</option>
@@ -382,6 +403,9 @@
 				$ATMdb->Execute("SELECT tarif_poids, poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->rowid);
 				$ATMdb->Get_line();
 				switch($ATMdb->Get_field('poids')){
+					case -9:
+						$unite = 'μg';
+						break;
 					case -6:
 						$unite = 'mg';
 						break;
@@ -485,7 +509,7 @@
 				<tr><td align="left">Méthode d'expédition</td><td><?=$form->selectarray("methode_dispatch",array('Enlèvement par le client','Transporteur'));?></td></tr>
 				<tr><td align="left">Hauteur</td><td><input type="text" name="hauteur"> cm</td></tr>
 				<tr><td align="left">Largeur</td><td><input type="text" name="largeur"> cm</td></tr>
-				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general"><select id="unitepoid_general" name="unitepoid_general"><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td></tr>
+				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general"><select id="unitepoid_general" name="unitepoid_general"><option value="-9">μg</option><option value="-6">mg</option><option value="-3">g</option><option value="0">kg</option></select></td></tr>
 				<tr><td align="left">N° suivis transporteur</td><td><input type="text" name="num_transporteur"></td></tr>
 			</table>
 			<br>
@@ -516,6 +540,9 @@
 						
 						//Unite de poids
 						switch($ATMdb->Get_field('poids')){
+							case -9:
+								$unite = 'μg';
+								break;
 							case -6:
 								$unite = 'mg';
 								break;
@@ -575,6 +602,9 @@
 								$cpt = 0;
 								while($ATMdb->Get_line()){
 									switch($ATMdb->Get_field('contenancereel_units')){
+										case -9:
+											$unite = 'μg';
+											break;
 										case -6:
 											$unite = 'mg';
 											break;
@@ -606,6 +636,7 @@
 							<td>
 								poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
 								<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+										<option value="-9">μg</option>
 										<option value="-6">mg</option>
 										<option value="-3">g</option>
 										<option value="0">kg</option>
@@ -614,6 +645,7 @@
 							<td>
 								poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
 								<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
+									<option value="-9">μg</option>
 									<option value="-6">mg</option>
 									<option value="-3">g</option>
 									<option value="0">kg</option>
@@ -622,6 +654,7 @@
 							<td>
 								tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 								<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
+									<option value="-9">μg</option>
 									<option value="-6">mg</option>
 									<option value="-3" selected="selected">g</option>
 									<option value="0">kg</option>
@@ -637,6 +670,9 @@
 						$ATMdb->Execute("SELECT tarif_poids, poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->rowid);
 						$ATMdb->Get_line();
 						switch($ATMdb->Get_field('poids')){
+							case -9:
+								$unite = 'μg';
+								break;
 							case -6:
 								$unite = 'mg';
 								break;
@@ -687,6 +723,7 @@
 				<tr><td align="left">Largeur</td><td><input type="text" name="largeur" value="<?=$dispatch->width; ?>"> cm</td></tr>
 				<tr><td align="left">Poids du colis</td><td><input type="text" name="poid_general" value="<?=$dispatch->weight; ?>">
 															<select id="unitepoid_general" name="unitepoid_general">
+																<option value="-9" <?php echo ($dispatch->weight_units == "-9")? 'selected="selected"' : ""; ?>>μg</option>
 																<option value="-6" <?php echo ($dispatch->weight_units == "-6")? 'selected="selected"' : ""; ?>>mg</option>
 																<option value="-3" <?php echo ($dispatch->weight_units == "-3")? 'selected="selected"' : ""; ?>>g</option>
 																<option value="0" <?php echo ($dispatch->weight_units == "0")? 'selected="selected"' : ""; ?>>kg</option>
@@ -723,6 +760,9 @@
 						
 						//Unite de poids
 						switch($ATMdb->Get_field('poids')){
+							case -9:
+								$unite = 'μg';
+								break;
 							case -6:
 								$unite = 'mg';
 								break;
@@ -784,6 +824,9 @@
 										$cpt = 0;
 										while($ATMdb->Get_line()){
 											switch($ATMdb->Get_field('contenancereel_units')){
+												case -9:
+													$unite = 'μg';
+													break;
 												case -6:
 													$unite = 'mg';
 													break;
@@ -816,6 +859,7 @@
 									<td>
 										poids : <input type="text" id="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poids_<?=$line->rowid;?>" style="width: 35px;" value="<?=number_format($dispatchline->weight,2,",",''); ?>"/>
 										<select id="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitepoids_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitepoids_<?=$line->rowid;?>">
+												<option value="-9" <?php echo ($dispatchline->weight_unit == "-9") ? 'selected="selected"' : ""; ?>>μg</option>
 												<option value="-6" <?php echo ($dispatchline->weight_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
 												<option value="-3" <?php echo ($dispatchline->weight_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
 												<option value="0" <?php echo ($dispatchline->weight_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
@@ -824,6 +868,7 @@
 									<td>
 										poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="poidsreel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;" value="<?=number_format($dispatchline->weight_reel,2,",",''); ?>"/>
 										<select id="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitereel_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitereel_<?=$line->rowid;?>">
+											<option value="-9" <?php echo ($dispatchline->weight_reel_unit == "-9") ? 'selected="selected"' : ""; ?>>μg</option>
 											<option value="-6" <?php echo ($dispatchline->weight_reel_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
 											<option value="-3" <?php echo ($dispatchline->weight_reel_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
 											<option value="0" <?php echo ($dispatchline->weight_reel_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
@@ -832,6 +877,7 @@
 									<td>
 										tare : <input type="text" id="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="tare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="tare_<?=$line->rowid;?>" style="width: 35px;" value="<?=number_format($dispatchline->tare,2,",",''); ?>"/>
 										<select id="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" name="unitetare_<?=$line->rowid;?>_<?=$dispatchline->rang;?>" class="unitetare_<?=$line->rowid;?>">
+											<option value="-9" <?php echo ($dispatchline->tare_unit == "-9") ? 'selected="selected"' : ""; ?>>μg</option>
 											<option value="-6" <?php echo ($dispatchline->tare_unit == "-6") ? 'selected="selected"' : ""; ?>>mg</option>
 											<option value="-3" <?php echo ($dispatchline->tare_unit == "-3") ? 'selected="selected"' : ""; ?>>g</option>
 											<option value="0" <?php echo ($dispatchline->tare_unit == "0") ? 'selected="selected"' : ""; ?>>kg</option>
@@ -877,6 +923,9 @@
 									$cpt = 0;
 									while($ATMdb->Get_line()){
 										switch($ATMdb->Get_field('contenancereel_value')){
+											case -9:
+												$unite = 'μg';
+												break;
 											case -6:
 												$unite = 'mg';
 												break;
@@ -908,6 +957,7 @@
 								<td>
 									poids : <input type="text" id="poids_<?=$line->rowid;?>_1" name="poids_<?=$line->rowid;?>_1" class="poids_<?=$line->rowid;?>" style="width: 35px;"/>
 									<select id="unitepoids_<?=$line->rowid;?>_1" name="unitepoids_<?=$line->rowid;?>_1" class="unitepoids_<?=$line->rowid;?>">
+											<option value="-9">μg</option>
 											<option value="-6">mg</option>
 											<option value="-3">g</option>
 											<option value="0">kg</option>
@@ -916,6 +966,7 @@
 								<td>
 									poids réel : <input type="text" id="poidsreel_<?=$line->rowid;?>_1" name="poidsreel_<?=$line->rowid;?>_1" class="poidsreel_<?=$line->rowid;?>" style="width: 35px;"/>
 									<select id="unitereel_<?=$line->rowid;?>_1" name="unitereel_<?=$line->rowid;?>_1" class="unitereel_<?=$line->rowid;?>">
+										<option value="-9">μg</option>
 										<option value="-6">mg</option>
 										<option value="-3">g</option>
 										<option value="0">kg</option>
@@ -924,6 +975,7 @@
 								<td>
 									tare : <input type="text" id="tare_<?=$line->rowid;?>_1" name="tare_<?=$line->rowid;?>_1" class="tare_<?=$line->rowid;?>" style="width: 35px;"/>
 									<select id="unitetare_<?=$line->rowid;?>_1" name="unitetare_<?=$line->rowid;?>_1" class="unitetare_<?=$line->rowid;?>">
+										<option value="-9">μg</option>
 										<option value="-6">mg</option>
 										<option value="-3" selected="selected">g</option>
 										<option value="0">kg</option>
@@ -942,6 +994,9 @@
 						$ATMdb->Execute("SELECT tarif_poids, poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->rowid);
 						$ATMdb->Get_line();
 						switch($ATMdb->Get_field('poids')){
+							case -9:
+								$unite = 'μg';
+								break;
 							case -6:
 								$unite = 'mg';
 								break;
