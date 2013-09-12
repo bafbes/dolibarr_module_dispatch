@@ -126,6 +126,9 @@
 			case -6;
 				print 'mg';
 				break;
+			case -9;
+				print 'μg';
+				break;
 		}
 		print '</td>';
 		print '</tr>';
