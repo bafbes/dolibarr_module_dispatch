@@ -186,7 +186,7 @@
 			
 				//Récupération des quantitées déjà expédiées
 				$ATMdb2 = new Tdb;
-				$qte_expedie = $dispatch->get_qte_expedie(&$ATMdb2,$line->rowid);
+				$qte_expedie = $dispatch->get_qte_expedie($ATMdb2,$line->rowid);
 				($qte_expedie == 0) ? $qte_expedie = 0.00 : "";
 				$ATMdb2->close();
 				
@@ -560,7 +560,7 @@
 						//Récupération des quantitées déjà expédiées
 						$ATMdb2 = new Tdb;
 						$dispatch = new TDispatch;
-						$qte_expedie = $dispatch->get_qte_expedie(&$ATMdb2,$line->rowid);
+						$qte_expedie = $dispatch->get_qte_expedie($ATMdb2,$line->rowid);
 						($qte_expedie == 0) ? $qte_expedie = 0.00 : "";
 						$ATMdb2->close();
 						
@@ -709,7 +709,7 @@
 	 */
 	elseif(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  ($_REQUEST['action'] == "update")){
 		$dispatch = new TDispatch;
-		$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
+		$dispatch->load($ATMdb,$_REQUEST['fk_dispatch']);
 		?>
 		<form action="" method="POST" onsubmit="delete_input_hide();">
 			<table class="notopnoleftnoright" width="100%" border="0" style="margin-bottom: 2px;" summary="">
@@ -779,7 +779,7 @@
 					
 						//Récupération des quantitées déjà expédiées
 						$ATMdb2 = new Tdb;
-						$qte_expedie = $dispatch->get_qte_expedie(&$ATMdb2,$line->rowid);
+						$qte_expedie = $dispatch->get_qte_expedie($ATMdb2,$line->rowid);
 						($qte_expedie == 0) ? $qte_expedie = 0.00 : "";
 						$ATMdb2->close();
 						
@@ -1033,7 +1033,6 @@
 				}
 				elseif($dispatch->statut == 1){
 					?>
-					<input type="submit" class="button" value="Réouvrir" name="reouvrir">
 					<input type="submit" class="button" value="Annuler" name="back">
 					<?php
 				}
@@ -1055,7 +1054,7 @@
 			print_r($_REQUEST);
 			echo '</pre>'; exit;*/
 			$dispatch = new TDispatch;
-			$dispatch->enregistrer(&$ATMdb, $commande, $_REQUEST);
+			$dispatch->enregistrer($ATMdb, $commande, $_REQUEST);
 			?>
 			<script type="text/javascript">
 				window.location = 'fiche.php?action=view&fk_commande=<?php echo $commande->id;?>&fk_dispatch=<?php echo $dispatch->rowid; ?>';
@@ -1066,8 +1065,8 @@
 		//Traitement Suppression
 		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "delete"){
 			$dispatch = new TDispatch;
-			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
-			$dispatch->delete(&$ATMdb);
+			$dispatch->load($ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->delete($ATMdb);
 			?>
 			<script type="text/javascript">
 				window.location = 'liste.php?fk_commande=<?php echo $commande->id;?>';
@@ -1078,16 +1077,16 @@
 		//Traitement Validation	
 		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['valider']) && $_REQUEST['action'] == "update_expedition"){
 			$dispatch = new TDispatch;
-			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
-			$dispatch->enregistrer(&$ATMdb, $commande, $_REQUEST);
-			$dispatch->valider(&$ATMdb, $commande);
+			$dispatch->load($ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->enregistrer($ATMdb, $commande, $_REQUEST);
+			$dispatch->valider($ATMdb, $commande);
 		}
 		
 		//Traitement Réouverture	
 		if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) && isset($_REQUEST['reouvrir']) && $_REQUEST['action'] == "update_expedition"){
 			$dispatch = new TDispatch;
-			$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
-			$dispatch->reouvrir(&$ATMdb, $commande);
+			$dispatch->load($ATMdb,$_REQUEST['fk_dispatch']);
+			$dispatch->reouvrir($ATMdb, $commande);
 		}
 		
 		//Traitement Facturer
@@ -1144,7 +1143,10 @@
 		if($dispatch->statut == 1){
 			print '<a class="butAction" href="?action=facturer&fk_dispatch='.$dispatch->rowid.'&socid='.$commande->socid.'&fk_commande='.$commande->id.'&notrigger=1">Facturer</a>';
 		}
-		print		'<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a><a class="butAction" href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch='.$dispatch->rowid.'" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');">Supprimer</a>';
+		else{
+			print		'<a class="butAction" href="?action=update&fk_commande='.$commande->id.'&fk_dispatch='.$dispatch->rowid.'">Modifier</a>';
+		}
+		print '<a class="butAction" href="?fk_commande='.$commande->id.'&action=delete&fk_dispatch='.$dispatch->rowid.'" onclick="return confirm(\'Voulez-vous vraiment supprimer cette expédition?\');">Supprimer</a>';
 		print '</div><br>';
 		
 		?>

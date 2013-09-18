@@ -241,8 +241,8 @@
 	//Traitement Suppression
 	if(isset($_REQUEST['action']) && !empty($_REQUEST['action']) &&  $_REQUEST['action'] == "delete"){
 		$dispatch = new TDispatch;
-		$dispatch->load(&$ATMdb,$_REQUEST['fk_dispatch']);
-		$dispatch->delete(&$ATMdb);
+		$dispatch->load($ATMdb,$_REQUEST['fk_dispatch']);
+		$dispatch->delete($ATMdb);
 	}
 	
 	?>

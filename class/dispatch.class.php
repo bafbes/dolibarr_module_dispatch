@@ -128,6 +128,8 @@ class TDispatch extends TObjetStd {
 	}
 	
 	function valider(&$ATMdb,$commande){
+		global $user;
+		
 		require_once DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php";
 		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 		
@@ -141,35 +143,17 @@ class TDispatch extends TObjetStd {
 			
 			//Ajoute une sortie de stock pour chaque equipement lié à l'expédition de la commande
 			foreach($this->lines as $lineAsset){
-				$asset = new TAsset;
-				$asset->load($ATMdb,$lineAsset->fk_asset);
-				$asset->contenancereel_value = $asset->contenancereel_value - $lineAsset->weight_reel;
-				$asset->save($ATMdb,"Validation Expedition");
+				$ATMdb->Execute("SELECT qty FROM ".MAIN_DB_PREFIX."asset_stock WHERE source = ".$this->rowid);
+				$ATMdb->Get_line();
+				if($ATMdb->Get_field('qty') !== ($lineAsset->weight_reel * (-1))){
+					$asset = new TAsset;
+					$asset->load($ATMdb,$lineAsset->fk_asset);
+					$asset->contenancereel_value = $asset->contenancereel_value - $lineAsset->weight_reel;
+					$asset->save($ATMdb,$user,'Validation Expedition <img border="0" title="ShowShipping" alt="ShowShipping" src="'.DOL_URL_ROOT.'/theme/eldy/img/object_sending.png">&nbsp;<a href="'.DOL_URL_ROOT.'/expedition/fiche.php?id='.$this->rowid.'" ><b>'.$this->ref.'</b></a>');
+				}
 			}
 		}
 	}
-	
-	function reouvrir(&$ATMdb,$commande){
-		require_once DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php";
-		require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
-		
-		$this->statut = 0; //Validé
-		$this->save($ATMdb);
-		
-		foreach($commande->lines as $line){
-			//Cahrge les équipements lié à la ligne de commande
-			$this->loadLines($ATMdb, $line->rowid);
-			
-			//Retirer une sortie de stock pour chaque equipement lié à l'expédition de la commande
-			foreach($this->lines as $lineAsset){
-				$asset = new TAsset;
-				$asset->load($ATMdb,$lineAsset->fk_asset);
-				$asset->contenancereel_value = $asset->contenancereel_value + $lineAsset->weight_reel;
-				$asset->save($ATMdb,"Annulation Expedition");
-			}
-		}
-	}
-	
 	
 	function delete($ATMdb){
 		$ATMdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."dispatchdet WHERE fk_dispatch = ".$this->rowid);

@@ -116,7 +116,7 @@ class moddispatch extends DolibarrModules
         //                              'objecttype:+tabname2:Title2:mylangfile@mymodule:$user->rights->othermodule->read:/mymodule/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2
         //                              'objecttype:-tabname':NU:conditiontoremove);                                                     						// To remove an existing tab identified by code tabname
         
-        $this->tabs = array('order:+tabExpedition1:Expédition:@dispatch:/dispatch/liste.php?fk_commande=__ID__');
+        $this->tabs = array('delivery:+delivery:Détail expédition:@expedition:/custom/dispatch/detail.php?id=__ID__');
         
 		// where objecttype can be
 		// 'thirdparty'       to add a tab in third party view
