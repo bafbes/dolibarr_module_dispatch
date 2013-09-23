@@ -14,6 +14,7 @@ class TDispatchDetail extends TObjetStd {
 		parent::start();
 		
 		$this->lines = array();
+		$this->nbLines = 0;
 	}
 	
 	//Charges les lignes de flacon associé à la ligne d'expédition passé en paramètre
@@ -26,6 +27,7 @@ class TDispatchDetail extends TObjetStd {
 			$dispatchdetail_temp = new TDispatchDetail;
 			$dispatchdetail_temp->load($PDOdb, $PDOdb->Get_field('rowid'));
 			$this->lines[] = $dispatchdetail_temp;
+			$this->nbLines = $this->nbLines + 1;
 		}
 	}
 	
