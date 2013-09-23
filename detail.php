@@ -235,7 +235,10 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '<td rowspan="'.($nbLines).'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	print '<td rowspan="'.($nbLines).'" align="center">'.floatval($PDOdb->Get_field('tarif_poids') - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	if($TDispatchDetail->nbLines > 0){
+		$cpt = 1;
 		foreach($TDispatchDetail->lines as $detailline){
+			if($cpt > 1)
+				print '<tr style="height:30px;">';
 			print '<td align="right">';
 				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet);
 			print '</td>';
@@ -251,6 +254,9 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 			print		'<input style="width:50px;" type="text" id="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->tare.'">';
 			print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$detailline->tare_unit);
 			print '</td>';
+			if($cpt > 1)
+				print '</tr>';
+			$cpt++;
 		}
 	}
 	else{
@@ -280,14 +286,18 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 //Affichage en type view
 function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines){
 	
-	print '<tr>';
+	print '<tr style="height:30px;">';
 	print '<td rowspan="'.$nbLines.'">'.$product->ref.' - '.$product->label.' </td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids')).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids') - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
+	
 	if($TDispatchDetail->nbLines > 0){
+		$cpt = 1;
 		foreach($TDispatchDetail->lines as $detailline){
+			if($cpt > 1)
+				print '<tr style="height:30px;">';
 			//chargement de l'équipement associé à la ligne
 			$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
 	 		    FROM ".MAIN_DB_PREFIX."asset
@@ -299,6 +309,9 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 			print '<td align="center">'.floatval($detailline->weight).' '.measuring_units_string($detailline->weight_unit,"weight").'</td>';
 			print '<td align="center">'.floatval($detailline->weight_reel).' '.measuring_units_string($detailline->weight_reel_unit,"weight").'</td>';
 			print '<td align="center">'.floatval($detailline->tare).' '.measuring_units_string($detailline->tare_unit,"weight").'</td>';
+			if($cpt > 1)
+				print '</tr>';
+			$cpt++;
 		}
 	}
 	else{
@@ -307,7 +320,7 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 		print '<td align="center"> - </td>';
 		print '<td align="center"> - </td>';
 	}
-	print '</tr>';
+	print '</tr><tr class="impair"><td colspan="9">&nbsp</td></tr>';
 }
 
 function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet){
