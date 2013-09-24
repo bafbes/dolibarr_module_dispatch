@@ -38,8 +38,8 @@ $expedition->fetch_lines();
 		
 		//MAJ des libelle de class, name, id des différents champs de la nouvelle ligne
 		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
-		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')')
-		$(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>')
+		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
+		$(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
 		$(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang);
 		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
 		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
@@ -215,7 +215,6 @@ function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$f
 	
 	$product = new Product($db);
 	$product->fetch($PDOdb->Get_field('fk_product'));
-	
 	if($mode == 'edit')
 		_form_expedition_line($PDOdb,$product,$line,$TDispatchDetail,$nbLines,$fk_expeditiondet);
 	else if ($mode == 'view')
@@ -229,17 +228,21 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$form = new FormProduct($db);
 	
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
-	print '<td rowspan="'.($nbLines).'">'.$product->ref.' - '.$product->label.'</td>';
-	print '<td rowspan="'.($nbLines).'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
-	print '<td rowspan="'.($nbLines).'" align="center">'.floatval($PDOdb->Get_field('tarif_poids')).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
-	print '<td rowspan="'.($nbLines).'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
-	print '<td rowspan="'.($nbLines).'" align="center">'.floatval($PDOdb->Get_field('tarif_poids') - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'">'.$product->ref.' - '.$product->label.'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids')).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids') - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
 		foreach($TDispatchDetail->lines as $detailline){
-			if($cpt > 1)
+			if($cpt > 1){
 				print '<tr style="height:30px;">';
-			print '<td align="right">';
+				print '<td align="right">';
+				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
+			}
+			else
+				print '<td align="right">';
 				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet);
 			print '</td>';
 			print '<td align="center">';
@@ -279,7 +282,7 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '</tr>';
 	//actions
 	print '<tr>';
-	print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.(($line->rang)? $line->rang : 1 ).');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
+	print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
 	print '</tr>';
 }
 
