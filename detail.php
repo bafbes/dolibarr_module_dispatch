@@ -77,12 +77,12 @@ $expedition->fetch_lines();
 </script>
 <?php
 /*echo '<pre>';
-print_r($line);
+print_r($expedition);
 echo '</pre>'; exit;*/
 
 //Boutons d'action
 print '<div class="tabsAction">';
-if($expedition->fk_statut != 1 && $_REQUEST['action'] != 'edit'){
+if($expedition->statut != 1 && $_REQUEST['action'] != 'edit'){
 	print '<a class="butAction" href="?id='.$expedition->id.'&action=edit">Modifier le détail</a>';
 }
 print '</div><br>';
