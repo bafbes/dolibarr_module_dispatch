@@ -1,6 +1,5 @@
 <?php
 require('config.php');
-require('class/dispatch.class.php');
 require('class/dispatchdetail.class.php');
 
 //Mise en page du tableau récap de l'expédition
@@ -51,7 +50,7 @@ $expedition->fetch_lines();
 		$(newligne).find('>input').val('');
 	}
 	
-	function delete_line(id_ligne,ligne){
+	function delete_line(id_ligne,ligne,id_detail=0){
 		
 		$(ligne).parent().parent().remove();
 		
@@ -64,6 +63,16 @@ $expedition->fetch_lines();
 			}
 			cpt = cpt + 1;
 		});
+		
+		if(id_detail != 0){
+			$.ajax({
+				type: "POST"
+				,url:'script/ajax.delete_line.php'
+				,data:{
+					id_detail : id_detail
+				}
+			});
+		}
 	}
 </script>
 <?php
@@ -172,6 +181,8 @@ function _save_expedition_lines(&$PDOdb,&$expedition, &$commande, $request){
 				if(!empty($val2['weightreel']) && !empty($val2['weight']) && !empty($val2['tare'])){
 					$dispatchdetail = new TDispatchDetail();
 					
+					if(isset($val2['idexpeditiondetasset'])) $dispatchdetail->load($PDOdb, $val2['idexpeditiondetasset']);
+					
 					$dispatchdetail->fk_expeditiondet = $cle2;
 					$dispatchdetail->fk_asset = $val2['equipement'];
 					$dispatchdetail->rang = $cle;
@@ -239,11 +250,13 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 			if($cpt > 1){
 				print '<tr style="height:30px;">';
 				print '<td align="right">';
-				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
+				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,'.$detailline->rowid.');"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
 			}
 			else
 				print '<td align="right">';
 				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet);
+			
+			print '<input type="hidden" name="idexpeditiondetasset_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->rowid.'">';
 			print '</td>';
 			print '<td align="center">';
 			print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->weight.'">';
