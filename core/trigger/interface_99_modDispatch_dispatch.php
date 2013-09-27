@@ -133,6 +133,8 @@ class InterfaceDispatchWorkflow
 		global $user, $langs;
 		dol_include_once('/asset/class/asset.class.php');
 		
+		$ATMdb = new TPDOdb();
+		
 		$asset = new TAsset;
 		$asset->load($ATMdb,$linedetail->fk_asset);
 		$asset->contenancereel_value = $asset->contenancereel_value - $linedetail->weight_reel;
