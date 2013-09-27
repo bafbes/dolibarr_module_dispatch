@@ -20,7 +20,7 @@ class TDispatchDetail extends TObjetStd {
 	//Charges les lignes de flacon associé à la ligne d'expédition passé en paramètre
 	function loadLines(&$PDOdb, $id_expeditionLine){
 		
-		$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE fk_expeditiondet = ".$id_expeditionLine." ORDER BY rang";
+		$sql = "SELECT rowid FROM ".$this->get_table()." WHERE fk_expeditiondet = ".$id_expeditionLine." ORDER BY rang";
 		
 		$TIdExpedet = TRequeteCore::_get_id_by_sql($PDOdb, $sql);
 		

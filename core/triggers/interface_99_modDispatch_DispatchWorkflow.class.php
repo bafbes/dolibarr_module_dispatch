@@ -106,39 +106,49 @@ class InterfaceDispatchWorkflow
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
 	{
-		if(!defined('INC_FROM_DOLIBARR'))define('INC_FROM_DOLIBARR',true);
-		dol_include_once('/dispatch/config.php');
+		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
 		
 		if ($action == 'SHIPPING_VALIDATE') {
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/class/dispatchdetail.class.php');
+			
 			$PDOdb = new TPDOdb();
+			
 			// Pour chaque ligne de l'expédition
 			foreach($object->lines as $line) {
 				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
 				$dd = new TDispatchDetail();
 				
-				if($dd->loadBy($PDOdb, $line->rowid, 'fk_expeditiondet')) {
-					// Création du mouvement de flacon + du mouvement de stock standard
-					$this->create_flacon_stock_mouvement($line, $dd, $object->ref);
-					$this->create_standard_stock_mouvement($line, $dd, $object->ref);
+				$TIdExpeditionDet = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'expeditiondet', array('fk_expedition' => $object->id, 'fk_origin_line' => $line->fk_origin_line));
+				$idExpeditionDet = $TIdExpeditionDet[0];
+				
+				//if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
+				if(!empty($idExpeditionDet)) {
+					$dd->loadLines($PDOdb, $idExpeditionDet);
+					
+					// Création des mouvements de stock de flacon
+					foreach($dd->lines as $detail) {
+						// Création du mouvement de stock standard
+						$this->create_flacon_stock_mouvement($PDOdb, $line, $detail, $object->ref);
+						$this->create_standard_stock_mouvement($line, $detail, $object->ref);
+					}
 				}
 			}
 			
-			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->rowid);
+			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 		}
 
 		return 0;
 	}
 	
-	private function create_flacon_stock_mouvement(&$line, &$linedetail, $numref) {
+	private function create_flacon_stock_mouvement(&$PDOdb, &$line, &$linedetail, $numref) {
 		global $user, $langs;
 		dol_include_once('/asset/class/asset.class.php');
 		
-		$ATMdb = new TPDOdb();
-		
 		$asset = new TAsset;
-		$asset->load($ATMdb,$linedetail->fk_asset);
+		$asset->load($PDOdb,$linedetail->fk_asset);
 		$asset->contenancereel_value = $asset->contenancereel_value - $linedetail->weight_reel;
-		$asset->save($ATMdb, $langs->trans("ShipmentValidatedInDolibarr",$numref));
+		$asset->save($PDOdb, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 	}
 	
 	private function create_standard_stock_mouvement(&$line, &$linedetail, $numref) {
@@ -148,7 +158,7 @@ class InterfaceDispatchWorkflow
 		$mouvS = new MouvementStock($this->db);
 		// We decrement stock of product (and sub-products)
 		// We use warehouse selected for each line
-		$result=$mouvS->livraison($user, $line->fk_product, $line->fk_entrepot, $linedetail->weight_reel, $line->subprice, $langs->trans("ShipmentValidatedInDolibarr",$numref));
+		$result=$mouvS->livraison($user, $line->fk_product, $line->entrepot_id, $linedetail->weight_reel, $line->subprice, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 		return $result;
 	}
 }
