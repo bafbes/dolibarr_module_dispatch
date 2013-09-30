@@ -148,7 +148,7 @@ class InterfaceDispatchWorkflow
 		$asset = new TAsset;
 		$asset->load($PDOdb,$linedetail->fk_asset);
 		$asset->contenancereel_value = $asset->contenancereel_value - $linedetail->weight_reel;
-		$asset->save($PDOdb, $langs->trans("ShipmentValidatedInDolibarr",$numref));
+		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 	}
 	
 	private function create_standard_stock_mouvement(&$line, &$linedetail, $numref) {
