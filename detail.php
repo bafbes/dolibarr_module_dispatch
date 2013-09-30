@@ -9,11 +9,15 @@ $commande = $objectsrc; //récupération de l'onjet commande
 $expedition = $object; //récupération de l'objet expedition
 $expedition->fetch_lines();
 
+/*echo '<pre>';
+print_r($_POST);
+echo '</pre>';exit;*/
+
 ?>
 <script type="text/javascript">
 	function add_line(id_ligne,rang){
 		newrang = rang + 1;
-		ligne = $('.line_'+id_ligne+'_1');
+		ligne = $('.line_'+id_ligne+'_'+rang);
 		
 		//implémentation du conteur générale pour le traitement
 		$('input[name=cptLigne]').val(parseInt($('input[name=cptLigne]').val()) + 1);
@@ -29,16 +33,18 @@ $expedition->fetch_lines();
 		//clonage de la ligne et suppression des td en trop
 		newligne = $(ligne).clone(true).insertAfter($(ligne));
 		cpt = 0;
-		$(newligne).find('> td').each(function(){
-			if(cpt <= 4)
-				$(this).remove();
-			cpt = cpt + 1;
-		});
+		if(rang == 1){
+			$(newligne).find('> td').each(function(){
+				if(cpt <= 4)
+					$(this).remove();
+				cpt = cpt + 1;
+			});
+		}
 		
 		//MAJ des libelle de class, name, id des différents champs de la nouvelle ligne
 		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
 		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
-		$(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
+		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
 		$(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang);
 		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
 		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
@@ -225,7 +231,8 @@ function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$f
 	$PDOdb->Get_line();
 	
 	$product = new Product($db);
-	$product->fetch($PDOdb->Get_field('fk_product'));
+	if($PDOdb->Get_field('fk_product')) $product->fetch($PDOdb->Get_field('fk_product'));
+	
 	if($mode == 'edit')
 		_form_expedition_line($PDOdb,$product,$line,$TDispatchDetail,$nbLines,$fk_expeditiondet);
 	else if ($mode == 'view')
@@ -236,12 +243,17 @@ function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$f
 function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines,$fk_expeditiondet){
 	global $db;
 	
+	if((int)$product->id == 0)
+		$libelle = $line->description;
+	else
+		$libelle = $product->ref.' - '.$product->label;
+	
 	$form = new FormProduct($db);
 	
 	$poidsCommande = floatval($PDOdb->Get_field('tarif_poids'));
 	
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
-	print '<td rowspan="'.$nbLines.'">'.$product->ref.' - '.$product->label.'</td>';
+	print '<td rowspan="'.$nbLines.'">'.$libelle.'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsCommande.' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
@@ -304,8 +316,13 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 //Affichage en type view
 function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines){
 	
+	if((int)$product->id == 0)
+		$libelle = $line->description;
+	else
+		$libelle = $product->ref.' - '.$product->label;
+	
 	print '<tr style="height:30px;">';
-	print '<td rowspan="'.$nbLines.'">'.$product->ref.' - '.$product->label.' </td>';
+	print '<td rowspan="'.$nbLines.'">'.$libelle.' </td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids')).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
