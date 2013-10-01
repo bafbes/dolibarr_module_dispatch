@@ -80,6 +80,29 @@ echo '</pre>';exit;*/
 			});
 		}
 	}
+	
+	$(function() {
+		$( "#dialog" ).dialog({
+			autoOpen: false,
+			height: 900,
+			width: 600,
+			show: {
+				effect: "blind",
+				duration: 1000
+			},
+			buttons: {
+				"Annuler": function() {
+					$( this ).dialog( "close" );
+				},				
+				"Imprimer": function(){
+					alert("ok");
+				}
+			}
+		});
+		$( "#btnimpression" ).click(function() {
+			$( "#dialog" ).dialog( "open" );
+		});
+	});
 </script>
 <?php
 /*echo '<pre>';
@@ -90,6 +113,9 @@ echo '</pre>'; exit;*/
 print '<div class="tabsAction">';
 if($expedition->statut == 0 && $_REQUEST['action'] != 'edit'){
 	print '<a class="butAction" href="?id='.$expedition->id.'&action=edit">Modifier le détail</a>';
+}
+else {
+	print '<a class="butAction" id="btnimpression">Imprimer les étiquettes</a>';
 }
 print '</div><br>';
 
@@ -386,3 +412,27 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet){
 }
 
 llxFooter();
+
+?>
+<div id="dialog" title="Impression Etiquette">
+	<table style="width: 100%;">
+		<tr>
+			<td align="left">Position d&eacute;part : <input type="text" name="startpos" id="startpos" style="width:25px;"></td>
+			<td align="left">
+				Mod&egrave;le :
+				<select name="modele" id="modele">
+					<option value="num">mon modele</option>
+				</select>
+			</td>
+			<td align="left">Nombre de copie : <input type="text" name="copie" id="copie" style="width:25px;" value="1"></td>
+			<td align="center"><input type="button" value="G&eacute;n&eacute;rer" /></td>
+		</tr>
+		<tr>
+			<td colspan="4">
+				<iframe id="etiquettes" style="width: 100%; height: 100%;">
+		
+				</iframe>
+			</td>
+		</tr>
+	</table>
+</div>
