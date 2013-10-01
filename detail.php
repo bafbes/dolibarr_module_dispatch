@@ -84,8 +84,8 @@ echo '</pre>';exit;*/
 	$(function() {
 		$( "#dialog" ).dialog({
 			autoOpen: false,
-			height: 900,
-			width: 600,
+			height: 700,
+			width: 900,
 			show: {
 				effect: "blind",
 				duration: 1000
@@ -95,7 +95,7 @@ echo '</pre>';exit;*/
 					$( this ).dialog( "close" );
 				},				
 				"Imprimer": function(){
-					alert("ok");
+					document.frames['etiquettes'].print();
 				}
 			}
 		});
@@ -103,6 +103,11 @@ echo '</pre>';exit;*/
 			$( "#dialog" ).dialog( "open" );
 		});
 	});
+	
+	function generer_etiquettes(){
+		modele = $('#modele').val();
+		$('#etiquettes').attr('src','modele/'+modele);
+	}
 </script>
 <?php
 /*echo '<pre>';
@@ -411,6 +416,56 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet){
 	print '</select>';
 }
 
+function combo($nom='modele',$defaut='', $entity=1) {
+	/* Code combo pour sélection modèle */
+	$TDocs = getListe($type, $entity);
+	?>
+	<select name="<?=$nom?>" id="<?=$nom?>" class="flat"><?
+		
+	foreach($TDocs as $fichier) {
+		
+		?><option value="<?=$fichier ?>" <?=($defaut==$fichier)?'selected="selected"':''?> extension="<?=_ext($fichier)?>"><?=$fichier ?></option><?
+		
+	}
+
+	?></select><?
+	
+}
+
+function getListe($entity=1) {
+/* Liste des modèles valides */
+	$Tab=array();
+	
+	if(is_dir(DOL_DOCUMENT_ROOT_ALT.'/dispatch/modele/'.$entity.'/')){
+		if ($handle = opendir(DOL_DOCUMENT_ROOT_ALT.'/dispatch/modele/'.$entity.'/')) {
+		    while (false !== ($entry = readdir($handle))) {
+		    	if($entry[0]!='.' && validFile($entry))  $Tab[] = $entry;
+		    }
+		
+		    closedir($handle);
+		}
+	}
+	
+	sort($Tab);
+	
+	return $Tab;
+}
+
+function _ext($file) {
+/* extension d'un fichier */
+	$ext = substr ($file, strrpos($file,'.'));
+	return $ext;
+}
+
+function validFile($name) {
+/* Fichier valid pour le traitement ? */
+	$ext = _ext($name);
+	
+	if($ext=='.html') return TRUE;
+	else { print "Type de fichier ($ext) non supporté ($name)."; return false; }
+	
+}
+
 llxFooter();
 
 ?>
@@ -420,16 +475,16 @@ llxFooter();
 			<td align="left">Position d&eacute;part : <input type="text" name="startpos" id="startpos" style="width:25px;"></td>
 			<td align="left">
 				Mod&egrave;le :
-				<select name="modele" id="modele">
-					<option value="num">mon modele</option>
-				</select>
+				<?php
+				combo('modele',GETPOST('modele'), $conf->entity);
+				?>
 			</td>
 			<td align="left">Nombre de copie : <input type="text" name="copie" id="copie" style="width:25px;" value="1"></td>
-			<td align="center"><input type="button" value="G&eacute;n&eacute;rer" /></td>
+			<td align="center"><input type="button" value="G&eacute;n&eacute;rer" onclick="generer_etiquettes();" /></td>
 		</tr>
 		<tr>
 			<td colspan="4">
-				<iframe id="etiquettes" style="width: 100%; height: 100%;">
+				<iframe id="etiquettes" style="width:210mm;height: 400px;" src="#">
 		
 				</iframe>
 			</td>

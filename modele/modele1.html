@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Impression etiquette</title>
+		<style type="text/css" media="print, screen">
+			@page{
+				padding : 0 0 0 0;
+				margin : 0 0 0 0;
+			}		
+		
+			body{
+				padding : 0;
+				border : 0;
+				margin-top : 35mm;
+				margin-bottom : 18mm;
+				margin-left : 33mm;
+				margin-right : 29mm;
+				width: 148mm;
+				height: 297mm;
+			}
+			
+			div{
+				float:left;
+				padding : 0;
+			}
+			
+			.etiquette{
+				margin-bottom : 14mm;
+				margin-right : 4mm;
+				height : 13mm;
+				background-color: #d9d9d9;
+				font-size : 8px;
+				width : 70mm;
+				padding-top: 1mm;
+			}
+			
+			.etiquette > div{
+				line-height: 16px;
+			}
+			
+			.intitule{
+				width: 55mm;
+			}
+			
+			.detail{
+				width: 45mm;
+			}
+			
+			.tare{
+				width: 17mm;
+				height:16px;
+				text-align : right;
+				overflow: visible;
+			}
+			
+			.code{
+				width: 13mm;
+			}
+			
+			.lot{
+				width: 20mm;
+			}
+			.poids{
+				width: 11mm;
+				text-align: right;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="etiquette">
+			<!-- [etiquette_vide.#;block=div] -->
+		</div>
+
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;block=((div))]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+
+	</body>
+</html>
