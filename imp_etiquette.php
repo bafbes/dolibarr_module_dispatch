@@ -64,7 +64,9 @@ if(isset($_REQUEST['modele'])){
 			$tare_unit = _unit($TPDOdb->Get_field('tare_unit'));
 			$poids_unit = _unit($TPDOdb->Get_field('poids_unit'));
 			
-			$Tetiquettes[] = array(
+			//On duplique l'étiquette autant de fois que demandé en paramètre
+			for($i=0; $i< $nbCopies; $i++){
+				$Tetiquettes[] = array(
 								"nom" => $TPDOdb->Get_field('nom'),
 								"description" => ((int)$TPDOdb->Get_field('description') != 0) ? $TPDOdb->Get_field('description') : "",
 								"tare" => number_format($TPDOdb->Get_field('tare'),2,',',' '),
@@ -74,6 +76,7 @@ if(isset($_REQUEST['modele'])){
 								"poids" => number_format($TPDOdb->Get_field('poids'),2,',',' '),
 								"poids_unit" => $poids_unit
 							);
+			}
 		}
 	}
 	
