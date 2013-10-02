@@ -2,36 +2,38 @@
 <html>
 	<head>
 		<title>Impression etiquette</title>
-		<style type="text/css" media="print, screen">
+		<style type="text/css" media="print">
 			@page{
 				padding : 0 0 0 0;
-				margin : 0 0 0 0;
+				margin-top : 35mm;
+				margin-bottom : 1mm;
+				margin-left : 34mm;
+				margin-right : 27mm;
 			}		
 		
 			body{
-				padding : 0;
+				padding : 0 0 0 0;
 				border : 0;
-				margin-top : 35mm;
-				margin-bottom : 18mm;
-				margin-left : 33mm;
-				margin-right : 29mm;
-				width: 148mm;
-				height: 297mm;
+				margin : 0 0 0 0;
+				/*width: 148mm;
+				height: 297mm;*/
+			}
+			
+			.etiquette{
+				margin-bottom : 13mm;
+				margin-right : 4mm;
+				height : 13mm;
+				background-color: #d9d9d9;
+				font-size : 9px;
+				font-family : Arial;
+				width : 70mm;
+				padding-top: 1mm;
+				page-break-inside: avoid;
 			}
 			
 			div{
 				float:left;
 				padding : 0;
-			}
-			
-			.etiquette{
-				margin-bottom : 14mm;
-				margin-right : 4mm;
-				height : 13mm;
-				background-color: #d9d9d9;
-				font-size : 8px;
-				width : 70mm;
-				padding-top: 1mm;
 			}
 			
 			.etiquette > div{
@@ -40,10 +42,13 @@
 			
 			.intitule{
 				width: 55mm;
+				font-weight: bold;
+				font-style: italic;
 			}
 			
 			.detail{
 				width: 45mm;
+				min-height: 1mm;
 			}
 			
 			.tare{
@@ -55,14 +60,95 @@
 			
 			.code{
 				width: 13mm;
+				font-weight: bold;
+				font-style: italic;
 			}
 			
 			.lot{
-				width: 20mm;
+				width: 17mm;
+				font-weight: bold;
+				font-style: italic;
 			}
 			.poids{
-				width: 11mm;
+				width: 14mm;
 				text-align: right;
+				font-weight: bold;
+				font-style: italic;
+			}
+		</style>
+		
+		<style type="text/css" media="screen">
+			@page{
+				padding : 0 0 0 0;
+				margin : 0 0 0 0;
+			}		
+		
+			body{
+				margin-top : 35mm;
+				margin-bottom : 18mm;
+				margin-left : 34mm;
+				margin-right : 28mm;
+				padding : 0;
+				border : 0;
+				/*width: 148mm;
+				height: 297mm;*/
+			}
+			
+			.etiquette{
+				margin-bottom : 13mm;
+				margin-right : 4mm;
+				height : 13mm;
+				background-color: #d9d9d9;
+				font-size : 9px;
+				font-family : Arial;
+				width : 70mm;
+				padding-top: 1mm;
+				page-break-inside: avoid ;
+			}
+			
+			div{
+				float:left;
+				padding : 0;
+			}
+			
+			.etiquette > div{
+				line-height: 16px;
+			}
+			
+			.intitule{
+				width: 55mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.detail{
+				width: 45mm;
+				min-height: 1mm;
+			}
+			
+			.tare{
+				width: 17mm;
+				height:16px;
+				text-align : right;
+				overflow: visible;
+			}
+			
+			.code{
+				width: 13mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.lot{
+				width: 17mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			.poids{
+				width: 14mm;
+				text-align: right;
+				font-weight: bold;
+				font-style: italic;
 			}
 		</style>
 	</head>
@@ -73,13 +159,212 @@
 		</div>
 
 		<div class="etiquette">
-			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;block=((div))]</div>
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
 			<div class="detail">[etiquette.description;]</div>
 			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
 			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
 			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
 			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
 		</div>
-
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
+		<div class="etiquette">
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule">[etiquette.nom;]</div>
+			<div class="detail">[etiquette.description;]</div>
+			<div class="label">Tare :</div><div class="tare">[etiquette.tare]&nbsp;[etiquette.tare_unit]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+		</div>
 	</body>
 </html>

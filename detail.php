@@ -92,10 +92,12 @@ echo '</pre>';exit;*/
 			},
 			buttons: {
 				"Annuler": function() {
+					$('#etiquettes').empty();
 					$( this ).dialog( "close" );
 				},				
 				"Imprimer": function(){
-					document.frames['etiquettes'].print();
+					window.frames.etiquettes.focus();
+					window.frames.etiquettes.print();
 				}
 			}
 		});
@@ -105,8 +107,8 @@ echo '</pre>';exit;*/
 	});
 	
 	function generer_etiquettes(){
-		modele = $('#modele').val();
-		$('#etiquettes').attr('src','modele/'+modele);
+		
+		$('#etiquettes').attr('src','imp_etiquette.php?startpos='+$('#startpos').val()+'&copie='+$('#copie').val()+'&modele='+$('#modele').val()+'&expedition='+<?php echo $expedition->id; ?>);
 	}
 </script>
 <?php
@@ -472,7 +474,7 @@ llxFooter();
 <div id="dialog" title="Impression Etiquette">
 	<table style="width: 100%;">
 		<tr>
-			<td align="left">Position d&eacute;part : <input type="text" name="startpos" id="startpos" style="width:25px;"></td>
+			<td align="left">Position d&eacute;part : <input type="text" name="startpos" id="startpos" style="width:25px;" value="1"></td>
 			<td align="left">
 				Mod&egrave;le :
 				<?php
@@ -484,7 +486,7 @@ llxFooter();
 		</tr>
 		<tr>
 			<td colspan="4">
-				<iframe id="etiquettes" style="width:210mm;height: 400px;" src="#">
+				<iframe id="etiquettes" name="etiquettes" style="width:230mm;height: 500px;" src="">
 		
 				</iframe>
 			</td>
