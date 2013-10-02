@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Impression etiquette</title>
+		<style type="text/css" media="print">
+			@page{
+				margin-top : 29mm;
+				margin-bottom : 25mm;
+				margin-left : 36mm;
+				margin-right : 25mm;
+				padding : 0 0 0 0;
+			}		
+		
+			body{
+				margin: 0 0 0 0;
+				padding : 0;
+				border : 0;
+				/*width: 148mm;
+				height: 297mm;*/
+			}
+			
+			.etiquette{
+				margin-bottom : 3mm;
+				margin-right : 4mm;
+				height : 24mm;
+				background-color: #d9d9d9;
+				font-size : 9px;
+				font-family : Arial;
+				width : 70mm;
+				padding-top: 1mm;
+				page-break-inside: avoid ;
+			}
+			
+			div{
+				float:left;
+				padding : 0;
+			}
+			
+			.etiquette > div{
+				line-height: 18px;
+			}
+			
+			.intitule{
+				width: 55mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.detail{
+				width: 70mm;
+				min-height: 6px;
+				text-align: center;
+			}
+			
+			.code{
+				width: 13mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.lot{
+				width: 17mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			.poids{
+				width: 14mm;
+				text-align: right;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.entete{
+				width: 70mm;
+				text-align: center;
+				padding-top: 1px;
+				font-weight: bold;
+			}
+			.pied{
+				width: 70mm;
+				text-align: center;
+				font-size: 8px;
+				line-height: 12px;
+				font-weight: bold;
+			}
+			.fournisseur{
+				font-size: 6px;
+				line-height: 12px;
+				text-align: center;
+				width: 70mm;
+			}
+		</style>
+		
+		<style type="text/css" media="screen">
+			@page{
+				padding : 0 0 0 0;
+				margin : 0 0 0 0;
+			}		
+		
+			body{
+				margin-top : 29mm;
+				margin-bottom : 25mm;
+				margin-left : 34mm;
+				margin-right : 28mm;
+				padding : 0;
+				border : 0;
+				/*width: 148mm;
+				height: 297mm;*/
+			}
+			
+			.etiquette{
+				margin-bottom : 3mm;
+				margin-right : 4mm;
+				height : 24mm;
+				background-color: #d9d9d9;
+				font-size : 9px;
+				font-family : Arial;
+				width : 70mm;
+				padding-top: 1mm;
+				page-break-inside: avoid ;
+			}
+			
+			div{
+				float:left;
+				padding : 0;
+			}
+			
+			.etiquette > div{
+				line-height: 18px;
+			}
+			
+			.intitule{
+				width: 55mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.detail{
+				width: 70mm;
+				min-height: 6px;
+				text-align: center;
+			}
+			
+			.code{
+				width: 13mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.lot{
+				width: 17mm;
+				font-weight: bold;
+				font-style: italic;
+			}
+			.poids{
+				width: 14mm;
+				text-align: right;
+				font-weight: bold;
+				font-style: italic;
+			}
+			
+			.entete{
+				width: 70mm;
+				text-align: center;
+				padding-top: 1px;
+				font-weight: bold;
+			}
+			.pied{
+				width: 70mm;
+				text-align: center;
+				font-size: 8px;
+				line-height: 12px;
+				font-weight: bold;
+			}
+			.fournisseur{
+				font-size: 6px;
+				line-height: 12px;
+				text-align: center;
+				width: 70mm;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="etiquette">
+			<!-- [etiquette_vide.#;block=div] -->
+		</div>
+
+		<div class="etiquette">
+			<div class="entete">latoxan@latoxan.com - <span style="font-size: 12px;">LATOXAN</span> - www.latoxan.fr</div>
+			<div class="label">Venin de :&nbsp;&nbsp;</div><div class="intitule" style="line-height: 18px;">[etiquette.nom;block=((div))]</div>
+			<div class="detail" style="line-height: 6px;">[etiquette.description;]</div>
+			<div class="label">Code:&nbsp;</div><div class="code">[etiquette.code]</div>
+			<div class="label">Lot:&nbsp;</div><div class="lot">[etiquette.lot]</div>
+			<div class="label">Poids Net :</div><div class="poids">[etiquette.poids]&nbsp;[etiquette.poids_unit]</div>
+			<div class="fournisseur" style="line-height: 8px;">Distributed by :&nbsp;FUNAKOSHI CO. LTD, 9-7 Hongo 2-Chome-Bunkyo-ku, Tokyo 113, Japan<br>TEL: +81 3 5684 1622 - FAX: +81 3 5684 1633</div>
+			<div class="pied" style="line-height: 10px;">FOR RESEARCH PURPOSES ONLY</div>
+		</div>
+	</body>
+</html>
