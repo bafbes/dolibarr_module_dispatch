@@ -132,7 +132,7 @@ class InterfaceDispatchWorkflow
 						$this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
 						$this->create_standard_stock_mouvement($line, $detail->weight_reel, $object->ref);
 					}
-				} else {
+				} else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
 					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 				}
 			}
