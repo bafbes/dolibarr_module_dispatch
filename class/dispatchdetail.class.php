@@ -33,7 +33,12 @@ class TDispatchDetail extends TObjetStd {
 	}
 	
 	function getPoidsExpedie(&$PDOdb,$id_expeditionLine){
-		$sql = "SELECT SUM(weight) as Total FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE fk_expeditiondet = ".$id_expeditionLine;
+		$sql = "SELECT SUM(eda.weight) as Total 
+				FROM ".MAIN_DB_PREFIX."expeditiondet_asset as eda
+					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (eda.fk_expeditiondet = ed.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as c ON (c.rowid = ed.fk_origin_line)
+				WHERE ed.fk_origin_line IN (SELECT fk_origin_line FROM ".MAIN_DB_PREFIX."expeditiondet WHERE rowid = ".$id_expeditionLine.")";
+		
 		$PDOdb->Execute($sql);
 		return ($PDOdb->Get_line()) ? $PDOdb->Get_field('Total') : 0 ;
 	}

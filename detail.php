@@ -284,13 +284,15 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$form = new FormProduct($db);
 	
 	$poidsCommande = floatval($PDOdb->Get_field('tarif_poids'));
+	$poids = $PDOdb->Get_field('poids');
+	$asset_lot = $PDOdb->Get_field('asset_lot');
 	
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsCommande.' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.$asset_lot.'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
 		foreach($TDispatchDetail->lines as $detailline){
@@ -354,12 +356,16 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	else
 		$libelle = $product->ref.' - '.$product->label;
 	
+	$poids = $PDOdb->Get_field('poids');
+	$tarif_poids = floatval($PDOdb->Get_field('tarif_poids'));
+	$asset_lot = $PDOdb->Get_field('asset_lot');
+	
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.' </td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids')).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($PDOdb->Get_field('tarif_poids') - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($PDOdb->Get_field('poids'),"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.$tarif_poids.' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.($tarif_poids - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
 	
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
