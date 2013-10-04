@@ -129,9 +129,11 @@ class InterfaceDispatchWorkflow
 					// Création des mouvements de stock de flacon
 					foreach($dd->lines as $detail) {
 						// Création du mouvement de stock standard
-						$this->create_flacon_stock_mouvement($PDOdb, $line, $detail, $object->ref);
-						$this->create_standard_stock_mouvement($line, $detail, $object->ref);
+						$this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
+						$this->create_standard_stock_mouvement($line, $detail->weight_reel, $object->ref);
 					}
+				} else {
+					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 				}
 			}
 			
@@ -141,7 +143,7 @@ class InterfaceDispatchWorkflow
 		return 0;
 	}
 	
-	private function create_flacon_stock_mouvement(&$PDOdb, &$line, &$linedetail, $numref) {
+	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref) {
 		global $user, $langs;
 		dol_include_once('/asset/class/asset.class.php');
 		
@@ -151,14 +153,14 @@ class InterfaceDispatchWorkflow
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 	}
 	
-	private function create_standard_stock_mouvement(&$line, &$linedetail, $numref) {
+	private function create_standard_stock_mouvement(&$line, $qty, $numref) {
 		global $user, $langs;
 		require_once DOL_DOCUMENT_ROOT.'/product/stock/class/mouvementstock.class.php';
 
 		$mouvS = new MouvementStock($this->db);
 		// We decrement stock of product (and sub-products)
 		// We use warehouse selected for each line
-		$result=$mouvS->livraison($user, $line->fk_product, $line->entrepot_id, $linedetail->weight_reel, $line->subprice, $langs->trans("ShipmentValidatedInDolibarr",$numref));
+		$result=$mouvS->livraison($user, $line->fk_product, $line->entrepot_id, $qty, $line->subprice, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 		return $result;
 	}
 }
