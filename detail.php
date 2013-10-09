@@ -44,7 +44,7 @@ echo '</pre>';exit;*/
 		//MAJ des libelle de class, name, id des différents champs de la nouvelle ligne
 		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
 		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
-		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
+		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
 		$(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang);
 		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
 		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
@@ -56,7 +56,7 @@ echo '</pre>';exit;*/
 		$(newligne).find('>input').val('');
 	}
 	
-	function delete_line(id_ligne,ligne,id_detail=0){
+	function delete_line(id_ligne,ligne,id_detail){
 		
 		$(ligne).parent().parent().remove();
 		
@@ -70,7 +70,7 @@ echo '</pre>';exit;*/
 			cpt = cpt + 1;
 		});
 		
-		if(id_detail != 0){
+		if(id_detail != false){
 			$.ajax({
 				type: "POST"
 				,url:'script/ajax.delete_line.php'
