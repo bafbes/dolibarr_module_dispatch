@@ -121,7 +121,7 @@ print '<div class="tabsAction">';
 if($expedition->statut == 0 && $_REQUEST['action'] != 'edit'){
 	print '<a class="butAction" href="?id='.$expedition->id.'&action=edit">Modifier le détail</a>';
 }
-else {
+elseif($_REQUEST['action'] != 'edit') {
 	print '<a class="butAction" id="btnimpression">Imprimer les étiquettes</a>';
 }
 print '</div><br>';
@@ -328,17 +328,21 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 		print '<td align="right">';
 			_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet);
 		print '</td>';
+		
+		$PDOdb->Execute("SELECT poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
+		$PDOdb->Get_line();
+		
 		print '<td align="center">';
 		print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.(!empty($detailline->weight) ? $detailline->weight:$poidsCommande).'">';
-		print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",!empty($detailline->weight_unit) ? $detailline->weight_unit:$product->weight_units);
+		print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$PDOdb->Get_field('poids'));
 		print '</td>';
 		print '<td align="center">';
 		print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weightreel_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->weight_reel.'">';
-		print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",!empty($detailline->weight_unit) ? $detailline->weight_unit:$product->weight_units);
+		print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$PDOdb->Get_field('poids'));
 		print '</td>';
 		print '<td align="center">';
 		print		'<input style="width:50px;" type="text" id="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->tare.'">';
-		print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",!empty($detailline->weight_unit) ? $detailline->weight_unit:-3);
+		print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",-3);
 		print '</td>';
 	}
 	print '</tr>';
@@ -402,7 +406,7 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet){
 	print '<select id="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'" name="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'" class="equipement_'.$line->rowid.'">';
 	
 	//Chargement des équipement lié au produit
-	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
+	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units, emplacement
 	 		 FROM ".MAIN_DB_PREFIX."asset
 	 		 WHERE fk_product = ".$product->id."
 	 		 ORDER BY contenance_value DESC";
@@ -413,7 +417,7 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet){
 		if($PDOdb->Get_field('contenancereel_value') > 0){
 			$cpt++;
 			print '<option value="'.$PDOdb->Get_field('rowid').'" '.(($line->fk_asset == $PDOdb->Get_field('rowid')) ? 'selected="selected"' : "").'>';
-			print 		$PDOdb->Get_field('serial_number')." - Lot n° ".$PDOdb->Get_field('lot_number')." - ".number_format($PDOdb->Get_field('contenancereel_value'),2,",","")." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight");
+			print 		$PDOdb->Get_field('serial_number')." / Lot n° ".$PDOdb->Get_field('lot_number')." / Emp. ".$PDOdb->Get_field('emplacement')." / ".number_format($PDOdb->Get_field('contenancereel_value'),2,",","")." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight");
 			print '</option>';	
 		}	
 	}
