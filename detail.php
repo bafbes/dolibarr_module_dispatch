@@ -327,29 +327,29 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	else{
 		for($i=0;$i<$line->qty_asked;$i++){
 			if($i > 0){
-				print '<tr style="height:30px;">';
+				print '<tr class="line_'.$fk_expeditiondet.'_'.($i+1).'">';
 				print '<td align="right">';
 				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
 			}
 			else
 				print '<td align="right">';
-				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot);
+				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot,$i);
 			print '</td>';
 			
 			$PDOdb->Execute("SELECT poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
 			$PDOdb->Get_line();
 			
 			print '<td align="center">';
-			print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.(!empty($detailline->weight) ? $detailline->weight:$poidsCommande).'">';
-			print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$PDOdb->Get_field('poids'));
+			print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.($i+1).'" name="weight_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight) ? $detailline->weight:$poidsCommande).'">';
+			print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.($i+1),"weight",$PDOdb->Get_field('poids'));
 			print '</td>';
 			print '<td align="center">';
-			print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weightreel_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->weight_reel.'">';
-			print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$PDOdb->Get_field('poids'));
+			print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" name="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" value="'.$detailline->weight_reel.'">';
+			print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.($i+1),"weight",$PDOdb->Get_field('poids'));
 			print '</td>';
 			print '<td align="center">';
-			print		'<input style="width:50px;" type="text" id="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->tare.'">';
-			print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",-3);
+			print		'<input style="width:50px;" type="text" id="tare_'.$fk_expeditiondet.'_'.($i+1).'" name="tare_'.$fk_expeditiondet.'_'.($i+1).'" value="'.$detailline->tare.'">';
+			print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.($i+1),"weight",-3);
 			print '</td>';
 			if($i > 0)
 				print '</tr>';
@@ -377,9 +377,9 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.' </td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.$tarif_poids.' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.($tarif_poids * $line->qty_asked).' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.($tarif_poids - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.(($tarif_poids * $line->qty_asked) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
 	
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
@@ -411,9 +411,9 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '</tr><tr class="impair"><td colspan="9">&nbsp</td></tr>';
 }
 
-function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lot=''){
+function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lot='',$i=0){
 	
-	print '<select id="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'" name="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'" class="equipement_'.$line->rowid.'">';
+	print '<select id="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : ($i+1) ).'" name="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : ($i+1) ).'" class="equipement_'.$line->rowid.'">';
 	
 	//Chargement des équipement lié au produit
 	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units, emplacement
