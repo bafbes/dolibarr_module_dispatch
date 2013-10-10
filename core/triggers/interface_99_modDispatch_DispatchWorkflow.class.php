@@ -129,9 +129,11 @@ class InterfaceDispatchWorkflow
 					// Création des mouvements de stock de flacon
 					foreach($dd->lines as $detail) {
 						// Création du mouvement de stock standard
-						$this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
-						$this->create_standard_stock_mouvement($line, $detail->weight_reel, $object->ref);
+						$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
+						echo "poids destocke : ".$poids_destocke.'<br>';
+						//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 					}
+					//exit;
 				} else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
 					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 				}
@@ -146,14 +148,23 @@ class InterfaceDispatchWorkflow
 	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref) {
 		global $user, $langs;
 		dol_include_once('/asset/class/asset.class.php');
+		dol_include_once('/product/class/product.class.php');
+		dol_include_once('/expedition/class/expedition.class.php');
+		
+		$poids_destocke = $this->calcule_poids_destocke($PDOdb,$linedetail);
+		$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
+		
+		echo $poids_destocke.'<br>';
 		
 		$asset = new TAsset;
 		$asset->load($PDOdb,$linedetail->fk_asset);
-		$asset->contenancereel_value = $asset->contenancereel_value - $linedetail->weight_reel;
+		$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref));
+		
+		return $poids_destocke;
 	}
 	
-	private function create_standard_stock_mouvement(&$line, $qty, $numref) {
+	/*private function create_standard_stock_mouvement(&$line, $qty, $numref) {
 		global $user, $langs;
 		require_once DOL_DOCUMENT_ROOT.'/product/stock/class/mouvementstock.class.php';
 
@@ -162,5 +173,31 @@ class InterfaceDispatchWorkflow
 		// We use warehouse selected for each line
 		$result=$mouvS->livraison($user, $line->fk_product, $line->entrepot_id, $qty, $line->subprice, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 		return $result;
-	}
+	}*/
+	
+	private function calcule_poids_destocke(&$PDOdb,&$linedetail){
+			
+		$sql = "SELECT p.weight, p.weight_units
+				FROM ".MAIN_DB_PREFIX."product as p
+					LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON (a.fk_product = p.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset as eda ON (eda.fk_asset = a.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.rowid = eda.fk_expeditiondet)
+				WHERE ed.rowid = ".$linedetail->fk_expeditiondet;
+		
+		echo $sql.'<br>';
+		
+		$PDOdb->Execute($sql);
+		$PDOdb->Get_line();
+		$weight = $PDOdb->Get_field('weight');
+		$poids = (!empty($weight)) ? $weight : 1 ;
+		$weight_units = $PDOdb->Get_field('weight_units');
+		$poids_unite = (!empty($weight_units)) ? $weight_units : $linedetail->weight_reel_unit ;
+		$poids = $poids * pow(10,$poids_unite);
+		//$poids_unite = $PDOdb->Get_field('weight_units');
+		$weight_reel = $linedetail->weight_reel * pow(10,$linedetail->weight_reel_unit );
+		
+		echo "$weight_reel / $poids<br>";
+		
+		return $weight_reel / $poids;
+	} 
 }

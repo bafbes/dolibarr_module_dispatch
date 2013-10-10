@@ -259,7 +259,7 @@ function _print_entete_tableau(){
 function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$fk_expeditiondet,$mode){
 	global $db;
 	
-	$nbLines = ($TDispatchDetail->nbLines > 0) ? $TDispatchDetail->nbLines: $line->qty_asked;
+	$nbLines = ($TDispatchDetail->nbLines > 0) ? $TDispatchDetail->nbLines: $line->qty_shipped;
 	$PDOdb->Execute("SELECT fk_product, asset_lot, tarif_poids, poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
 	$PDOdb->Get_line();
 	
@@ -290,9 +290,9 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$asset_lot.'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.($poidsCommande * $line->qty_asked).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.($poidsCommande * $line->qty_shipped).' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval(($poidsCommande * $line->qty_asked) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.floatval(($poidsCommande * $line->qty_shipped) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
 		foreach($TDispatchDetail->lines as $detailline){
@@ -325,7 +325,7 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 		}
 	}
 	else{
-		for($i=0;$i<$line->qty_asked;$i++){
+		for($i=0;$i<$line->qty_shipped;$i++){
 			if($i > 0){
 				print '<tr class="line_'.$fk_expeditiondet.'_'.($i+1).'">';
 				print '<td align="right">';
@@ -377,9 +377,9 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.' </td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.($tarif_poids * $line->qty_asked).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.($tarif_poids * $line->qty_shipped).' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.(($tarif_poids * $line->qty_asked) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.(($tarif_poids * $line->qty_shipped) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
 	
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
