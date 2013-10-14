@@ -130,7 +130,6 @@ class InterfaceDispatchWorkflow
 					foreach($dd->lines as $detail) {
 						// Création du mouvement de stock standard
 						$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
-						echo "poids destocke : ".$poids_destocke.'<br>';
 						//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 					}
 					//exit;
@@ -153,8 +152,6 @@ class InterfaceDispatchWorkflow
 		
 		$poids_destocke = $this->calcule_poids_destocke($PDOdb,$linedetail);
 		$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
-		
-		echo $poids_destocke.'<br>';
 		
 		$asset = new TAsset;
 		$asset->load($PDOdb,$linedetail->fk_asset);
@@ -184,8 +181,6 @@ class InterfaceDispatchWorkflow
 					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.rowid = eda.fk_expeditiondet)
 				WHERE ed.rowid = ".$linedetail->fk_expeditiondet;
 		
-		echo $sql.'<br>';
-		
 		$PDOdb->Execute($sql);
 		$PDOdb->Get_line();
 		$weight = $PDOdb->Get_field('weight');
@@ -193,10 +188,7 @@ class InterfaceDispatchWorkflow
 		$weight_units = $PDOdb->Get_field('weight_units');
 		$poids_unite = (!empty($weight_units)) ? $weight_units : $linedetail->weight_reel_unit ;
 		$poids = $poids * pow(10,$poids_unite);
-		//$poids_unite = $PDOdb->Get_field('weight_units');
 		$weight_reel = $linedetail->weight_reel * pow(10,$linedetail->weight_reel_unit );
-		
-		echo "$weight_reel / $poids<br>";
 		
 		return $weight_reel / $poids;
 	} 
