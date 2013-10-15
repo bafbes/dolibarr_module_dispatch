@@ -375,11 +375,11 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$asset_lot = $PDOdb->Get_field('asset_lot');
 	
 	print '<tr style="height:30px;">';
-	print '<td rowspan="'.$nbLines.'">'.$libelle.' </td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.($tarif_poids * $line->qty_shipped).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.(($tarif_poids * $line->qty_shipped) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$PDOdb->Get_field('asset_lot').'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.($tarif_poids * $line->qty_shipped).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.(($tarif_poids * $line->qty_shipped) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid)).' '.measuring_units_string($poids,"weight").'</td>';
 	
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
