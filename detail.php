@@ -287,12 +287,12 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$poids = $PDOdb->Get_field('poids');
 	$asset_lot = $PDOdb->Get_field('asset_lot');
 	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
-	$poidsAExpedier = floatval(($poidsCommande * $line->qty_shipped) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
+	$poidsAExpedier = floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
 	
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$asset_lot.'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.($poidsCommande * $line->qty_shipped).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
 	if($TDispatchDetail->nbLines > 0){
@@ -379,9 +379,9 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset_lot.'</td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.($tarif_poids * $line->qty_shipped).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$tarif_poids.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.(($tarif_poids * $line->qty_shipped) - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.($tarif_poids - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
 	
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
