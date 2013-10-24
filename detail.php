@@ -508,7 +508,6 @@ llxFooter();
 					modele : $(this).val()
 				}
 			}).done(function(TConstantes){
-				alert(TConstantes.margeleft);
 				$('#margetop').val(TConstantes.margetop);
 				$('#margeleft').val(TConstantes.margeleft);
 			});
