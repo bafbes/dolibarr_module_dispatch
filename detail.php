@@ -1,6 +1,7 @@
 <?php
 require('config.php');
 require('class/dispatchdetail.class.php');
+include_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 
 //Mise en page du tableau récap de l'expédition
 include('detail_head.php');
@@ -12,6 +13,7 @@ $expedition->fetch_lines();
 /*echo '<pre>';
 print_r($_POST);
 echo '</pre>';exit;*/
+global $db;
 
 ?>
 <script type="text/javascript">
@@ -108,7 +110,7 @@ echo '</pre>';exit;*/
 	
 	function generer_etiquettes(){
 		
-		$('#etiquettes').attr('src','imp_etiquette.php?startpos='+$('#startpos').val()+'&copie='+$('#copie').val()+'&modele='+$('#modele').val()+'&expedition='+<?php echo $expedition->id; ?>);
+		$('#etiquettes').attr('src','imp_etiquette.php?startpos='+$('#startpos').val()+'&copie='+$('#copie').val()+'&modele='+$('#modele').val()+'&expedition='+<?php echo $expedition->id; ?>+'&margetop='+$('#margetop').val()+'&margeleft='+$('#margeleft').val());
 	}
 </script>
 <?php
@@ -496,7 +498,23 @@ llxFooter();
 
 ?>
 <div id="dialog" title="Impression Etiquette">
-	<table style="width: 100%;">
+	<script type="text/javascript">
+		$('#modele').change(function(){
+			$.ajax({
+				type: "POST"
+				,url:'script/get_const.php'
+				,dataType: "json"
+				,data:{
+					modele : $(this).val()
+				}
+			}).done(function(TConstantes){
+				alert(TConstantes.margeleft);
+				$('#margetop').val(TConstantes.margetop);
+				$('#margeleft').val(TConstantes.margeleft);
+			});
+		});
+	</script>
+	<table>
 		<tr>
 			<td align="left">Position d&eacute;part : <input type="text" name="startpos" id="startpos" style="width:25px;" value="1"></td>
 			<td align="left">
@@ -506,10 +524,12 @@ llxFooter();
 				?>
 			</td>
 			<td align="left">Nombre de copie : <input type="text" name="copie" id="copie" style="width:25px;" value="1"></td>
+			<td align="left">Marge haute (mm) : <input type="text" name="margetop" id="margetop" style="width:25px;" value="<?php echo (dolibarr_get_const($db, 'ETIQUETTE_MARGE_TOP')) ? dolibarr_get_const($db, 'ETIQUETTE_MARGE_TOP') : 35;?>"></td>
+			<td align="left">Marge gauche (mm) : <input type="text" name="margeleft" id="margeleft" style="width:25px;" value="<?php echo  (dolibarr_get_const($db, 'ETIQUETTE_MARGE_LEFT')) ? dolibarr_get_const($db, 'ETIQUETTE_MARGE_LEFT') : 34;?>"></td>
 			<td align="center"><input type="button" value="G&eacute;n&eacute;rer" onclick="generer_etiquettes();" /></td>
 		</tr>
 		<tr>
-			<td colspan="4">
+			<td colspan="6">
 				<iframe id="etiquettes" name="etiquettes" style="width:230mm;height: 500px;" src="">
 		
 				</iframe>

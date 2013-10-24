@@ -2,6 +2,7 @@
 require("config.php");
 require(DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php");
 require(DOL_DOCUMENT_ROOT."/expedition/class/expedition.class.php");
+include_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 global $db;
 
 function _unit($unite){
@@ -80,11 +81,23 @@ if(isset($_REQUEST['modele'])){
 		}
 	}
 	
+	if (!empty($_REQUEST['margetop'])) dolibarr_set_const($db, 'ETIQUETTE_MARGE_TOP_'.$modele, $_REQUEST['margetop'],'chaine',1,'Marge en mm');
+	if (!empty($_REQUEST['margeleft'])) dolibarr_set_const($db, 'ETIQUETTE_MARGE_LEFT_'.$modele, $_REQUEST['margeleft'],'chaine',1,'Marge en mm');
+	
+	$TMarges = array(
+		'margetop'=> $_REQUEST['margetop'],
+		'margeleft'=> $_REQUEST['margeleft']
+	);
+	
 	$TBS = new TTemplateTBS();
 	
 	$rendu = $TBS->Render("modele/".$modele,
 					array('etiquette_vide'=>$TetiquettesVides,
-						  'etiquette'=>$Tetiquettes)
+						  'etiquette'=>$Tetiquettes
+					)
+					,array(
+						  'marge'=>$TMarges
+					)
 				);
 				
 	echo $rendu;
