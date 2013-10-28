@@ -423,8 +423,9 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lo
 	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units, emplacement
 	 		 FROM ".MAIN_DB_PREFIX."asset
 	 		 WHERE fk_product = ".$product->id;
-	if($asset_lot != '')
-		$sql .= " AND lot_number = '".$asset_lot."'";
+	// 13.10.28 - MKO : On autorise la sélection d'un flacon dans un autre lot lors de l'expé
+	//if($asset_lot != '')
+	//	$sql .= " AND lot_number = '".$asset_lot."'";
 	$sql .= " ORDER BY contenance_value DESC";
 	$PDOdb->Execute($sql);
 	
