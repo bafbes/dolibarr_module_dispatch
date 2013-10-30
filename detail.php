@@ -246,13 +246,13 @@ function _print_entete_tableau(){
 	print '<table class="liste" width="100%">';
 	print '	<tr class="liste_titre">';
 	print '		<td style="width: 300px;">Produit</td>';
-	print '		<td align="center" style="width: 100px;">Lot</td>';
+	print '		<td align="center" style="width: 100px;">Flacon prévu</td>';
 	print '		<td align="center" style="width: 150px;">Poids commandé</td>';
 	print '		<td align="center" style="width: 150px;">Poids expédié</td>';
 	print '		<td align="center" style="width: 150px;">Poids à expédier</td>';
-	print '		<td align="center">Flacon</td>';
+	print '		<td align="center">Flacon réel</td>';
 	print '		<td align="center">Poids</td>';
-	print '		<td align="center">Poids Réel</td>';
+	print '		<td align="center">Poids réel</td>';
 	print '		<td align="center">Tare</td>';
 	print '	</tr>';
 }
@@ -291,9 +291,14 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
 	$poidsAExpedier = floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
 	
+	dol_include_once('/asset/class/asset.class.php');
+	$ATMdb = new Tdb;
+	$asset = new TAsset();
+	$asset->load($ATMdb, $asset_lot);
+	
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.$asset_lot.'</td>';
+	print '<td rowspan="'.$nbLines.'" align="center">'.$asset->serial_number.'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
@@ -378,9 +383,14 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$tarif_poids = floatval(($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty')) * pow(10,$poids) * pow(10,-$product->weight_units));
 	$asset_lot = $PDOdb->Get_field('asset_lot');
 	
+	dol_include_once('/asset/class/asset.class.php');
+	$ATMdb = new Tdb;
+	$asset = new TAsset();
+	$asset->load($ATMdb, $asset_lot);
+	
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset_lot.'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset->serial_number.'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$tarif_poids.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.($tarif_poids - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
@@ -428,13 +438,16 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lo
 	//	$sql .= " AND lot_number = '".$asset_lot."'";
 	$sql .= " ORDER BY contenance_value DESC";
 	$PDOdb->Execute($sql);
+	$defaultFlacon = !empty($line) ? $line->fk_asset : $asset_lot;
 	
 	$cpt = 0;
 	while($PDOdb->Get_line()){
 		if($PDOdb->Get_field('contenancereel_value') > 0){
 			$cpt++;
-			print '<option value="'.$PDOdb->Get_field('rowid').'" '.(($line->fk_asset == $PDOdb->Get_field('rowid')) ? 'selected="selected"' : "").'>';
-			print 		$PDOdb->Get_field('serial_number')." / Lot n° ".$PDOdb->Get_field('lot_number')." / Emp. ".$PDOdb->Get_field('emplacement')." / ".number_format($PDOdb->Get_field('contenancereel_value'),2,",","")." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight");
+			print '<option value="'.$PDOdb->Get_field('rowid').'" '.(($defaultFlacon == $PDOdb->Get_field('rowid')) ? 'selected="selected"' : "").'>';
+			print $PDOdb->Get_field('serial_number');
+			print " / Batch ".$PDOdb->Get_field('lot_number')." / Stock ".$PDOdb->Get_field('emplacement');
+			print " / ".number_format($PDOdb->Get_field('contenancereel_value'),2,",","")." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight");
 			print '</option>';	
 		}	
 	}
