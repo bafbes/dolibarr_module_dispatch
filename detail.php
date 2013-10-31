@@ -289,7 +289,7 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$poids = $PDOdb->Get_field('poids');
 	$asset_lot = $PDOdb->Get_field('asset_lot');
 	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
-	$poidsAExpedier = floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
+	$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
 	$poidsAExpedierParFlacon = floatval($PDOdb->Get_field('tarif_poids'));
 	
 	dol_include_once('/asset/class/asset.class.php');
@@ -384,7 +384,7 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$poids = $PDOdb->Get_field('poids');
 	$asset_lot = $PDOdb->Get_field('asset_lot');
 	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
-	$poidsAExpedier = floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
+	$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
 	
 	dol_include_once('/asset/class/asset.class.php');
 	$ATMdb = new Tdb;
