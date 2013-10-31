@@ -290,6 +290,7 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$asset_lot = $PDOdb->Get_field('asset_lot');
 	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
 	$poidsAExpedier = floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
+	$poidsAExpedierParFlacon = floatval($PDOdb->Get_field('tarif_poids'));
 	
 	dol_include_once('/asset/class/asset.class.php');
 	$ATMdb = new Tdb;
@@ -349,11 +350,11 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 			$PDOdb->Get_line();
 			
 			print '<td align="center">';
-			print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.($i+1).'" name="weight_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight) ? $detailline->weight:$poidsAExpedier).'">';
+			print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.($i+1).'" name="weight_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight) ? $detailline->weight:$poidsAExpedierParFlacon).'">';
 			print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.($i+1),"weight",$PDOdb->Get_field('poids'));
 			print '</td>';
 			print '<td align="center">';
-			print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" name="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight_reel) ? $detailline->weight_reel : $poidsAExpedier).'">';
+			print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" name="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight_reel) ? $detailline->weight_reel : $poidsAExpedierParFlacon).'">';
 			print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.($i+1),"weight",$PDOdb->Get_field('poids'));
 			print '</td>';
 			print '<td align="center">';
@@ -379,9 +380,11 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	else
 		$libelle = $product->ref.' - '.$product->label;
 	
+	$poidsCommande = floatval($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty'));
 	$poids = $PDOdb->Get_field('poids');
-	$tarif_poids = floatval(($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty')) * pow(10,$poids) * pow(10,-$product->weight_units));
 	$asset_lot = $PDOdb->Get_field('asset_lot');
+	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
+	$poidsAExpedier = floatval($poidsCommande - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
 	
 	dol_include_once('/asset/class/asset.class.php');
 	$ATMdb = new Tdb;
@@ -391,9 +394,9 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset->serial_number.'</td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$tarif_poids.' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.($tarif_poids - $TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)).' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
+	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
 	
 	if($TDispatchDetail->nbLines > 0){
 		$cpt = 1;
