@@ -380,10 +380,10 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	else
 		$libelle = $product->ref.' - '.$product->label;
 	
-	$poidsCommande = floatval($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty'));
+	$poidsCommande = round(floatval($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty')), 6);
 	$poids = $PDOdb->Get_field('poids');
 	$asset_lot = $PDOdb->Get_field('asset_lot');
-	$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
+	$poidsExpedie = round(floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)), 6);
 	$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
 	
 	dol_include_once('/asset/class/asset.class.php');
