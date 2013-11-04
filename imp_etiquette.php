@@ -53,7 +53,7 @@ if(isset($_REQUEST['modele'])){
 		}
 		
 		foreach($TidExepeditiondetAsset as $idExpeditiondetAsset){
-			$sql = "SELECT p.label as nom, p.note as descritpion, eda.tare as tare, a.serial_number as code, a.lot_number as lot, eda.weight_reel as poids, eda.weight_reel_unit as poids_unit, eda.tare_unit as tare_unit
+			$sql = "SELECT p.ref, p.label as nom, p.note as descritpion, eda.tare as tare, a.serial_number as code, a.lot_number as lot, eda.weight_reel as poids, eda.weight_reel_unit as poids_unit, eda.tare_unit as tare_unit
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as eda
 						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON (a.rowid = eda.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
@@ -68,6 +68,7 @@ if(isset($_REQUEST['modele'])){
 			//On duplique l'étiquette autant de fois que demandé en paramètre
 			for($i=0; $i< $nbCopies; $i++){
 				$Tetiquettes[] = array(
+								"ref" => $TPDOdb->Get_field('ref'),
 								"nom" => $TPDOdb->Get_field('nom'),
 								"description" => ((int)$TPDOdb->Get_field('description') != 0) ? $TPDOdb->Get_field('description') : "",
 								"tare" => number_format($TPDOdb->Get_field('tare'),2,',',' '),
