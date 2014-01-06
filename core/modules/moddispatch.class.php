@@ -138,7 +138,7 @@ class moddispatch extends DolibarrModules
 
         // Dictionnaries
         if (! isset($conf->dispatch->enabled)){
-        	$conf->dispatch->enabled=0;
+        	@$conf->dispatch->enabled=0;
 		}
 		$this->dictionnaries=array();
         /* Example:
