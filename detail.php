@@ -47,7 +47,7 @@ global $db;
 		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
 		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
 		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
-		$(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang);
+		<?php if($conf->global->MAIN_MODULE_ASSET) { ?> $(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang); <?php } ?>
 		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
 		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
 		$(newligne).find('#weightreel_'+id_ligne+'_'+rang).attr('id','weightreel_'+id_ligne+'_'+newrang).attr('name','weightreel_'+id_ligne+'_'+newrang);
@@ -243,18 +243,36 @@ function _save_expedition_lines(&$PDOdb,&$expedition, &$commande, $request){
 
 //Affiche l'entete du tableau
 function _print_entete_tableau(){
-	print '<table class="liste" width="100%">';
-	print '	<tr class="liste_titre">';
-	print '		<td style="width: 300px;">Produit</td>';
-	print '		<td align="center" style="width: 100px;">Flacon prévu</td>';
-	print '		<td align="center" style="width: 150px;">Poids commandé</td>';
-	print '		<td align="center" style="width: 150px;">Poids expédié</td>';
-	print '		<td align="center" style="width: 150px;">Poids à expédier</td>';
-	print '		<td align="center">Flacon réel</td>';
-	print '		<td align="center">Poids</td>';
-	print '		<td align="center">Poids réel</td>';
-	print '		<td align="center">Tare</td>';
-	print '	</tr>';
+	
+	global $conf;
+	
+	if($conf->global->MAIN_MODULE_ASSET){
+	
+		print '<table class="liste" width="100%">';
+		print '	<tr class="liste_titre">';
+		print '		<td style="width: 300px;">Produit</td>';
+		print '		<td align="center" style="width: 100px;">Flacon prévu</td>';
+		print '		<td align="center" style="width: 150px;">Poids commandé</td>';
+		print '		<td align="center" style="width: 150px;">Poids expédié</td>';
+		print '		<td align="center" style="width: 150px;">Poids à expédier</td>';
+		print '		<td align="center">Flacon réel</td>';
+		print '		<td align="center">Poids</td>';
+		print '		<td align="center">Poids réel</td>';
+		print '		<td align="center">Tare</td>';
+		print '	</tr>';
+	}
+	else{
+		print '<table class="liste" width="100%">';
+		print '	<tr class="liste_titre">';
+		print '		<td style="width: 300px;">Produit</td>';
+		print '		<td align="center" style="width: 150px;">Unités commandées</td>';
+		print '		<td align="center" style="width: 150px;">Unités expédiées</td>';
+		print '		<td align="center" style="width: 150px;">Unités à expédier</td>';
+		print '		<td align="center">Unités</td>';
+		print '		<td align="center">Unités réelles</td>';
+		print '		<td align="center">Tare</td>';
+		print '	</tr>';
+	}
 }
 
 //Affiche la ligne d'expédition
@@ -292,14 +310,16 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
 	$poidsAExpedierParFlacon = floatval($PDOdb->Get_field('tarif_poids'));
 	
-	dol_include_once('/asset/class/asset.class.php');
-	$ATMdb = new Tdb;
-	$asset = new TAsset();
-	$asset->load($ATMdb, $asset_lot);
+	if($conf->global->MAIN_MODULE_ASSET){
+		dol_include_once('/asset/class/asset.class.php');
+		$ATMdb = new Tdb;
+		$asset = new TAsset();
+		$asset->load($ATMdb, $asset_lot);
+	}
 	
 	print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
 	print '<td rowspan="'.$nbLines.'">'.$libelle.'</td>';
-	print '<td rowspan="'.$nbLines.'" align="center">'.$asset->serial_number.'</td>';
+	if($conf->global->MAIN_MODULE_ASSET) print '<td rowspan="'.$nbLines.'" align="center">'.$asset->serial_number.'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.$nbLines.'" align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
@@ -311,9 +331,10 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 				print '<td align="right">';
 				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,'.$detailline->rowid.');"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
 			}
-			else
+			else{
 				print '<td align="right">';
-				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot);
+				if($conf->global->MAIN_MODULE_ASSET) _select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot);
+			}
 			
 			print '<input type="hidden" name="idexpeditiondetasset_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->rowid.'">';
 			print '</td>';
@@ -335,7 +356,13 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 		}
 	}
 	else{
-		for($i=0;$i<$line->qty_shipped;$i++){
+		if($conf->global->MAIN_MODULE_ASSET){
+			$cpt = $line->qty_shipped;
+		}
+		else {
+			$cpt = 1;
+		}
+		for($i=0;$i<$cpt;$i++){
 			if($i > 0){
 				print '<tr class="line_'.$fk_expeditiondet.'_'.($i+1).'">';
 				print '<td align="right">';
@@ -343,7 +370,7 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 			}
 			else
 				print '<td align="right">';
-				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot,$i);
+				if($conf->global->MAIN_MODULE_ASSET) _select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot,$i);
 			print '</td>';
 			
 			$PDOdb->Execute("SELECT poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
@@ -368,7 +395,10 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	print '</tr>';
 	//actions
 	print '<tr>';
-	print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
+	if($conf->global->MAIN_MODULE_ASSET)
+		print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
+	else
+		print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une ligne de détail:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
 	print '</tr>';
 }
 
@@ -386,14 +416,16 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	$poidsExpedie = round(floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)), 6);
 	$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
 	
-	dol_include_once('/asset/class/asset.class.php');
-	$ATMdb = new Tdb;
-	$asset = new TAsset();
-	$asset->load($ATMdb, $asset_lot);
+	if($conf->global->MAIN_MODULE_ASSET){
+		dol_include_once('/asset/class/asset.class.php');
+		$ATMdb = new Tdb;
+		$asset = new TAsset();
+		$asset->load($ATMdb, $asset_lot);
+	}
 	
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
-	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset->serial_number.'</td>';
+	if($conf->global->MAIN_MODULE_ASSET) print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset->serial_number.'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
@@ -420,7 +452,7 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 		}
 	}
 	else{
-		print '<td align="center"> - </td>';
+		if($conf->global->MAIN_MODULE_ASSET) print '<td align="center"> - </td>';
 		print '<td align="center"> - </td>';
 		print '<td align="center"> - </td>';
 		print '<td align="center"> - </td>';
