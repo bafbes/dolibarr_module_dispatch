@@ -21,13 +21,19 @@ global $db;
 		newrang = rang + 1;
 		ligne = $('.line_'+id_ligne+'_'+rang);
 		
-		//implémentation du conteur générale pour le traitement
+		//implémentation du compteur générale pour le traitement
 		$('input[name=cptLigne]').val(parseInt($('input[name=cptLigne]').val()) + 1);
 		
 		//MAJ du rowspan pour la partie gauche de la ligne
 		cpt = 0;
+		<?php
+		if($conf->global->MAIN_MODULE_ASSET)
+			echo "cpt_max = 4;";
+		else
+			echo "cpt_max = 3;";
+		?>
 		$('tr.line_'+id_ligne+'_1 > td').each(function(){
-			if(cpt <= 4)
+			if(cpt <= cpt_max)
 				$(this).attr('rowspan',newrang);
 			cpt = cpt + 1;
 		});
@@ -279,7 +285,11 @@ function _print_entete_tableau(){
 function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$fk_expeditiondet,$mode){
 	global $db;
 	
-	$nbLines = ($TDispatchDetail->nbLines > 0) ? $TDispatchDetail->nbLines: $line->qty_shipped;
+	if($conf->asset->enabled)
+		$nbLines = ($TDispatchDetail->nbLines > 0) ? $TDispatchDetail->nbLines: $line->qty_shipped;
+	else
+		$nbLines = 1;
+	
 	$PDOdb->Execute("SELECT fk_product, asset_lot, tarif_poids, poids, qty FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
 	$PDOdb->Get_line();
 	
@@ -332,8 +342,10 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,'.$detailline->rowid.');"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
 			}
 			else{
-				print '<td align="right">';
-				if($conf->global->MAIN_MODULE_ASSET) _select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot);
+				if($conf->global->MAIN_MODULE_ASSET){
+					print '<td align="right">';
+					_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot);
+				}
 			}
 			
 			print '<input type="hidden" name="idexpeditiondetasset_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->rowid.'">';
@@ -368,10 +380,11 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 				print '<td align="right">';
 				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
 			}
-			else
+			else if($conf->global->MAIN_MODULE_ASSET){
 				print '<td align="right">';
-				if($conf->global->MAIN_MODULE_ASSET) _select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot,$i);
-			print '</td>';
+				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot,$i);
+				print '</td>';
+			}
 			
 			$PDOdb->Execute("SELECT poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
 			$PDOdb->Get_line();
