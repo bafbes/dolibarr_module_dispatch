@@ -126,11 +126,13 @@ class InterfaceDispatchWorkflow
 				if(!empty($idExpeditionDet)) {
 					$dd->loadLines($PDOdb, $idExpeditionDet);
 					
-					// Création des mouvements de stock de flacon
-					foreach($dd->lines as $detail) {
-						// Création du mouvement de stock standard
-						$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
-						//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
+					if($conf->asset->enabled){
+						// Création des mouvements de stock de flacon
+						foreach($dd->lines as $detail) {
+							// Création du mouvement de stock standard
+							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
+							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
+						}
 					}
 					//exit;
 				} else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
