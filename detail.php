@@ -304,7 +304,7 @@ function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$f
 
 //Affichage en type edition
 function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines,$fk_expeditiondet){
-	global $db;
+	global $db, $conf;
 	
 	if((int)$product->id == 0)
 		$libelle = $line->description;
@@ -424,6 +424,8 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 
 //Affichage en type view
 function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines){
+	global $conf;
+		
 	
 	if((int)$product->id == 0)
 		$libelle = $line->description;
@@ -445,7 +447,7 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	
 	print '<tr style="height:30px;">';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
-	if($conf->global->MAIN_MODULE_ASSET) 
+	if($conf->asset->enabled) 
 		print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$asset->serial_number.'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
 	print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'" align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
