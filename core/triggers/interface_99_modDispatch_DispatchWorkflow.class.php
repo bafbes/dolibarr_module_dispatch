@@ -106,6 +106,8 @@ class InterfaceDispatchWorkflow
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
 	{
+		global $conf;
+		
 		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
 		
 		if ($action == 'SHIPPING_VALIDATE') {
@@ -152,11 +154,12 @@ class InterfaceDispatchWorkflow
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
 		
+		$asset = new TAsset;
+		$asset->load($PDOdb,$linedetail->fk_asset);
+		
 		$poids_destocke = $this->calcule_poids_destocke($PDOdb,$linedetail);
 		$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
 		
-		$asset = new TAsset;
-		$asset->load($PDOdb,$linedetail->fk_asset);
 		$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref));
 		
