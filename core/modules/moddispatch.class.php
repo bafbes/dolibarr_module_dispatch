@@ -264,7 +264,7 @@ class moddispatch extends DolibarrModules
 
 		$result=$this->load_tables();
 
-		$url ='http://'.$_SERVER['SERVER_NAME']. DOL_URL_ROOT_ALT."/dispatch/script/create-maj-base.php";
+		$url = dol_buildpath('/dispatch/script/create-maj-base.php',2);
 		file_get_contents($url);
 
 		return $this->_init($sql, $options);
