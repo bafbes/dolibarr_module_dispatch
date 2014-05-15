@@ -237,6 +237,9 @@ function _save_expedition_lines(&$PDOdb,&$expedition, &$commande, $request){
 					$dispatchdetail->weight_reel_unit = $val2['weightreelunit'];
 					$dispatchdetail->tare_unit = $val2['tareunit'];
 					
+					$dispatchdetail->carton = $val2['carton'];
+					$dispatchdetail->numerosuivi = $val2['numerosuivi'];
+
 					$dispatchdetail->save($PDOdb);
 				}
 			}
@@ -254,11 +257,13 @@ function _print_entete_tableau(){
 		print '<table class="liste" width="100%">';
 		print '	<tr class="liste_titre">';
 		print '		<td style="width: 300px;">Produit</td>';
-		print '		<td align="center" style="width: 100px;">Flacon prévu</td>';
+		print '		<td align="center" style="width: 100px;">Equipement prévu</td>';
 		print '		<td align="center" style="width: 150px;">Poids commandé</td>';
 		print '		<td align="center" style="width: 150px;">Poids expédié</td>';
 		print '		<td align="center" style="width: 150px;">Poids à expédier</td>';
-		print '		<td align="center">Flacon réel</td>';
+		print '		<td align="center">Equipement réel</td>';
+		print '		<td align="center" style="width: 150px;">Carton</td>';
+		print '		<td align="center" style="width: 150px;">Numéro de suivi</td>';
 		print '		<td align="center">Poids</td>';
 		print '		<td align="center">Poids réel</td>';
 		print '		<td align="center">Tare</td>';
@@ -272,6 +277,8 @@ function _print_entete_tableau(){
 		print '		<td align="center" style="width: 150px;">Unités expédiées</td>';
 		print '		<td align="center" style="width: 150px;">Unités à expédier</td>';
 		print '		<td align="center" style="width: 150px;">Lot</td>';
+		print '		<td align="center" style="width: 150px;">Carton</td>';
+		print '		<td align="center" style="width: 150px;">Numéro de suivi</td>';
 		print '		<td align="center">Unités</td>';
 		print '		<td align="center">Unités réelles</td>';
 		print '		<td align="center">Tare</td>';
@@ -352,6 +359,11 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 			
 			print '		<input type="hidden" name="idexpeditiondetasset_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->rowid.'">';
 			print '</td>';
+
+			
+			print '<td align="center"><input type="text" style="width:25px;" id="carton_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="carton_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->carton.'"></td>';
+			print '<td align="center"><input type="text" style="width:75px;" id="numerosuivi_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="numerosuivi_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->numerosuivi.'"></td>';
+
 			print '<td align="center">';
 			print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->weight.'">';
 			print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$detailline->weight_unit);
@@ -469,6 +481,10 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 				print '<td align="center">'.$PDOdb->Get_field('serial_number').' - Lot n° '.$PDOdb->Get_field('lot_number').' - '.floatval($PDOdb->Get_field('contenancereel_value')).' '.measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight").'</td>';
 			else
 				print '<td align="center">'.$detailline->lot.'</td>';
+
+			print '<td align="center">'.$detailline->carton.'</td>';
+			print '<td align="center">'.$detailline->numerosuivi.'</td>';
+
 			print '<td align="center">'.floatval($detailline->weight).' '.measuring_units_string($detailline->weight_unit,"weight").'</td>';
 			print '<td align="center">'.floatval($detailline->weight_reel).' '.measuring_units_string($detailline->weight_reel_unit,"weight").'</td>';
 			print '<td align="center">'.floatval($detailline->tare).' '.measuring_units_string($detailline->tare_unit,"weight").'</td>';
@@ -483,7 +499,7 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 		print '<td align="center"> - </td>';
 		print '<td align="center"> - </td>';
 	}
-	print '</tr><tr class="impair"><td colspan="9">&nbsp</td></tr>';
+	print '</tr><tr class="impair"><td colspan="11">&nbsp</td></tr>';
 }
 
 function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lot='',$i=0){
