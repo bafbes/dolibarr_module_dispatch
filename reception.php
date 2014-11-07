@@ -69,6 +69,8 @@
 				$asset->firmware = $line['firmware'];
 				$asset->imei= $line['imei'];
 				
+				$asset->contenancereel_value = 1;
+				
 				$nb_year_garantie = 0;
 				
 				$prod = new Product($db);

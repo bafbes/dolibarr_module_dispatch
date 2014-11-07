@@ -8,7 +8,7 @@ if(isset($_POST['id_detail'])){
 else
 	return 0;
 
-$ATMdb = new Tdb;
+$ATMdb = new TPDOdb;
 
 $sql = "DELETE FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE rowid = ".$id_detail;
 $ATMdb->Execute($sql);

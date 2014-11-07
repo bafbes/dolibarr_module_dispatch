@@ -10,113 +10,21 @@ $commande = $objectsrc; //récupération de l'onjet commande
 $expedition = $object; //récupération de l'objet expedition
 $expedition->fetch_lines();
 
-/*echo '<pre>';
-print_r($_POST);
-echo '</pre>';exit;*/
-global $db;
 
-?>
-<script type="text/javascript">
-	function add_line(id_ligne,rang){
-		newrang = rang + 1;
-		ligne = $('.line_'+id_ligne+'_'+rang);
-		
-		//implémentation du compteur générale pour le traitement
-		$('input[name=cptLigne]').val(parseInt($('input[name=cptLigne]').val()) + 1);
-		
-		//MAJ du rowspan pour la partie gauche de la ligne
-		cpt = 0;
-		cpt_max = 3;
-		$('tr.line_'+id_ligne+'_1 > td').each(function(){
-			if(cpt <= cpt_max)
-				$(this).attr('rowspan',newrang);
-			cpt = cpt + 1;
-		});
-		
-		//clonage de la ligne et suppression des td en trop
-		newligne = $(ligne).clone(true).insertAfter($(ligne));
-		cpt = 0;
-		if(rang == 1){
-			$(newligne).find('> td').each(function(){
-				if(cpt <= 3)
-					$(this).remove();
-				cpt = cpt + 1;
-			});
-		}
-		
-		//MAJ des libelle de class, name, id des différents champs de la nouvelle ligne
-		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
-		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
-		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
-		<?php if($conf->global->MAIN_MODULE_ASSET) { ?> $(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang); <?php } ?>
-		$(newligne).find('#lot_'+id_ligne+'_'+rang).attr('id','lot_'+id_ligne+'_'+newrang).attr('name','lot_'+id_ligne+'_'+newrang);
-		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
-		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
-		$(newligne).find('#weightreel_'+id_ligne+'_'+rang).attr('id','weightreel_'+id_ligne+'_'+newrang).attr('name','weightreel_'+id_ligne+'_'+newrang);
-		$(newligne).find('select[name=weightreelunit_'+id_ligne+'_'+rang+']').attr('name','weightreelunit_'+id_ligne+'_'+newrang);
-		$(newligne).find('#tare_'+id_ligne+'_'+rang).attr('id','tare_'+id_ligne+'_'+newrang).attr('name','tare_'+id_ligne+'_'+newrang);
-		$(newligne).find('select[name=tareunit_'+id_ligne+'_'+rang+']').attr('name','tareunit_'+id_ligne+'_'+newrang);
-		
-		$(newligne).find('>input').val('');
-	}
-	
-	function delete_line(id_ligne,ligne,id_detail){
-		
-		$(ligne).parent().parent().remove();
-		
-		cpt = 0;
-		$('tr.line_'+id_ligne+'_1 > td').each(function(){
-			if(cpt <= 4){
-				nb = $(this).attr('rowspan');
-				$(this).attr('rowspan',nb - 1);
-				$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+(nb-1)+')')
-			}
-			cpt = cpt + 1;
-		});
-		
-		if(id_detail != false){
-			$.ajax({
-				type: "POST"
-				,url:'script/ajax.delete_line.php'
-				,data:{
-					id_detail : id_detail
-				}
-			});
-		}
-	}
-	
-	$(function() {
-		$( "#dialog" ).dialog({
-			autoOpen: false,
-			height: 700,
-			width: 900,
-			show: {
-				effect: "blind",
-				duration: 1000
-			},
-			buttons: {
-				"Annuler": function() {
-					$('#etiquettes').empty();
-					$( this ).dialog( "close" );
-				},				
-				"Imprimer": function(){
-					window.frames.etiquettes.focus();
-					window.frames.etiquettes.print();
-				}
-			}
-		});
-		$( "#btnimpression" ).click(function() {
-			$( "#dialog" ).dialog( "open" );
-		});
-	});
-	
-	function generer_etiquettes(){
-		
-		$('#etiquettes').attr('src','imp_etiquette.php?startpos='+$('#startpos').val()+'&copie='+$('#copie').val()+'&modele='+$('#modele').val()+'&expedition='+<?php echo $expedition->id; ?>+'&margetop='+$('#margetop').val()+'&margeleft='+$('#margeleft').val());
-	}
-</script>
-<?php
-/*echo '<pre>';
+
+_js($expedition);
+/*echo '<pre>';123456789 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
+- Lot n° - 0 Kg			1 Kg	1 Kg	0 Kg
+123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
+123456783 - Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
+123456789 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
+- Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
+123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
+123456784 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
+- Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
+123456787 - Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
+123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
+123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
 print_r($expedition);
 echo '</pre>'; exit;*/
 
@@ -163,8 +71,121 @@ function _action(&$expedition,&$commande) {
 
 //Affiche le détail des lignes d'expédition avec leur équipements
 function _fiche(&$PDOdb,&$expedition, &$commande, $mode){
-	
+global $conf;
+		
 	if($mode == 'edit'){
+				
+		if($conf->asset->enabled) {
+			dol_include_once('/asset/class/asset.class.php');
+			
+			$form=new TFormCore('auto', 'formimport','post', true);	
+			echo $form->hidden('action','edit');
+			
+			echo $form->hidden('id', $expedition->id);
+			echo $form->fichier('Fichier à importer','file1','',80);
+			echo $form->btsubmit('Envoyer', 'btsend');	
+			
+			$form->end();	
+			
+			if(!empty($_FILES['file1']['name'])) {
+				
+				$f1  =file($_FILES['file1']['tmp_name']);
+			
+				$TImport = array();
+				
+				
+				
+				foreach($f1 as $k=>$line) {
+					
+					list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
+					
+					$asset=new TAsset;
+					if($asset->loadReference($PDOdb, $numserie)) {
+						
+						// l'équipement existe
+						foreach($expedition->lines as &$line) {
+							if($asset->fk_product == $line->fk_product ) {
+								$id_line_dispatch = $line->line_id;
+								break;
+							} 
+						}
+						
+						$dispatchdetail = new TDispatchDetail();
+						$dispatchdetail->fk_expeditiondet = $id_line_dispatch;
+						$dispatchdetail->fk_asset = $asset->getId();
+						$dispatchdetail->rang = $k;
+						$dispatchdetail->lot = '';
+						$dispatchdetail->weight = $asset->contenance_value;
+						$dispatchdetail->weight_reel = $asset->contenancereel_value; 
+						$dispatchdetail->tare = 0;
+						$dispatchdetail->weight_unit = $asset->contenance_units;
+						$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
+						$dispatchdetail->tare_unit = 0;
+						
+						$dispatchdetail->carton = '';
+						$dispatchdetail->numerosuivi = '';
+	
+						$dispatchdetail->save($PDOdb);
+						
+					}	
+				
+					
+				}
+				
+				setEventMessage('Fichier importé');
+			}
+
+
+			$form=new TFormCore('auto', 'formaddasset','post', true);	
+			echo $form->hidden('action','edit');
+			echo $form->hidden('mode','addasset');
+			
+			echo $form->hidden('id', $expedition->id);
+			echo $form->texte('nuémro de série à ajouter','numserie','',30);
+			echo $form->btsubmit('Ajouter', 'btaddasset');	
+			
+			$form->end();	
+			
+			if(GETPOST('mode')=='addasset') {
+				
+				$asset=new TAsset;
+					if($asset->loadReference($PDOdb, GETPOST('numserie'))) {
+				
+						// l'équipement existe
+						foreach($expedition->lines as &$line) {
+							if($asset->fk_product == $line->fk_product ) {
+								$id_line_dispatch = $line->line_id;
+								break;
+							} 
+						}
+				
+						$dispatchdetail = new TDispatchDetail();
+						$dispatchdetail->fk_expeditiondet = $id_line_dispatch;
+						$dispatchdetail->fk_asset = $asset->getId();
+						$dispatchdetail->rang = 0;
+						$dispatchdetail->lot = '';
+						$dispatchdetail->weight = $asset->contenance_value;
+						$dispatchdetail->weight_reel = $asset->contenancereel_value; 
+						$dispatchdetail->tare = 0;
+						$dispatchdetail->weight_unit = $asset->contenance_units;
+						$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
+						$dispatchdetail->tare_unit = 0;
+						
+						$dispatchdetail->carton = '';
+						$dispatchdetail->numerosuivi = '';
+		
+						$dispatchdetail->save($PDOdb);
+						
+						setEventMessage('Equipement ajouté');
+					}
+			}
+			
+
+				
+		}	
+		
+			
+		
 		print '<form action="?id='.$expedition->id.'" method="POST" onsubmit="delete_input_hide();">';
 		print '<input type="hidden" name="action" value="save">';
 		print '<input type="hidden" name="cptLigne" value="'.count($expedition->lines).'">';
@@ -253,21 +274,25 @@ function _print_entete_tableau(){
 	global $conf;
 	
 	if($conf->global->MAIN_MODULE_ASSET){
+		
+		?>
+		<table class="liste" width="100%"> 
+			<tr class="liste_titre"> 
+				<td style="width: 300px;">Produit</td> 
+				<td align="center" style="width: 100px;">Equipement prévu</td> 
+				<td align="center" style="width: 150px;">Poids commandé</td> 
+				<td align="center" style="width: 150px;">Poids expédié</td> 
+		 		<td align="center" style="width: 150px;">Poids à expédier</td> 
+		 		<td align="center">Equipement réel</td> 
+		 		<td align="center" style="width: 150px;">Carton</td> 
+		 		<td align="center" style="width: 150px;">Numéro de suivi</td> 
+		 		<td align="center">Poids</td> 
+		 		<td align="center">Poids réel</td> 
+		 		<td align="center">Tare</td> 
+		 	</tr>
+		<?php
 	
-		print '<table class="liste" width="100%">';
-		print '	<tr class="liste_titre">';
-		print '		<td style="width: 300px;">Produit</td>';
-		print '		<td align="center" style="width: 100px;">Equipement prévu</td>';
-		print '		<td align="center" style="width: 150px;">Poids commandé</td>';
-		print '		<td align="center" style="width: 150px;">Poids expédié</td>';
-		print '		<td align="center" style="width: 150px;">Poids à expédier</td>';
-		print '		<td align="center">Equipement réel</td>';
-		print '		<td align="center" style="width: 150px;">Carton</td>';
-		print '		<td align="center" style="width: 150px;">Numéro de suivi</td>';
-		print '		<td align="center">Poids</td>';
-		print '		<td align="center">Poids réel</td>';
-		print '		<td align="center">Tare</td>';
-		print '	</tr>';
+		
 	}
 	else{
 		print '<table class="liste" width="100%">';
@@ -507,13 +532,14 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lo
 	print '<select id="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : ($i+1) ).'" name="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : ($i+1) ).'" class="equipement_'.$line->rowid.'">';
 	
 	//Chargement des équipement lié au produit
-	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units, emplacement
+	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
 	 		 FROM ".MAIN_DB_PREFIX."asset
 	 		 WHERE fk_product = ".$product->id;
 	// 13.10.28 - MKO : On autorise la sélection d'un équipement dans un autre lot lors de l'expé
 	//if($asset_lot != '')
 	//	$sql .= " AND lot_number = '".$asset_lot."'";
 	$sql .= " ORDER BY contenance_value DESC";
+	
 	$PDOdb->Execute($sql);
 	$defaultFlacon = !empty($line) ? $line->fk_asset : $asset_lot;
 	
@@ -585,7 +611,113 @@ function validFile($name) {
 	
 }
 
-llxFooter();
+function _js(&$expedition){
+	global $conf;
+	?>
+	<script type="text/javascript">
+	function add_line(id_ligne,rang){
+		newrang = rang + 1;
+		ligne = $('.line_'+id_ligne+'_'+rang);
+		
+		//implémentation du compteur générale pour le traitement
+		$('input[name=cptLigne]').val(parseInt($('input[name=cptLigne]').val()) + 1);
+		
+		//MAJ du rowspan pour la partie gauche de la ligne
+		cpt = 0;
+		cpt_max = 3;
+		$('tr.line_'+id_ligne+'_1 > td').each(function(){
+			if(cpt <= cpt_max)
+				$(this).attr('rowspan',newrang);
+			cpt = cpt + 1;
+		});
+		
+		//clonage de la ligne et suppression des td en trop
+		newligne = $(ligne).clone(true).insertAfter($(ligne));
+		cpt = 0;
+		if(rang == 1){
+			$(newligne).find('> td').each(function(){
+				if(cpt <= 3)
+					$(this).remove();
+				cpt = cpt + 1;
+			});
+		}
+		
+		//MAJ des libelle de class, name, id des différents champs de la nouvelle ligne
+		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
+		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
+		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
+		<?php if($conf->global->MAIN_MODULE_ASSET) { ?> $(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang); <?php } ?>
+		$(newligne).find('#lot_'+id_ligne+'_'+rang).attr('id','lot_'+id_ligne+'_'+newrang).attr('name','lot_'+id_ligne+'_'+newrang);
+		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
+		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
+		$(newligne).find('#weightreel_'+id_ligne+'_'+rang).attr('id','weightreel_'+id_ligne+'_'+newrang).attr('name','weightreel_'+id_ligne+'_'+newrang);
+		$(newligne).find('select[name=weightreelunit_'+id_ligne+'_'+rang+']').attr('name','weightreelunit_'+id_ligne+'_'+newrang);
+		$(newligne).find('#tare_'+id_ligne+'_'+rang).attr('id','tare_'+id_ligne+'_'+newrang).attr('name','tare_'+id_ligne+'_'+newrang);
+		$(newligne).find('select[name=tareunit_'+id_ligne+'_'+rang+']').attr('name','tareunit_'+id_ligne+'_'+newrang);
+		
+		$(newligne).find('>input').val('');
+	}
+	
+	function delete_line(id_ligne,ligne,id_detail){
+		
+		$(ligne).parent().parent().remove();
+		
+		cpt = 0;
+		$('tr.line_'+id_ligne+'_1 > td').each(function(){
+			if(cpt <= 4){
+				nb = $(this).attr('rowspan');
+				$(this).attr('rowspan',nb - 1);
+				$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+(nb-1)+')')
+			}
+			cpt = cpt + 1;
+		});
+		
+		if(id_detail != false){
+			$.ajax({
+				type: "POST"
+				,url:'script/ajax.delete_line.php'
+				,data:{
+					id_detail : id_detail
+				}
+			});
+		}
+	}
+	
+	$(function() {
+		$( "#dialog" ).dialog({
+			autoOpen: false,
+			height: 700,
+			width: 900,
+			show: {
+				effect: "blind",
+				duration: 1000
+			},
+			buttons: {
+				"Annuler": function() {
+					$('#etiquettes').empty();
+					$( this ).dialog( "close" );
+				},				
+				"Imprimer": function(){
+					window.frames.etiquettes.focus();
+					window.frames.etiquettes.print();
+				}
+			}
+		});
+		$( "#btnimpression" ).click(function() {
+			$( "#dialog" ).dialog( "open" );
+		});
+	});
+	
+	function generer_etiquettes(){
+		
+		$('#etiquettes').attr('src','imp_etiquette.php?startpos='+$('#startpos').val()+'&copie='+$('#copie').val()+'&modele='+$('#modele').val()+'&expedition='+<?php echo $expedition->id; ?>+'&margetop='+$('#margetop').val()+'&margeleft='+$('#margeleft').val());
+	}
+</script>
+<?php
+	
+}
+
+
 
 ?>
 <div id="dialog" title="Impression Etiquette">
@@ -626,4 +758,6 @@ llxFooter();
 			</td>
 		</tr>
 	</table>
-</div>
+</div><?php
+
+llxFooter();
