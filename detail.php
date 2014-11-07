@@ -142,7 +142,7 @@ function _action(&$expedition,&$commande) {
 	if(isset($_REQUEST['action'])) {
 		switch($_REQUEST['action']) {
 			
-			case 'edit'	: //Ajout ou suppression de flacons associé à une ligne d'expédition
+			case 'edit'	: //Ajout ou suppression de équipements associé à une ligne d'expédition
 				_fiche($PDOdb,$expedition,$commande,'edit');
 				break;
 				
@@ -161,7 +161,7 @@ function _action(&$expedition,&$commande) {
 	}
 }
 
-//Affiche le détail des lignes d'expédition avec leur flacons
+//Affiche le détail des lignes d'expédition avec leur équipements
 function _fiche(&$PDOdb,&$expedition, &$commande, $mode){
 	
 	if($mode == 'edit'){
@@ -329,7 +329,7 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	
 	if($conf->global->MAIN_MODULE_ASSET){
 		dol_include_once('/asset/class/asset.class.php');
-		$ATMdb = new Tdb;
+		$ATMdb = new TPDOdb;
 		$asset = new TAsset();
 		$asset->load($ATMdb, $asset_lot);
 	}
@@ -428,9 +428,9 @@ function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	//actions
 	print '<tr>';
 	if($conf->global->MAIN_MODULE_ASSET)
-		print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un flacon d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
+		print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter un équipement d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
 	else
-		print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une ligne de détail:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un flacon suplémentaire" title="Lié un flacon suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
+		print '<td colspan="8" align="left"><span style="padding-left: 25px;">Ajouter une ligne de détail:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
 	print '</tr>';
 }
 
@@ -452,7 +452,7 @@ function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLin
 	
 	if($conf->global->MAIN_MODULE_ASSET){
 		dol_include_once('/asset/class/asset.class.php');
-		$ATMdb = new Tdb;
+		$ATMdb = new TPDOdb;
 		$asset = new TAsset();
 		$asset->load($ATMdb, $asset_lot);
 	}
@@ -510,7 +510,7 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lo
 	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units, emplacement
 	 		 FROM ".MAIN_DB_PREFIX."asset
 	 		 WHERE fk_product = ".$product->id;
-	// 13.10.28 - MKO : On autorise la sélection d'un flacon dans un autre lot lors de l'expé
+	// 13.10.28 - MKO : On autorise la sélection d'un équipement dans un autre lot lors de l'expé
 	//if($asset_lot != '')
 	//	$sql .= " AND lot_number = '".$asset_lot."'";
 	$sql .= " ORDER BY contenance_value DESC";
@@ -530,7 +530,7 @@ function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lo
 	}
 
 	if($cpt == 0){
-		print '<option value="null">Aucun flacon utilisable pour ce produit</option>';
+		print '<option value="null">Aucun équipement utilisable pour ce produit</option>';
 	}
 	print '</select>';
 }
