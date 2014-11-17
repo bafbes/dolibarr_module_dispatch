@@ -96,7 +96,7 @@ class moddispatch extends DolibarrModules
 		$this->dirs = array();
 
 		// Config pages. Put here list of php page, stored into mymodule/admin directory, to use to setup module.
-		$this->config_page_url = array("index.php@dispatch");
+		$this->config_page_url = array();
 
 		// Dependencies
 		$this->depends = array();		// List of modules id that must be enabled if this module is enabled
