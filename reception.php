@@ -4,7 +4,12 @@
 
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
+	
+	$id = GETPOST('id');
 
+	$commandefourn = new CommandeFournisseur($db);
+	$commandefourn->fetch($id);
+	
 	$action = GETPOST('action');
 	$TImport = &$_SESSION['import_recept'];
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
@@ -13,7 +18,7 @@
 		$TImport = array();
 		
 		foreach($f1 as $line) {
-			
+
 			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
 			if($numserie!='') {
 				$TImport[] =array(
@@ -57,7 +62,7 @@
 		$PDOdb=new TPDOdb;
 		
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
-		
+
 		foreach($TImport  as $k=>$line) {
 				
 			$asset =new TAsset;
@@ -75,11 +80,38 @@
 				
 				$prod = new Product($db);
 				$prod->fetch($asset->fk_product);
+
+				//Affectation du type d'équipement pour avoir accès aux extrafields équipement
+				$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
+				$asset->load_asset_type($PDOdb);
+				
+				//Renseignement des extrafields
+				$asset->set_date('date_reception', $_REQUEST['date_recep']);
+				
+				foreach($commandefourn->lines as $line){
+					if($line->fk_product == $asset->fk_product){
+						$asset->prix_achat  = number_format($line->subprice,2);
+						
+						$extension_garantie = 0;
+						$PDOdb->Execute('SELECT extension_garantie FROM '.MAIN_DB_PREFIX.'commande_fournisseurdet WHERE rowid = '.$line->id);
+						if($PDOdb->Get_line()){
+							$extension_garantie = $PDOdb->Get_field('extension_garantie');
+						}
+						
+					}
+				}
+				
 				$nb_year_garantie+=$prod->array_options['options_duree_garantie_fournisseur'];
 				
-				//TODO ajouter l'extension de ligne
-				
 				$asset->date_fin_garantie_fourn = strtotime('+'.$nb_year_garantie.'year', $time_date_recep);
+				$asset->date_fin_garantie_fourn = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_fourn);
+				$asset->fk_soc = $commandefourn->socid;
+				
+				$societe = new Societe($db);
+				$societe->fetch('','NOMADIC SOLUTIONS');
+				
+				$asset->fk_societe_localisation = $societe->id;
+				$asset->etat = 0; //En stock
 				
 				$asset->save($PDOdb);
 			}
@@ -92,12 +124,7 @@
 		
 	}
 	
-	usort($TImport,'_by_ref');
-
-	$id = GETPOST('id');
-
-	$commandefourn = new CommandeFournisseur($db);
-	$commandefourn->fetch($id);
+	if(is_array($TImport)) usort($TImport,'_by_ref');
 
 	fiche($commandefourn, $TImport);
 
@@ -127,7 +154,7 @@ global $langs, $db;
 	echo $form->fichier('Fichier à importer','file1','',80);
 	echo $form->btsubmit('Envoyer', 'btsend');	
 	
-	tabImport($TImport);
+	tabImport($TImport,$commande);
 	
 	$form->end();
 	
@@ -136,7 +163,7 @@ global $langs, $db;
 	llxFooter();
 }
 
-function tabImport($TImport) {
+function tabImport($TImport,$commande) {
 global $langs, $db;		
 	
 	$form=new TFormCore;
@@ -158,29 +185,31 @@ global $langs, $db;
 		
 		$prod = new Product($db);
 		
-		foreach ($TImport as $k=>$line) {
-						
-			if($prod->id==0 || $line['ref']!= $prod->ref) {
-				if(!empty( $line['fk_product']))$prod->fetch($line['fk_product']);
-				else $prod->fetch('', $line['ref']);
-			} 		
-				
-			?><tr>
-				<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
-				<td><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></td>
-				<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
-				<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
-				<td>
-					<?php 
-					echo '<a href="?action=DELETE_LINE&k='.$k.'">'.img_delete().'</a>';					
+		if(is_array($TImport)){
+			foreach ($TImport as $k=>$line) {
+							
+				if($prod->id==0 || $line['ref']!= $prod->ref) {
+					if(!empty( $line['fk_product']))$prod->fetch($line['fk_product']);
+					else $prod->fetch('', $line['ref']);
+				} 		
 					
-					?>
-				</td>
-			</tr>
-			
-			<?
-			
-		}	
+				?><tr>
+					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
+					<td>
+						<?php 
+						echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'">'.img_delete().'</a>';					
+						
+						?>
+					</td>
+				</tr>
+				
+				<?
+				
+			}
+		}
 	
 		?><tr style="background-color: lightblue;">
 				<td><?php $formDoli->select_produits(-1, 'TLine[-1][fk_product]') ?></td>
