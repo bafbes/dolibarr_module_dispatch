@@ -3,6 +3,8 @@
 	require('config.php');
 
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
+	dol_include_once('/product/class/html.formproduct.class.php' );
+	dol_include_once('/product/stock/class/entrepot.class.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
 	
 	global $langs;
@@ -107,6 +109,7 @@
 				$asset->date_fin_garantie_fourn = strtotime('+'.$nb_year_garantie.'year', $time_date_recep);
 				$asset->date_fin_garantie_fourn = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_fourn);
 				$asset->fk_soc = $commandefourn->socid;
+				$asset->fk_entrepot = GETPOST('id_entrepot');
 				
 				$societe = new Societe($db);
 				$societe->fetch('','NOMADIC SOLUTIONS');
@@ -171,6 +174,7 @@ global $langs, $db;
 	
 	$form=new TFormCore;
 	$formDoli =	new Form($db);
+	$formproduct=new FormProduct($db);
 	
 	print count($TImport).' équipement(s) dans votre réception';
 	
@@ -238,6 +242,11 @@ global $langs, $db;
 		<hr />
 		<?
 		echo $form->calendrier('Date de réception', 'date_recep', time());
+		
+		$entrepot = new Entrepot($db);
+		$entrepot->fetch('','Neuf');
+		
+		print " <b>Entrepôt</b> ".$formproduct->selectWarehouses($entrepot->id,'id_entrepot','',1);
 		
 		echo $form->btsubmit('Créer les équipements', 'bt_create');
 	}
