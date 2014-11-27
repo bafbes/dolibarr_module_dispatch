@@ -5,6 +5,9 @@
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
 	
+	global $langs;
+	$langs->load('orders');
+	
 	$id = GETPOST('id');
 
 	$commandefourn = new CommandeFournisseur($db);
