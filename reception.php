@@ -54,8 +54,6 @@
 		setEventMessage('Modifications enregistrées');
 	}
 	elseif(isset($_POST['bt_create'])) {
-				
-		setEventMessage('Equipements créés');
 		
 		dol_include_once('/asset/class/asset.class.php');
 		
@@ -116,12 +114,12 @@
 				$asset->save($PDOdb);
 			}
 			
-			
-			
 		}
-			
-			
 		
+		$commandefourn->setStatus($user, 5);
+		
+		setEventMessage('Equipements créés');
+
 	}
 	
 	if(is_array($TImport)) usort($TImport,'_by_ref');
@@ -151,19 +149,20 @@ global $langs, $db;
 	$form=new TFormCore('auto','formrecept','post', true);
 	echo $form->hidden('action', 'SAVE');
 	echo $form->hidden('id', $commande->id);
-	echo $form->fichier('Fichier à importer','file1','',80);
-	echo $form->btsubmit('Envoyer', 'btsend');	
+	
+	if($commande->statut < 5){
+		echo $form->fichier('Fichier à importer','file1','',80);
+		echo $form->btsubmit('Envoyer', 'btsend');
+	}
 	
 	tabImport($TImport,$commande);
 	
 	$form->end();
 	
-	
-	
 	llxFooter();
 }
 
-function tabImport($TImport,$commande) {
+function tabImport(&$TImport,&$commande) {
 global $langs, $db;		
 	
 	$form=new TFormCore;
@@ -182,7 +181,7 @@ global $langs, $db;
 		</tr>
 		
 	<?
-		
+		if($commande->statut >= 5) $form->type_aff = "view";
 		$prod = new Product($db);
 		
 		if(is_array($TImport)){
@@ -200,8 +199,9 @@ global $langs, $db;
 					<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
 					<td>
 						<?php 
-						echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'">'.img_delete().'</a>';					
-						
+						if($commande->statut < 5){
+							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'">'.img_delete().'</a>';
+						}
 						?>
 					</td>
 				</tr>
@@ -210,29 +210,33 @@ global $langs, $db;
 				
 			}
 		}
-	
-		?><tr style="background-color: lightblue;">
-				<td><?php $formDoli->select_produits(-1, 'TLine[-1][fk_product]') ?></td>
-				<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30)   ?></td>
-				<td><?php echo $form->texte('','TLine[-1][imei]', '', 30)   ?></td>
-				<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30)   ?></td>
-				<td>Nouveau
-				</td>
-			</tr>
+		
+		if($commande->statut < 5){
+			?><tr style="background-color: lightblue;">
+					<td><?php $formDoli->select_produits(-1, 'TLine[-1][fk_product]') ?></td>
+					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30)   ?></td>
+					<td><?php echo $form->texte('','TLine[-1][imei]', '', 30)   ?></td>
+					<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30)   ?></td>
+					<td>Nouveau
+					</td>
+				</tr>
+			<?php
+		}	
+		?>
 			
 		
 	</table>
 	<?
-	
-	echo $form->btsubmit('Enregistrer', 'bt_save');
+	if($commande->statut < 5){
+		echo $form->btsubmit('Enregistrer', 'bt_save');
+			
+		?>
+		<hr />
+		<?
+		echo $form->calendrier('Date de réception', 'date_recep', time());
 		
-	?>
-	<hr />
-	<?
-	
-	echo $form->calendrier('Date de réception', 'date_recep', time());
-	
-	echo $form->btsubmit('Créer les équipements', 'bt_create');
+		echo $form->btsubmit('Créer les équipements', 'bt_create');
+	}
 	
 }
 
