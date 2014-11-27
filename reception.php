@@ -9,7 +9,7 @@
 
 	$commandefourn = new CommandeFournisseur($db);
 	$commandefourn->fetch($id);
-	
+
 	$action = GETPOST('action');
 	$TImport = &$_SESSION['import_recept'];
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
@@ -117,12 +117,13 @@
 		}
 		
 		$commandefourn->setStatus($user, 5);
+		$commandefourn->statut = 5;
 		
 		setEventMessage('Equipements créés');
 
 	}
-	
-	if(is_array($TImport)) usort($TImport,'_by_ref');
+
+	//if(is_array($TImport)) usort($TImport,'_by_ref');
 
 	fiche($commandefourn, $TImport);
 
