@@ -141,7 +141,7 @@ global $conf;
 			echo $form->hidden('mode','addasset');
 			
 			echo $form->hidden('id', $expedition->id);
-			echo $form->texte('nuémro de série à ajouter','numserie','',30);
+			echo $form->texte('Numéro de série à ajouter','numserie','',30);
 			echo $form->btsubmit('Ajouter', 'btaddasset');	
 			
 			$form->end();	
