@@ -7,7 +7,7 @@
 	dol_include_once('/product/stock/class/entrepot.class.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
 	
-	global $langs;
+	global $langs, $user;
 	$langs->load('orders');
 	
 	$id = GETPOST('id');
@@ -65,7 +65,10 @@
 		$PDOdb=new TPDOdb;
 		
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
-
+			
+		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
+		$TProdVentil = array();
+		
 		foreach($TImport  as $k=>$line) {
 				
 			$asset =new TAsset;
@@ -118,13 +121,21 @@
 				$asset->etat = 0; //En stock
 				
 				$asset->save($PDOdb);
+				
+				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
+				$TProdVentil[$asset->fk_product] += 1;
 			}
 			
 		}
 		
+		foreach($TProdVentil as $id_prod => $qte){
+			//Fonction standard ventilation commande fournisseur
+			$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+		}
+		
 		$commandefourn->setStatus($user, 5);
 		$commandefourn->statut = 5;
-		
+
 		setEventMessage('Equipements créés');
 
 	}
