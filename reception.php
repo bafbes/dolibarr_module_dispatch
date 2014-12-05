@@ -127,14 +127,28 @@
 			}
 			
 		}
+
+		//pre($commandefourn,true);exit;
 		
+		$status = 5;
+		$totalementventile = true;
 		foreach($TProdVentil as $id_prod => $qte){
 			//Fonction standard ventilation commande fournisseur
+			
+			foreach($commandefourn->lines as $line){
+				if($line->fk_product = $id_prod){
+					if($qte < $line->qty && $totalementventile){
+						$totalementventile = false;
+						$status = 4;
+					}
+				}
+			}
+			
 			$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 		}
 		
-		$commandefourn->setStatus($user, 5);
-		$commandefourn->statut = 5;
+		$commandefourn->setStatus($user, $status);
+		$commandefourn->statut = $status;
 
 		setEventMessage('Equipements créés');
 
