@@ -89,6 +89,10 @@
 			$dispatchdetail->fk_expeditiondet = $fk_line_expe;
 			$dispatchdetail->fk_asset = $asset->rowid;
 			$dispatchdetail->rang = $rang;
+			$dispatchdetail->weight = 1;
+			$dispatchdetail->weight_reel = 1;
+			$dispatchdetail->weight_unit = 0;
+			$dispatchdetail->weight_reel_unit = 0;
 
 			$dispatchdetail->save($PDOdb);
 

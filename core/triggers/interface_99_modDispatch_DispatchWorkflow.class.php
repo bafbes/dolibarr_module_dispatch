@@ -137,9 +137,9 @@ class InterfaceDispatchWorkflow
 						}
 					}
 					//exit;
-				} else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
+				}/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
 					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
-				}
+				}*/
 			}
 			
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
