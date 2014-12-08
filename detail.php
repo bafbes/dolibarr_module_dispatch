@@ -1,846 +1,346 @@
 <?php
-require('config.php');
-require('class/dispatchdetail.class.php');
-include_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 
-//Mise en page du tableau récap de l'expédition
-include('detail_head.php');
+	require('config.php');
 
-$commande = $objectsrc; //récupération de l'onjet commande
-$expedition = $object; //récupération de l'objet expedition
-$expedition->fetch_lines();
-
-
-
-_js($expedition);
-/*echo '<pre>';123456789 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-- Lot n° - 0 Kg			1 Kg	1 Kg	0 Kg
-123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-123456783 - Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
-123456789 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-- Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
-123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-123456784 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-- Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
-123456787 - Lot n° - 0 Kg			0 Kg	0 Kg	0 Kg
-123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-123456745 - Lot n° - 1 Kg			1 Kg	1 Kg	0 Kg
-print_r($expedition);
-echo '</pre>'; exit;*/
-
-//Boutons d'action
-print '<div class="tabsAction">';
-if($expedition->statut == 0 && $_REQUEST['action'] != 'edit'){
-	print '<a class="butAction" href="?id='.$expedition->id.'&action=edit">Modifier le détail</a>';
-}
-elseif($_REQUEST['action'] != 'edit') {
-	print '<a class="butAction" id="btnimpression">Imprimer les étiquettes</a>';
-}
-print '</div><br>';
-
-print "<div class=\"titre\">Détail de l'expédition</div>";
-
-// Get parameters
-_action($expedition,$commande);
-
-function _action(&$expedition,&$commande) {
-	global $user, $conf;	
-	$PDOdb=new TPDOdb;
-
-	if(isset($_REQUEST['action'])) {
-		switch($_REQUEST['action']) {
-			
-			case 'edit'	: //Ajout ou suppression de équipements associé à une ligne d'expédition
-				_fiche($PDOdb,$expedition,$commande,'edit');
-				break;
-				
-			case 'save':
-				_save_expedition_lines($PDOdb,$expedition,$commande,$_REQUEST);
-				_fiche($PDOdb,$expedition,$commande,'view');
-				break;
-			
-			default :
-				_fiche($PDOdb,$expedition,$commande,'view');
-		}
-		
-	}
-	elseif(isset($_REQUEST['id'])) {
-		_fiche($PDOdb,$expedition,$commande,'view');
-	}
-}
-
-//Affiche le détail des lignes d'expédition avec leur équipements
-function _fiche(&$PDOdb,&$expedition, &$commande, $mode){
-global $conf;
-		
-	if($mode == 'edit'){
-				
-		if($conf->asset->enabled) {
-			dol_include_once('/asset/class/asset.class.php');
-			
-			$form=new TFormCore('auto', 'formimport','post', true);	
-			echo $form->hidden('action','edit');
-			
-			echo $form->hidden('id', $expedition->id);
-			echo $form->fichier('Fichier à importer','file1','',80);
-			echo $form->btsubmit('Envoyer', 'btsend');	
-			
-			$form->end();	
-			
-			if(!empty($_FILES['file1']['name'])) {
-				
-				$f1  =file($_FILES['file1']['tmp_name']);
-			
-				$TImport = array();
-				
-				
-				
-				foreach($f1 as $k=>$line) {
-					
-					list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-					
-					$asset=new TAsset;
-					if($asset->loadReference($PDOdb, $numserie)) {
-						
-						// l'équipement existe
-						foreach($expedition->lines as &$line) {
-							if($asset->fk_product == $line->fk_product ) {
-								$id_line_dispatch = $line->line_id;
-								break;
-							} 
-						}
-						
-						$dispatchdetail = new TDispatchDetail();
-						$dispatchdetail->fk_expeditiondet = $id_line_dispatch;
-						$dispatchdetail->fk_asset = $asset->getId();
-						$dispatchdetail->rang = $k;
-						$dispatchdetail->lot = '';
-						$dispatchdetail->weight = $asset->contenance_value;
-						$dispatchdetail->weight_reel = $asset->contenancereel_value; 
-						$dispatchdetail->tare = 0;
-						$dispatchdetail->weight_unit = $asset->contenance_units;
-						$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
-						$dispatchdetail->tare_unit = 0;
-						
-						$dispatchdetail->carton = '';
-						$dispatchdetail->numerosuivi = '';
-	
-						$dispatchdetail->save($PDOdb);
-						
-					}	
-				
-					
-				}
-				
-				setEventMessage('Fichier importé');
-			}
-
-
-			$form=new TFormCore('auto', 'formaddasset','post', true);	
-			echo $form->hidden('action','edit');
-			echo $form->hidden('mode','addasset');
-			
-			echo $form->hidden('id', $expedition->id);
-			echo $form->texte('Numéro de série à ajouter','numserie','',30);
-			echo $form->btsubmit('Ajouter', 'btaddasset');	
-			
-			$form->end();	
-			
-			if(GETPOST('mode')=='addasset') {
-				
-				$asset=new TAsset;
-					if($asset->loadReference($PDOdb, GETPOST('numserie'))) {
-				
-						// l'équipement existe
-						foreach($expedition->lines as &$line) {
-							if($asset->fk_product == $line->fk_product ) {
-								$id_line_dispatch = $line->line_id;
-								break;
-							} 
-						}
-				
-						$dispatchdetail = new TDispatchDetail();
-						$dispatchdetail->fk_expeditiondet = $id_line_dispatch;
-						$dispatchdetail->fk_asset = $asset->getId();
-						$dispatchdetail->rang = 0;
-						$dispatchdetail->lot = '';
-						$dispatchdetail->weight = $asset->contenance_value;
-						$dispatchdetail->weight_reel = $asset->contenancereel_value; 
-						$dispatchdetail->tare = 0;
-						$dispatchdetail->weight_unit = $asset->contenance_units;
-						$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
-						$dispatchdetail->tare_unit = 0;
-						
-						$dispatchdetail->carton = '';
-						$dispatchdetail->numerosuivi = '';
-		
-						$dispatchdetail->save($PDOdb);
-						
-						setEventMessage('Equipement ajouté');
-					}
-			}
-			
-
-				
-		}	
-		
-			
-		
-		print '<form action="?id='.$expedition->id.'" method="POST" onsubmit="delete_input_hide();">';
-		print '<input type="hidden" name="action" value="save">';
-		print '<input type="hidden" name="cptLigne" value="'.count($expedition->lines).'">';
-	}
-	
-	_print_entete_tableau();
-	
-	if(count($expedition->lines) > 0){
-		
-		//Parcours des lignes d'expédition
-		foreach($expedition->lines as $line){
-			
-			//Récupération du rowid de la ligne d'expédition car non stocké dans l'objet dolibarr....
-			$sql = "SELECT rowid 
-					FROM ".MAIN_DB_PREFIX."expeditiondet 
-					WHERE fk_origin_line = ".$line->fk_origin_line."
-					AND fk_expedition = ".$expedition->id;
-
-			$PDOdb->Execute($sql);
-			$PDOdb->Get_line();
-			$fk_expeditiondet = $PDOdb->Get_field('rowid');
-			
-			//Chargement des détails associé à la ligne
-			$TDispatchDetail = new TDispatchDetail;
-			$TDispatchDetail->loadLines($PDOdb, $fk_expeditiondet);
-			
-			$TotalLines += $TDispatchDetail->nbLines;
-			
-			_print_expedition_line($PDOdb,$expedition,$line,$TDispatchDetail,$fk_expeditiondet,$mode);
-		}
-	}
-	else{
-		print '<tr><td colspan="9">Aucunes lignes d\'expéditions à afficher<td></tr>';
-	}
-	
-	print '</table>';
-	
-	if($mode == 'view'){
-		print $TotalLines." équipement(s) dans votre expédition";
-	}
-	
-	if($mode == 'edit'){
-		print '<center><br><input type="submit" class="button" value="Sauvegarder" name="save">&nbsp;';
-		print '<input type="button" class="button" value="Annuler" name="back" onclick="window.location = \'?id='.$expedition->id.'\';"></center>';
-		print '</form>';
-	}
-}
-
-//Parse le formulaire puis le traite
-function _save_expedition_lines(&$PDOdb,&$expedition, &$commande, $request){
-	
-	//Parsing des données passé en $_POST
-	foreach($request as $cle=>$val){
-		$Tcle = explode('_', $cle);
-		if(!empty($Tcle)){
-			$Tval[$Tcle[2]][$Tcle[1]][$Tcle[0]] = $val;
-		}
-	}
-	
-	//Création des associations expeditiondet => expeditiondet_asset
-	foreach($Tval as $cle=>$val){
-		if(is_numeric($cle)){
-			foreach($val as $cle2=>$val2){
-				if(!empty($val2['weightreel']) && !empty($val2['weight'])){
-					$dispatchdetail = new TDispatchDetail();
-					
-					if(isset($val2['idexpeditiondetasset'])) $dispatchdetail->load($PDOdb, $val2['idexpeditiondetasset']);
-					
-					$dispatchdetail->fk_expeditiondet = $cle2;
-					$dispatchdetail->fk_asset = $val2['equipement'];
-					$dispatchdetail->rang = $cle;
-					$dispatchdetail->lot = $val2['lot'];;
-					$dispatchdetail->weight = price2num($val2['weight'],2);
-					$dispatchdetail->weight_reel = price2num($val2['weightreel'],2); 
-					$dispatchdetail->tare = price2num($val2['tare'],2);
-					$dispatchdetail->weight_unit = $val2['weightunit'];
-					$dispatchdetail->weight_reel_unit = $val2['weightreelunit'];
-					$dispatchdetail->tare_unit = $val2['tareunit'];
-					
-					$dispatchdetail->carton = $val2['carton'];
-					$dispatchdetail->numerosuivi = $val2['numerosuivi'];
-
-					$dispatchdetail->save($PDOdb);
-				}
-			}
-		}
-	}
-}
-
-//Affiche l'entete du tableau
-function _print_entete_tableau(){
-	
-	global $conf;
-	
-	if($conf->global->MAIN_MODULE_ASSET){
-		
-		?>
-		<table class="liste" width="100%"> 
-			<tr class="liste_titre"> 
-				<td style="width: 300px;">Produit</td>
-				<?php
-				if($conf->clilatoxan->enabled){
-					?>
-					<td align="center" style="width: 100px;">Equipement prévu</td>
-					<td align="center" style="width: 150px;">Poids commandé</td> 
-					<td align="center" style="width: 150px;">Poids expédié</td> 
-			 		<td align="center" style="width: 150px;">Poids à expédier</td>
-			 		<?php
-				}
-				?>
-		 		<td align="center">Equipement expédié</td> 
-		 		<?php
-				if($conf->clilatoxan->enabled){
-					?> 
-			 		<td align="center">Poids</td> 
-			 		<td align="center">Poids réel</td> 
-			 		<td align="center">Tare</td>
-			 		<?php 
-			 	}
-				else{
-					?>
-					<td align="center" style="width: 150px;">Carton</td> 
-		 			<td align="center" style="width: 150px;">Numéro de suivi</td>
-					<?php
-				}
-				?>
-		 	</tr>
-		<?php
-	
-		
-	}
-	else{
-		print '<table class="liste" width="100%">';
-		print '	<tr class="liste_titre">';
-		print '		<td style="width: 300px;">Produit</td>';
-		print '		<td align="center" style="width: 150px;">Unités commandées</td>';
-		print '		<td align="center" style="width: 150px;">Unités expédiées</td>';
-		print '		<td align="center" style="width: 150px;">Unités à expédier</td>';
-		print '		<td align="center" style="width: 150px;">Lot</td>';
-		print '		<td align="center" style="width: 150px;">Carton</td>';
-		print '		<td align="center" style="width: 150px;">Numéro de suivi</td>';
-		print '		<td align="center">Unités</td>';
-		print '		<td align="center">Unités réelles</td>';
-		print '		<td align="center">Tare</td>';
-		print '	</tr>';
-	}
-}
-
-//Affiche la ligne d'expédition
-function _print_expedition_line(&$PDOdb,&$expedition,&$line,&$TDispatchDetail,$fk_expeditiondet,$mode){
-	global $db,$conf;
-	
-	if($TDispatchDetail->nbLines > 0)
-		$nbLines = $TDispatchDetail->nbLines;
-	elseif($conf->asset->enabled)
-		$nbLines = $line->qty_shipped;
-	else
-		$nbLines = 1;
-	
-	$PDOdb->Execute("SELECT fk_product, tarif_poids, poids, qty FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
-	$PDOdb->Get_line();
-	
-	$product = new Product($db);
-	if($PDOdb->Get_field('fk_product')) $product->fetch($PDOdb->Get_field('fk_product'));
-	
-	if($mode == 'edit')
-		_form_expedition_line($PDOdb,$product,$line,$TDispatchDetail,$nbLines,$fk_expeditiondet);
-	else if ($mode == 'view')
-		_view_expedition_line($PDOdb,$product,$line,$TDispatchDetail,$nbLines,$mode);
-}
-
-//Affichage en type edition
-function _form_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines,$fk_expeditiondet){
-	global $db, $conf;
-
-	if((int)$product->id == 0){
-		$libelle = $line->description;
-	}
-	else{
-		$libelle = $product->getNomUrl(1).' - '.$product->label;
-	}
-	
-	$form = new FormProduct($db);
-	
-	//Spécifique Latoxan
-	if($conf->clilatoxan->enabled){
-		$poidsCommande = floatval($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty'));
-		$poids = $PDOdb->Get_field('poids');
-		$asset_lot = $PDOdb->Get_field('asset_lot');
-		$poidsExpedie = floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product));
-		$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
-		$poidsAExpedierParFlacon = floatval($PDOdb->Get_field('tarif_poids'));
-	}
-	
-	if($conf->global->MAIN_MODULE_ASSET){
-		dol_include_once('/asset/class/asset.class.php');
-		$ATMdb = new TPDOdb;
-		$asset = new TAsset();
-		$asset->load($ATMdb, $asset_lot);
-	}
-	
-	if($TDispatchDetail->nbLines > 0){
-		$cpt = 1;
-		foreach($TDispatchDetail->lines as $detailline){
-			
-			print '<tr class="line_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : 1 ).'">';
-			print '<td>'.$libelle.'</td>';
-			
-			if($conf->clilatoxan->enabled){
-				//rowspan="'.$nbLines.'"
-				print '<td align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
-				print '<td align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
-				print '<td align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
-			}
-			
-			if($cpt > 1){
-				print '		<td align="center">';
-				print '		<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,'.$detailline->rowid.');"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
-			}
-			else
-				print '		<td align="center">';
-
-			if($conf->global->MAIN_MODULE_ASSET){
-				_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot);
-			}
-			else{
-				print '<input type="text" style="width:75px;" id="lot_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="lot_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->lot.'">';
-			}
-			
-			print '		<input type="hidden" name="idexpeditiondetasset_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->rowid.'">';
-			print '</td>';
-
-			//Carton
-			print '<td align="center"><input type="text" style="width:25px;" id="carton_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="carton_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->carton.'"></td>';
-			//Numéro de suivi
-			print '<td align="center"><input type="text" style="width:75px;" id="numerosuivi_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="numerosuivi_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->numerosuivi.'"></td>';
-			
-			if($conf->clilatoxan->enabled){
-				print '<td align="center">';
-				print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weight_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->weight.'">';
-				print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$detailline->weight_unit);
-				print '</td>';
-				print '<td align="center">';
-				print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="weightreel_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->weight_reel.'">';
-				print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$detailline->weight_reel_unit);
-				print '</td>';
-				print '<td align="center">';
-				print		'<input style="width:50px;" type="text" id="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="tare_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->tare.'">';
-				print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ),"weight",$detailline->tare_unit);
-				print '</td>';
-			}
-			if($cpt > 1)
-				print '</tr>';
-			$cpt++;
-		}
-	}
-	elseif((int)$product->id >0){
-		if($conf->global->MAIN_MODULE_ASSET){
-			$cpt = $line->qty_shipped;
-		}
-		else {
-			$cpt = 1;
-		}
-		for($i=0;$i<$cpt;$i++){
-			print '<tr class="line_'.$fk_expeditiondet.'_'.($i+1).'">';
-			print '<td>'.$libelle.'</td>';
-			if($i > 0){
-				print '<td align="center">';
-				print 		'<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('.$fk_expeditiondet.',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>';
-			}
-			else if($conf->global->MAIN_MODULE_ASSET){
-				print '<td align="center">';
-					_select_equipement($PDOdb,$product,$detailline,$fk_expeditiondet,$asset_lot,$i);
-				print '</td>';
-			}
-			else{
-				print '<td align="right">';
-				print '<input type="text" style="width: 100px;" id="lot_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="lot_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->lot.'">';
-				print '</td>';
-			}
-			
-			//Carton
-			print '<td align="center"><input type="text" style="width:25px;" id="carton_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="carton_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->carton.'"></td>';
-			//Numéro de suivi
-			print '<td align="center"><input type="text" style="width:75px;" id="numerosuivi_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" name="numerosuivi_'.$fk_expeditiondet.'_'.(($detailline->rang)? $detailline->rang : 1 ).'" value="'.$detailline->numerosuivi.'"></td>';
-
-			$PDOdb->Execute("SELECT poids FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid = ".$line->fk_origin_line);
-			$PDOdb->Get_line();
-
-			if($conf->clilatoxan->enabled){
-				print '<td align="center">';
-				print		'<input style="width:50px;" type="text" id="weight_'.$fk_expeditiondet.'_'.($i+1).'" name="weight_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight) ? $detailline->weight:$poidsAExpedierParFlacon).'">';
-				print 		$form->select_measuring_units("weightunit_".$fk_expeditiondet.'_'.($i+1),"weight",$PDOdb->Get_field('poids'));
-				print '</td>';
-				print '<td align="center">';
-				print		'<input style="width:50px;" type="text" id="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" name="weightreel_'.$fk_expeditiondet.'_'.($i+1).'" value="'.(!empty($detailline->weight_reel) ? $detailline->weight_reel : $poidsAExpedierParFlacon).'">';
-				print 		$form->select_measuring_units("weightreelunit_".$fk_expeditiondet.'_'.($i+1),"weight",$PDOdb->Get_field('poids'));
-				print '</td>';
-				print '<td align="center">';
-				print		'<input style="width:50px;" type="text" id="tare_'.$fk_expeditiondet.'_'.($i+1).'" name="tare_'.$fk_expeditiondet.'_'.($i+1).'" value="'.$detailline->tare.'">';
-				print 		$form->select_measuring_units("tareunit_".$fk_expeditiondet.'_'.($i+1),"weight",-3);
-				print '</td>';
-			}
-			if($i > 0)
-				print '</tr>';
-		}
-	}
-	print '</tr>';
-	//actions
-	print '<tr>';
-	if((int)$product->id > 0){
-		if($conf->global->MAIN_MODULE_ASSET)
-			print '<td colspan="4" align="left"><span style="padding-left: 25px;">Ajouter un équipement d\'expédition:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
-		else
-			print '<td colspan="4" align="left"><span style="padding-left: 25px;">Ajouter une ligne de détail:</span><a id="add_'.$fk_expeditiondet.'" alt="Lié un équipement suplémentaire" title="Lié un équipement suplémentaire" style="cursor:pointer;" onclick="add_line('.$fk_expeditiondet.','.$nbLines.');"><img src="img/ajouter.png" style="cursor:pointer;" /></a></td>';
-	}
-	print '</tr>';
-}
-
-//Affichage en type view
-function _view_expedition_line(&$PDOdb,&$product,&$line,&$TDispatchDetail,$nbLines){
-	global $conf;
+	dol_include_once('/expedition/class/expedition.class.php' );
+	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
+	dol_include_once('/product/class/html.formproduct.class.php' );
+	dol_include_once('/core/lib/admin.lib.php' );
+	dol_include_once('/core/lib/sendings.lib.php' );
 	dol_include_once('/asset/class/asset.class.php');
 	
-	//Ligne libre ou ligne produit
-	if((int)$product->id == 0){
-		$libelle = $line->description;
-	}
-	else{
-		//$libelle = $product->ref.' - '.$product->label;
-		$libelle = $product->getNomUrl(1)." - ".$product->label;
-	}
-	
-	//Spécifique Latoxan
-	if($conf->clilatoxan->enabled){
-		$poidsCommande = round(floatval($PDOdb->Get_field('tarif_poids') * $PDOdb->Get_field('qty')), 6);
-		$poids = $PDOdb->Get_field('poids');
-		if($conf->global->MAIN_MODULE_ASSET) $asset_lot = $PDOdb->Get_field('asset_lot');
-		$poidsExpedie = round(floatval($TDispatchDetail->getPoidsExpedie($PDOdb,$line->rowid,$product)), 6);
-		$poidsAExpedier = floatval($poidsCommande - $poidsExpedie);
-	}
+	global $langs, $user,$db;
+	$langs->load('orders');
+	$PDOdb=new TPDOdb;
 
-	$ATMdb = new TPDOdb;
-	$asset = new TAsset();
-	$asset->load($ATMdb, $asset_lot);
+	$id = GETPOST('id');
+
+	$expedition = new Expedition($db);
+	$expedition->fetch($id);
 	
-	//pre($TDispatchDetail->lines,true);
-	if($TDispatchDetail->nbLines > 0){
-		foreach($TDispatchDetail->lines as $detailline){
+	$action = GETPOST('action');
+	$TImport = _loadDetail($PDOdb, $expedition);
 	
-			//chargement de l'équipement associé à la ligne
-			$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
-	 		    FROM ".MAIN_DB_PREFIX."asset
-	 		    WHERE rowid = ".$detailline->fk_asset;
+	function _loadDetail(&$PDOdb,&$expedition){
+		
+		$TImport = array();
+
+		foreach($expedition->lines as $line){
+		
+			$sql = "SELECT a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet
+					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
+						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON ( a.rowid = ea.fk_asset)
+						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
+					WHERE ea.fk_expeditiondet = ".$line->line_id."
+						ORDER BY ea.rang ASC";
+
 			$PDOdb->Execute($sql);
-			$PDOdb->Get_line();
 
-			print '<tr style="height:30px;">';
-			//print '<td rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'">'.$libelle.' </td>';
-			
-			//Libellé produit
-			print '<td>'.$libelle.' </td>';
-			
-			//Numéro d'équipement
-			if($conf->clilatoxan->enabled){
-				print '<td align="center">'.$PDOdb->Get_field('serial_number').' - Lot n° '.$PDOdb->Get_field('lot_number').' - '.floatval($PDOdb->Get_field('contenancereel_value')).' '.measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight").'</td>';
+			while ($PDOdb->Get_line()) {
+				$TImport[] =array(
+					'ref'=>$PDOdb->Get_field('ref')
+					,'numserie'=>$PDOdb->Get_field('serial_number')
+					,'fk_product'=>$PDOdb->Get_field('rowid')
+					,'fk_expeditiondet'=>$PDOdb->Get_field('fk_expeditiondet')
+				);
 			}
-			else{
-				print '<td align="center">'.(($PDOdb->Get_field('serial_number'))? '<a href="'.dol_buildpath('/asset/fiche.php?id='.$PDOdb->Get_field('rowid'),1).'">'.$PDOdb->Get_field('serial_number').'</a>': 'Aucun').'</td>';
-			}
-
-			//Poids
-			if($conf->clilatoxan->enabled){
-				//rowspan="'.(($TDispatchDetail->nbLines > 0) ? $nbLines : 1).'"
-				print '<td align="center">'.$poidsCommande.' '.measuring_units_string($poids,"weight").'</td>';
-				print '<td align="center">'.$poidsExpedie.' '.measuring_units_string($poids,"weight").'</td>';
-				print '<td align="center">'.$poidsAExpedier.' '.measuring_units_string($poids,"weight").'</td>';
-			}
-			
-			//Carton
-			print '<td align="center">'.(($detailline->carton)? $detailline->carton : '-').'</td>';
-			
-			//Numéro de suivi
-			print '<td align="center">'.(($detailline->numerosuivi)? $detailline->numerosuivi : '-').'</td>';
-			
-			//Poids spécifique 
-			if($conf->clilatoxan->enabled){
-				print '<td align="center">'.floatval($detailline->weight).' '.measuring_units_string($detailline->weight_unit,"weight").'</td>';
-				print '<td align="center">'.floatval($detailline->weight_reel).' '.measuring_units_string($detailline->weight_reel_unit,"weight").'</td>';
-				print '<td align="center">'.floatval($detailline->tare).' '.measuring_units_string($detailline->tare_unit,"weight").'</td>';
-			}
-			
-			print '</tr>';
 		}
+
+		return $TImport;
 	}
-	elseif((int)$product->id > 0){
+
+	function _addExpeditiondetLine(&$PDOdb,&$TImport,&$expedition,$numserie){
+		global $db;
 		
-		print '<tr style="height:30px;">';
-		
-		//Produit
-		print '<td>'.$libelle.' </td>';
-		
-		//Equipement
-		print '<td align="center">Aucun</td>';
-		
-		//Carton
-		print '<td align="center">-</td>';
-		//Numero de suivi
-		print '<td align="center">-</td>';
-		
-		//Poids vide
-		if($conf->clilatoxan->enabled){
-			print '<td align="center"> - </td>';
-			print '<td align="center"> - </td>';
-			print '<td align="center"> - </td>';
+		//Charge l'asset lié au numéro de série dans le fichier
+		$asset = new TAsset;
+		if($asset->loadBy($PDOdb,$numserie,'serial_number')){
+			
+			//Charge le produit associé à l'équipement
+			$prodAsset = new Product($db);
+			$prodAsset->fetch($asset->fk_product);
+			
+			//Rempli le tableau utilisé pour l'affichage des lignes
+			$TImport[] =array(
+				'ref'=>$prodAsset->ref
+				,'numserie'=>$numserie
+				,'fk_product'=>$prodAsset->id
+			);
+			
+			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
+			foreach($expedition->lines as $expeline){
+				if($expeline->fk_product == $prodAsset->id){
+					$fk_line_expe = $expeline->line_id;
+				}
+			}
+			
+			//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
+			$dispatchdetail = new TDispatchDetail;
+			
+			//Si déjà existant => MAj
+			$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE fk_asset = ".$asset->rowid." AND fk_expeditiondet = ".$fk_line_expe);
+			if($PDOdb->Get_line()){
+				$dispatchdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
+			}
+
+			$keys = array_keys($TImport);
+			$rang = $keys[count($keys)-1];
+
+			$dispatchdetail->fk_expeditiondet = $fk_line_expe;
+			$dispatchdetail->fk_asset = $asset->rowid;
+			$dispatchdetail->rang = $rang;
+
+			$dispatchdetail->save($PDOdb);
+
 		}
 		
-		print '</tr>';
+		return $TImport;
 
 	}
+	
+	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
+		$f1  =file($_FILES['file1']['tmp_name']);
+
+		$TImport = array();
+
+		foreach($f1 as $line) {
+
+			list($numserie)=str_getcsv($line,';','"');
+
+			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
+		}
+		
+	}
+	else if($action=='DELETE_LINE') {
+		unset($TImport[(int)GETPOST('k')]);
+		
+		$rowid = GETPOST('rowid');
+		
+		$dispatchdetail = new TDispatchDetail;
+		$dispatchdetail->load($PDOdb, $rowid);
+		$dispatchdetail->delete($PDOdb);
+		
+		setEventMessage('Ligne supprimée');
+	}
+	elseif(isset($_POST['btaddasset'])) {
+		
+		$numserie = GETPOST('numserie');
+		
+		$asset = new TAsset;
+		if($asset->loadBy($PDOdb, $numserie, 'serial_number')){
+				
+			_addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
+
+			setEventMessage('Numéro de série enregistré');
+		}
+		else{
+			setEventMessage('Aucun équipement pour ce numéro de série','errors');
+		}		
+	}
+
+	fiche($expedition, $TImport);
+
+
+function fiche(&$expedition, &$TImport) {
+global $langs, $db;
+
+	llxHeader();
+
+	$head = shipping_prepare_head($expedition);
+	
+	$title=$langs->trans("Shipment");
+	dol_fiche_head($head, 'dispatch', $title, 0, 'dispatch');
+	
+	enteteexpedition($expedition);
+	
+	echo '<br>';
+	
+	if($expedition->statut == 0){
+		//Form pour import de fichier
+		$form=new TFormCore('auto','formimport','post', true);
+		echo $form->hidden('action', 'SAVE');
+		echo $form->hidden('id', $expedition->id);
+	
+		echo $form->fichier('Fichier à importer','file1','',80);
+		echo $form->btsubmit('Envoyer', 'btsend');
+		
+		$form->end();
+		
+		//Form pour ajouter un équipement directement
+		$form=new TFormCore('auto', 'formaddasset','post', true);	
+		echo $form->hidden('action','edit');
+		echo $form->hidden('mode','addasset');
+		
+		echo $form->hidden('id', $expedition->id);
+		echo $form->texte('Numéro de série à ajouter','numserie','',30);
+		echo $form->btsubmit('Ajouter', 'btaddasset');	
+		
+		$form->end();
+		
+		echo '<br>';
+	}
+	
+	tabImport($TImport,$expedition);
+	
+	llxFooter();
 }
 
-function _select_equipement(&$PDOdb,&$product,&$line,$fk_expeditiondet,$asset_lot='',$i=0){
+function tabImport(&$TImport,&$expedition) {
+global $langs, $db;		
 	
-	print '<select id="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : ($i+1) ).'" name="equipement_'.$fk_expeditiondet.'_'.(($line->rang)? $line->rang : ($i+1) ).'" class="equipement_'.$line->rowid.'">';
+	$form=new TFormCore;
+	$formDoli =	new Form($db);
+	$formproduct=new FormProduct($db);
+	$PDOdb=new TPDOdb;
 	
-	//Chargement des équipement lié au produit
-	$sql = "SELECT rowid, serial_number, lot_number, contenancereel_value, contenancereel_units
-	 		 FROM ".MAIN_DB_PREFIX."asset
-	 		 WHERE fk_product = ".$product->id;
-	// 13.10.28 - MKO : On autorise la sélection d'un équipement dans un autre lot lors de l'expé
-	//if($asset_lot != '')
-	//	$sql .= " AND lot_number = '".$asset_lot."'";
-	$sql .= " ORDER BY contenance_value DESC";
+	print count($TImport).' équipement(s) dans votre expédition';
 	
-	$PDOdb->Execute($sql);
-	$defaultFlacon = !empty($line) ? $line->fk_asset : $asset_lot;
-	
-	$cpt = 0;
-	while($PDOdb->Get_line()){
-		if($PDOdb->Get_field('contenancereel_value') > 0){
-			$cpt++;
-			print '<option value="'.$PDOdb->Get_field('rowid').'" '.(($defaultFlacon == $PDOdb->Get_field('rowid')) ? 'selected="selected"' : "").'>';
-			print $PDOdb->Get_field('serial_number');
-			if($conf->clilatoxan->enabled){
-				print " / Batch ".$PDOdb->Get_field('lot_number')." / Stock ".$PDOdb->Get_field('emplacement');
-				print " / ".number_format($PDOdb->Get_field('contenancereel_value'),2,",","")." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),"weight");
+	?>
+	<table width="100%" class="border">
+		<tr class="liste_titre">
+			<td>Produit</td>
+			<td>Numéro de série</td>
+			<td>&nbsp;</td>
+		</tr>
+		
+	<?
+		$prod = new Product($db);
+		
+		$form->Set_typeaff('view');
+		
+		if(is_array($TImport)){
+			foreach ($TImport as $k=>$line) {
+							
+				if($prod->id==0 || $line['ref']!= $prod->ref) {
+					if(!empty( $line['fk_product']))$prod->fetch($line['fk_product']);
+					else $prod->fetch('', $line['ref']);
+				} 		
+				
+				$asset = new TAsset;
+				$asset->loadBy($PDOdb,$line['numserie'],'serial_number');
+				
+				$Trowid = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX."expeditiondet_asset",array('fk_asset'=>$asset->rowid,'fk_expeditiondet'=>$line['fk_expeditiondet']));
+				
+				?><tr>
+					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
+					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>" target="_blank"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></a></td>
+					<td>
+						<?php 
+							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
+						?>
+					</td>
+				</tr>
+				
+				<?
+				
 			}
-			print '</option>';
 		}	
-	}
-
-	if($cpt == 0){
-		print '<option value="null">Aucun équipement utilisable pour ce produit</option>';
-	}
-	print '</select>';
-}
-
-function combo($nom='modele',$defaut='', $entity=1) {
-	/* Code combo pour sélection modèle */
-	$TDocs = getListe($type, $entity);
-	?>
-	<select name="<?=$nom?>" id="<?=$nom?>" class="flat"><?
+		?>
+			
 		
-	foreach($TDocs as $fichier) {
-		
-		?><option value="<?=$fichier ?>" <?=($defaut==$fichier)?'selected="selected"':''?> extension="<?=_ext($fichier)?>"><?=$fichier ?></option><?
-		
-	}
-
-	?></select><?
-	
-}
-
-function getListe($entity=1) {
-/* Liste des modèles valides */
-	$Tab=array();
-	
-	if(is_dir(DOL_DOCUMENT_ROOT_ALT.'/dispatch/modele/'.$entity.'/')){
-		if ($handle = opendir(DOL_DOCUMENT_ROOT_ALT.'/dispatch/modele/'.$entity.'/')) {
-		    while (false !== ($entry = readdir($handle))) {
-		    	if($entry[0]!='.' && validFile($entry))  $Tab[] = $entry;
-		    }
-		
-		    closedir($handle);
-		}
-	}
-	
-	sort($Tab);
-	
-	return $Tab;
-}
-
-function _ext($file) {
-/* extension d'un fichier */
-	$ext = substr ($file, strrpos($file,'.'));
-	return $ext;
-}
-
-function validFile($name) {
-/* Fichier valid pour le traitement ? */
-	$ext = _ext($name);
-	
-	if($ext=='.html') return TRUE;
-	else { print "Type de fichier ($ext) non supporté ($name)."; return false; }
-	
-}
-
-function _js(&$expedition){
-	global $conf;
-	?>
-	<script type="text/javascript">
-	function add_line(id_ligne,rang){
-		newrang = rang + 1;
-		ligne = $('.line_'+id_ligne+'_'+rang);
-		
-		//implémentation du compteur générale pour le traitement
-		$('input[name=cptLigne]').val(parseInt($('input[name=cptLigne]').val()) + 1);
-		
-		//MAJ du rowspan pour la partie gauche de la ligne
-		/*cpt = 0;
-		cpt_max = 3;
-		$('tr.line_'+id_ligne+'_1 > td').each(function(){
-			if(cpt <= cpt_max)
-				$(this).attr('rowspan',newrang);
-			cpt = cpt + 1;
-		});*/
-		
-		//clonage de la ligne et suppression des td en trop
-		newligne = $(ligne).clone(true).insertAfter($(ligne));
-		cpt = 0;
-		if(rang == 1){
-			$(newligne).find('> td').each(function(){
-				if(cpt <= 3)
-					$(this).remove();
-				cpt = cpt + 1;
-			});
-		}
-		
-		//MAJ des libelle de class, name, id des différents champs de la nouvelle ligne
-		$(newligne).attr('class','line_'+id_ligne+'_'+newrang);
-		$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+newrang+')');
-		if(rang == 1) $(newligne).children().eq(0).prepend('<a alt="Supprimer la liaison" title="Supprimer la liaison" style="cursor:pointer;" onclick="delete_line('+id_ligne+',this,false);"><img src="img/supprimer.png" style="cursor:pointer;" /></a>');
-		<?php if($conf->global->MAIN_MODULE_ASSET) { ?> $(newligne).find('#equipement_'+id_ligne+'_'+rang).attr('id','equipement_'+id_ligne+'_'+newrang).attr('name','equipement_'+id_ligne+'_'+newrang); <?php } ?>
-		$(newligne).find('#lot_'+id_ligne+'_'+rang).attr('id','lot_'+id_ligne+'_'+newrang).attr('name','lot_'+id_ligne+'_'+newrang);
-		$(newligne).find('#weight_'+id_ligne+'_'+rang).attr('id','weight_'+id_ligne+'_'+newrang).attr('name','weight_'+id_ligne+'_'+newrang);
-		$(newligne).find('select[name=weightunit_'+id_ligne+'_'+rang+']').attr('name','weightunit_'+id_ligne+'_'+newrang);
-		$(newligne).find('#weightreel_'+id_ligne+'_'+rang).attr('id','weightreel_'+id_ligne+'_'+newrang).attr('name','weightreel_'+id_ligne+'_'+newrang);
-		$(newligne).find('select[name=weightreelunit_'+id_ligne+'_'+rang+']').attr('name','weightreelunit_'+id_ligne+'_'+newrang);
-		$(newligne).find('#tare_'+id_ligne+'_'+rang).attr('id','tare_'+id_ligne+'_'+newrang).attr('name','tare_'+id_ligne+'_'+newrang);
-		$(newligne).find('select[name=tareunit_'+id_ligne+'_'+rang+']').attr('name','tareunit_'+id_ligne+'_'+newrang);
-		
-		$(newligne).find('>input').val('');
-	}
-	
-	function delete_line(id_ligne,ligne,id_detail){
-		
-		$(ligne).parent().parent().remove();
-		
-		/*cpt = 0;
-		$('tr.line_'+id_ligne+'_1 > td').each(function(){
-			if(cpt <= 4){
-				nb = $(this).attr('rowspan');
-				$(this).attr('rowspan',nb - 1);
-				$('#add_'+id_ligne).attr('onclick','add_line('+id_ligne+','+(nb-1)+')')
-			}
-			cpt = cpt + 1;
-		});*/
-		
-		if(id_detail != false){
-			$.ajax({
-				type: "POST"
-				,url:'script/ajax.delete_line.php'
-				,data:{
-					id_detail : id_detail
-				}
-			});
-		}
-	}
-	
-	$(function() {
-		$( "#dialog" ).dialog({
-			autoOpen: false,
-			height: 700,
-			width: 900,
-			show: {
-				effect: "blind",
-				duration: 1000
-			},
-			buttons: {
-				"Annuler": function() {
-					$('#etiquettes').empty();
-					$( this ).dialog( "close" );
-				},				
-				"Imprimer": function(){
-					window.frames.etiquettes.focus();
-					window.frames.etiquettes.print();
-				}
-			}
-		});
-		$( "#btnimpression" ).click(function() {
-			$( "#dialog" ).dialog( "open" );
-		});
-	});
-	
-	function generer_etiquettes(){
-		
-		$('#etiquettes').attr('src','imp_etiquette.php?startpos='+$('#startpos').val()+'&copie='+$('#copie').val()+'&modele='+$('#modele').val()+'&expedition='+<?php echo $expedition->id; ?>+'&margetop='+$('#margetop').val()+'&margeleft='+$('#margeleft').val());
-	}
-</script>
-<?php
-	
-}
-
-
-
-?>
-<div id="dialog" title="Impression Etiquette">
-	<script type="text/javascript">
-		$('#modele').change(function(){
-			$.ajax({
-				type: "POST"
-				,url:'script/get_const.php'
-				,dataType: "json"
-				,data:{
-					modele : $(this).val()
-				}
-			}).done(function(TConstantes){
-				$('#margetop').val(TConstantes.margetop);
-				$('#margeleft').val(TConstantes.margeleft);
-			});
-		});
-	</script>
-	<table>
-		<tr>
-			<td align="left">Position d&eacute;part : <input type="text" name="startpos" id="startpos" style="width:25px;" value="1"></td>
-			<td align="left">
-				Mod&egrave;le :
-				<?php
-				combo('modele',GETPOST('modele'), $conf->entity);
-				?>
-			</td>
-			<td align="left">Nombre de copie : <input type="text" name="copie" id="copie" style="width:25px;" value="1"></td>
-			<td align="left">Marge haute (mm) : <input type="text" name="margetop" id="margetop" style="width:25px;" value="<?php echo (dolibarr_get_const($db, 'ETIQUETTE_MARGE_TOP')) ? dolibarr_get_const($db, 'ETIQUETTE_MARGE_TOP') : 35;?>"></td>
-			<td align="left">Marge gauche (mm) : <input type="text" name="margeleft" id="margeleft" style="width:25px;" value="<?php echo  (dolibarr_get_const($db, 'ETIQUETTE_MARGE_LEFT')) ? dolibarr_get_const($db, 'ETIQUETTE_MARGE_LEFT') : 34;?>"></td>
-			<td align="center"><input type="button" value="G&eacute;n&eacute;rer" onclick="generer_etiquettes();" /></td>
-		</tr>
-		<tr>
-			<td colspan="6">
-				<iframe id="etiquettes" name="etiquettes" style="width:230mm;height: 500px;" src="">
-		
-				</iframe>
-			</td>
-		</tr>
 	</table>
-</div><?php
+	<br>
+	<?
+	
+}
 
-llxFooter();
+function enteteexpedition(&$expedition) {
+global $langs, $db, $user, $hookmanager, $conf;
+
+	$form =	new Form($db);
+	
+	$soc = new Societe($db);
+	$soc->fetch($expedition->socid);
+	
+	if (!empty($expedition->origin))
+	{
+		$typeobject = $expedition->origin;
+		$origin = $expedition->origin;
+		$expedition->fetch_origin();
+	}
+	
+    print '<table class="border" width="100%">';
+
+    $linkback = '<a href="'.DOL_URL_ROOT.'/expedition/liste.php">'.$langs->trans("BackToList").'</a>';
+
+    // Ref
+    print '<tr><td width="20%">'.$langs->trans("Ref").'</td>';
+    print '<td colspan="3">';
+    print $form->showrefnav($expedition, 'ref', $linkback, 1, 'ref', 'ref');
+    print '</td></tr>';
+
+    // Customer
+    print '<tr><td width="20%">'.$langs->trans("Customer").'</td>';
+    print '<td colspan="3">'.$soc->getNomUrl(1).'</td>';
+    print "</tr>";
+
+    // Linked documents
+    if ($typeobject == 'commande' && $expedition->$typeobject->id && ! empty($conf->commande->enabled))
+    {
+        print '<tr><td>';
+        $objectsrc=new Commande($db);
+        $objectsrc->fetch($expedition->$typeobject->id);
+        print $langs->trans("RefOrder").'</td>';
+        print '<td colspan="3">';
+        print $objectsrc->getNomUrl(1,'commande');
+        print "</td>\n";
+        print '</tr>';
+    }
+    if ($typeobject == 'propal' && $expedition->$typeobject->id && ! empty($conf->propal->enabled))
+    {
+        print '<tr><td>';
+        $objectsrc=new Propal($db);
+        $objectsrc->fetch($expedition->$typeobject->id);
+        print $langs->trans("RefProposal").'</td>';
+        print '<td colspan="3">';
+        print $objectsrc->getNomUrl(1,'expedition');
+        print "</td>\n";
+        print '</tr>';
+    }
+
+    // Ref customer
+    print '<tr><td>'.$langs->trans("RefCustomer").'</td>';
+    print '<td colspan="3">'.$expedition->ref_customer."</a></td>\n";
+    print '</tr>';
+
+    // Date creation
+    print '<tr><td>'.$langs->trans("DateCreation").'</td>';
+    print '<td colspan="3">'.dol_print_date($expedition->date_creation,"day")."</td>\n";
+    print '</tr>';
+
+    // Delivery date planed
+    print '<tr><td height="10">';
+    print '<table class="nobordernopadding" width="100%"><tr><td>';
+    print $langs->trans('DateDeliveryPlanned');
+    print '</td>';
+	
+    print '</tr></table>';
+    print '</td><td colspan="2">';
+	print $expedition->date_delivery ? dol_print_date($expedition->date_delivery,'dayhourtext') : '&nbsp;';
+    print '</td>';
+    print '</tr>';
+
+    // Status
+    print '<tr><td>'.$langs->trans("Status").'</td>';
+    print '<td colspan="3">'.$expedition->getLibStatut(4)."</td>\n";
+    print '</tr>';
+
+    // Sending method
+    print '<tr><td height="10">';
+    print '<table class="nobordernopadding" width="100%"><tr><td>';
+    print $langs->trans('SendingMethod');
+    print '</td>';
+
+    print '</tr></table>';
+    print '</td><td colspan="2">';
+    if ($expedition->shipping_method_id > 0)
+    {
+        // Get code using getLabelFromKey
+        $code=$langs->getLabelFromKey($db,$expedition->shipping_method_id,'c_shipment_mode','rowid','code');
+        print $langs->trans("SendingMethod".strtoupper($code));
+    }
+    print '</td>';
+    print '</tr>';
+
+    print "</table>\n";
+}
