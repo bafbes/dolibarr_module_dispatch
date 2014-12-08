@@ -118,7 +118,7 @@ class moddispatch extends DolibarrModules
         //                              'objecttype:-tabname':NU:conditiontoremove);                                                     						// To remove an existing tab identified by code tabname
         
         $this->tabs = array(
-        	'delivery:+delivery:Détail expédition:@expedition:/custom/dispatch/detail.php?id=__ID__'
+        	'delivery:+dispatch:Détail expédition:@expedition:/custom/dispatch/detail.php?id=__ID__'
         	,'supplier_order:+recepasset:Réception équipement:dispatch@dispacth:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
 		);
         
