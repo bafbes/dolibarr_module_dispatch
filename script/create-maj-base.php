@@ -13,3 +13,6 @@
 
 	$o=new TDispatchDetail;
 	$o->init_db_by_vars($ATMdb);
+	
+	$o=new TRecepDetail;
+	$o->init_db_by_vars($ATMdb);

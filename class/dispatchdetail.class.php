@@ -50,3 +50,19 @@ class TDispatchDetail extends TObjetStd {
 		return $total * pow(10,-$product->weight_units) ;
 	}
 }
+
+class TRecepDetail extends TObjetStd {
+	function __construct() {
+		global $langs;
+		
+		parent::set_table(MAIN_DB_PREFIX.'commande_fournisseurdet_asset');
+		parent::add_champs('fk_commandedet,fk_asset','type=entier;index;');
+		parent::add_champs('rang','type=entier;');
+		parent::add_champs('lot,carton,numerosuivi,imei,firmware','type=chaine;');
+		parent::add_champs('weight, weight_reel, tare','type=float;');
+		parent::add_champs('weight_unit, weight_reel_unit, tare_unit','type=entier;');
+		
+		parent::_init_vars();
+		parent::start();
+	}
+}

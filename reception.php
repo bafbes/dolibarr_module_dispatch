@@ -3,20 +3,112 @@
 	require('config.php');
 
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
+	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/product/stock/class/entrepot.class.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
+	dol_include_once('/asset/class/asset.class.php');
 	
 	global $langs, $user;
 	$langs->load('orders');
+	
+	$PDOdb = new TPDOdb;
 	
 	$id = GETPOST('id');
 
 	$commandefourn = new CommandeFournisseur($db);
 	$commandefourn->fetch($id);
-
+	
 	$action = GETPOST('action');
-	$TImport = &$_SESSION['import_recept'];
+	$TImport = _loadDetail($PDOdb,$commandefourn);
+	
+	function _loadDetail(&$PDOdb,&$commandefourn){
+		
+		$TImport = array();
+		
+		foreach($commandefourn->lines as $line){
+		
+			$sql = "SELECT ca.rowid as idline,a.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware
+					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
+						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON ( a.rowid = ca.fk_asset)
+						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
+					WHERE ca.fk_commandedet = ".$line->id."
+						ORDER BY ca.rang ASC";
+
+			$PDOdb->Execute($sql);
+
+			while ($PDOdb->Get_line()) {
+				$TImport[] =array(
+					'ref'=>$PDOdb->Get_field('ref')
+					,'numserie'=>$PDOdb->Get_field('serial_number')
+					,'imei'=>$PDOdb->Get_field('imei')
+					,'firmware'=>$PDOdb->Get_field('firmware')
+					,'fk_product'=>$PDOdb->Get_field('rowid')
+					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
+				);
+			}
+		}
+		
+		return $TImport;
+	}
+	
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$numserie,$imei,$firmware){
+		global $db;
+		
+		//Charge l'asset lié au numéro de série dans le fichier
+		$asset = new TAsset;
+		if($asset->loadBy($PDOdb,$numserie,'serial_number')){
+			
+			//Charge le produit associé à l'équipement
+			$prodAsset = new Product($db);
+			$prodAsset->fetch($asset->fk_product);
+			
+			//Rempli le tableau utilisé pour l'affichage des lignes
+			$TImport[] =array(
+				'ref'=>$prodAsset->ref
+				,'numserie'=>$numserie
+				,'fk_product'=>$prodAsset->id
+				,'imei'=>$imei
+				,'firmware'=>$firmware
+			);
+			
+			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
+			foreach($commandefourn->lines as $commandeline){
+				if($commandeline->fk_product == $prodAsset->id){
+					$fk_line = $commandeline->id;
+				}
+			}
+			
+			//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
+			$recepdetail = new TRecepDetail;
+			
+			//Si déjà existant => MAj
+			$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset WHERE fk_asset = ".$asset->rowid." AND fk_commandedet = ".$fk_line);
+			if($PDOdb->Get_line()){
+				$recepdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
+			}
+
+			$keys = array_keys($TImport);
+			$rang = $keys[count($keys)-1];
+
+			$recepdetail->fk_commandedet = $fk_line;
+			$recepdetail->fk_asset = $asset->rowid;
+			$recepdetail->rang = $rang;
+			$recepdetail->imei = $imei;
+			$recepdetail->firmware = $firmware;
+			$recepdetail->weight = 1;
+			$recepdetail->weight_reel = 1;
+			$recepdetail->weight_unit = 0;
+			$recepdetail->weight_reel_unit = 0;
+
+			$recepdetail->save($PDOdb);
+
+		}
+		
+		return $TImport;
+
+	}
+	
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
 		
@@ -25,37 +117,34 @@
 		foreach($f1 as $line) {
 
 			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-			if($numserie!='') {
-				$TImport[] =array(
-					'ref'=>$ref
-					,'numserie'=>$numserie
-					,'imei'=>$imei
-					,'firmware'=>$firmware
-					,'fk_product'=>0
-				);
-				
-			}
+			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$numserie,$imei,$firmware);
 		}
 		
 	}
 	else if($action=='DELETE_LINE') {
 		unset($TImport[(int)GETPOST('k')]);
-	
-		setEventMessage('Ligne supprimée');
+
+		$rowid = GETPOST('rowid');
+
+		$recepdetail = new TRecepDetail;
+		$recepdetail->load($PDOdb, $rowid);
+		$recepdetail->delete($PDOdb);
 		
+		setEventMessage('Ligne supprimée');
+
 	}
 	elseif(isset($_POST['bt_save'])) {
 		
-		//var_dump($_POST['TLine']);
 		foreach($_POST['TLine']  as $k=>$line) {
-			
-			if($k==-1) {
-				if($line['numserie']!='' && $line['fk_product']>0) $TImport[] = $line;
-				elseif($line['fk_product']>0) setEventMessage('Nouvelle ligne incomplète', 'errors');
-			} 
-			else  $TImport[(int)$k] = $line;
-			
+			unset($TImport[(int)$k]);
+			$asset = new TAsset;
+			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
+					
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['numserie'],$line['imei'],$line['firmware']);
+			}
+
 		}
+
 		setEventMessage('Modifications enregistrées');
 	}
 	elseif(isset($_POST['bt_create'])) {
@@ -74,6 +163,8 @@
 			$asset =new TAsset;
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
+				
+				_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['numserie'],$line['$imei'],$line['$firmware']);
 				
 				$asset->fk_product = $line['fk_product'];
 				$asset->serial_number =$line['numserie'];
@@ -216,7 +307,7 @@ global $langs, $db;
 	<?
 		if($commande->statut >= 5) $form->type_aff = "view";
 		$prod = new Product($db);
-		
+
 		if(is_array($TImport)){
 			foreach ($TImport as $k=>$line) {
 							
@@ -227,13 +318,13 @@ global $langs, $db;
 					
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
-					<td><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?><?php echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)   ?></td>
 					<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
 					<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
 					<td>
 						<?php 
 						if($commande->statut < 5){
-							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'">'.img_delete().'</a>';
+							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
 						}
 						?>
 					</td>
