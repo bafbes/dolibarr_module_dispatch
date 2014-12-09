@@ -152,14 +152,17 @@
 			
 		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
 		$TProdVentil = array();
-		
+
 		foreach($TImport  as $k=>$line) {
 				
 			$asset =new TAsset;
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
 				
-				_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware']);
+				//Seulement si nouvelle ligne
+				if($k == -1){
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware']);
+				}
 				
 				$asset->fk_product = $line['fk_product'];
 				$asset->serial_number =$line['numserie'];
