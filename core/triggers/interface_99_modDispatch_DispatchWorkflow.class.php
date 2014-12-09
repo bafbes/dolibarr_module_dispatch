@@ -106,7 +106,7 @@ class InterfaceDispatchWorkflow
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
 	{
-		global $conf;
+		global $conf,$db;
 		
 		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
 		
@@ -134,6 +134,43 @@ class InterfaceDispatchWorkflow
 							// Création du mouvement de stock standard
 							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
+							
+							if($conf->clinomadic->enabled){
+								$asset = new TAsset;
+								$asset->load($PDOdb, $detail->fk_asset);
+	
+								$prod = new Product($db);
+								$prod->fetch($asset->fk_product);
+								
+								//Affectation du type d'équipement pour avoir accès aux extrafields équipement
+								$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
+								$asset->load_asset_type($PDOdb);
+								
+								//Localisation client
+								$asset->fk_societe_localisation = $object->socid;
+								
+								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret'])){
+									$asset->etat = 2; //Prêté
+									$asset->set_date('date_deb_pret', $object->date_valid);
+									$asset->set_date('date_fin_pret', strtotime('+'.$object->commande[0]->array_options['options_duree_pret'].'year',$object->date_valid));
+								}
+								else{
+									$asset->etat = 1; //Vendu
+								}
+
+								foreach($object->linkedObjects['commande'][0]->lines as $line){
+									if($line->fk_product == $asset->fk_product){									
+										$extension_garantie = $line->array_options['options_extension_garantie'];
+									}
+								}
+								
+								$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
+
+								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $object->date_valid);
+								$asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
+
+								$asset->save($PDOdb);
+							}
 						}
 					}
 					//exit;

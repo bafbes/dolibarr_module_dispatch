@@ -28,13 +28,12 @@
 		
 		foreach($commandefourn->lines as $line){
 		
-			$sql = "SELECT ca.rowid as idline,a.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware
+			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
-						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON ( a.rowid = ca.fk_asset)
-						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
+						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
 						ORDER BY ca.rang ASC";
-
+			
 			$PDOdb->Execute($sql);
 
 			while ($PDOdb->Get_line()) {
@@ -52,58 +51,54 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$numserie,$imei,$firmware){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware){
 		global $db;
+			
+		//Charge le produit associé à l'équipement
+		$prodAsset = new Product($db);
+		$prodAsset->fetch('',$refproduit);
 		
-		//Charge l'asset lié au numéro de série dans le fichier
-		$asset = new TAsset;
-		if($asset->loadBy($PDOdb,$numserie,'serial_number')){
-			
-			//Charge le produit associé à l'équipement
-			$prodAsset = new Product($db);
-			$prodAsset->fetch($asset->fk_product);
-			
-			//Rempli le tableau utilisé pour l'affichage des lignes
-			$TImport[] =array(
-				'ref'=>$prodAsset->ref
-				,'numserie'=>$numserie
-				,'fk_product'=>$prodAsset->id
-				,'imei'=>$imei
-				,'firmware'=>$firmware
-			);
-			
-			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
-			foreach($commandefourn->lines as $commandeline){
-				if($commandeline->fk_product == $prodAsset->id){
-					$fk_line = $commandeline->id;
-				}
+		//Rempli le tableau utilisé pour l'affichage des lignes
+		$TImport[] =array(
+			'ref'=>$prodAsset->ref
+			,'numserie'=>$numserie
+			,'fk_product'=>$prodAsset->id
+			,'imei'=>$imei
+			,'firmware'=>$firmware
+		);
+		
+		//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
+		foreach($commandefourn->lines as $commandeline){
+			if($commandeline->fk_product == $prodAsset->id){
+				$fk_line = $commandeline->id;
 			}
-			
-			//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
-			$recepdetail = new TRecepDetail;
-			
-			//Si déjà existant => MAj
-			$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset WHERE fk_asset = ".$asset->rowid." AND fk_commandedet = ".$fk_line);
-			if($PDOdb->Get_line()){
-				$recepdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
-			}
-
-			$keys = array_keys($TImport);
-			$rang = $keys[count($keys)-1];
-
-			$recepdetail->fk_commandedet = $fk_line;
-			$recepdetail->fk_asset = $asset->rowid;
-			$recepdetail->rang = $rang;
-			$recepdetail->imei = $imei;
-			$recepdetail->firmware = $firmware;
-			$recepdetail->weight = 1;
-			$recepdetail->weight_reel = 1;
-			$recepdetail->weight_unit = 0;
-			$recepdetail->weight_reel_unit = 0;
-
-			$recepdetail->save($PDOdb);
-
 		}
+		
+		//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
+		$recepdetail = new TRecepDetail;
+		
+		//Si déjà existant => MAj
+		$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset 
+						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$numserie." AND fk_commandedet = ".$fk_line);
+		if($PDOdb->Get_line()){
+			$recepdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
+		}
+
+		$keys = array_keys($TImport);
+		$rang = $keys[count($keys)-1];
+
+		$recepdetail->fk_commandedet = $fk_line;
+		$recepdetail->fk_product = $prodAsset->id;
+		$recepdetail->rang = $rang;
+		$recepdetail->serial_number = $numserie;
+		$recepdetail->imei = $imei;
+		$recepdetail->firmware = $firmware;
+		$recepdetail->weight = 1;
+		$recepdetail->weight_reel = 1;
+		$recepdetail->weight_unit = 0;
+		$recepdetail->weight_reel_unit = 0;
+
+		$recepdetail->save($PDOdb);
 		
 		return $TImport;
 
@@ -117,7 +112,7 @@
 		foreach($f1 as $line) {
 
 			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$numserie,$imei,$firmware);
+			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware);
 		}
 		
 	}
@@ -140,7 +135,7 @@
 			$asset = new TAsset;
 			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
 					
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['numserie'],$line['imei'],$line['firmware']);
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'],$line['firmware']);
 			}
 
 		}
@@ -164,7 +159,7 @@
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
 				
-				_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['numserie'],$line['$imei'],$line['$firmware']);
+				_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware']);
 				
 				$asset->fk_product = $line['fk_product'];
 				$asset->serial_number =$line['numserie'];
