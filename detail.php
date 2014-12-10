@@ -109,7 +109,7 @@
 
 		foreach($f1 as $line) {
 
-			list($numserie)=str_getcsv($line,';','"');
+			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
 
 			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
 		}
