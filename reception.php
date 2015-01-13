@@ -110,9 +110,10 @@
 		$TImport = array();
 		
 		foreach($f1 as $line) {
-
-			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware);
+			if(!(ctype_space($line))) {
+				list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware);
+			}
 		}
 		
 	}
