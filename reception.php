@@ -237,6 +237,9 @@
 			$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 		}
 		
+		if($commandefourn->fk_statut == 0)
+			$commandefourn->valid($user);
+		
 		$commandefourn->setStatus($user, $status);
 		$commandefourn->statut = $status;
 
