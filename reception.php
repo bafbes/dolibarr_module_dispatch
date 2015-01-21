@@ -371,6 +371,8 @@ global $langs, $db;
 			
 		if($commande->statut < 5 ) echo $form->btsubmit('Enregistrer', 'bt_save');
 			
+			
+		$form->type_aff = 'edit';	
 		?>
 		<hr />
 		<?
