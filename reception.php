@@ -146,18 +146,18 @@
 	elseif(isset($_POST['bt_create'])) {
 		
 		$PDOdb=new TPDOdb;
-		
+
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
 			
 		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
 		$TProdVentil = array();
 
 		foreach($TImport  as $k=>$line) {
-				
+			
 			$asset =new TAsset;
+			
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
-				
 				//Seulement si nouvelle ligne
 				if($k == -1){
 					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware']);
@@ -218,8 +218,9 @@
 
 		//pre($commandefourn,true);exit;
 		
-		$status = 5;
+		$status = $commandefourn->fk_statut;
 		$totalementventile = true;
+		
 		foreach($TProdVentil as $id_prod => $qte){
 			//Fonction standard ventilation commande fournisseur
 			
@@ -237,6 +238,10 @@
 		
 		if($commandefourn->fk_statut == 0)
 			$commandefourn->valid($user);
+		
+		if($totalementventile){
+			$status = 5;
+		}
 		
 		$commandefourn->setStatus($user, $status);
 		$commandefourn->statut = $status;
