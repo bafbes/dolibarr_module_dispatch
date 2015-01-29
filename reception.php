@@ -337,10 +337,11 @@ global $langs, $db;
 					<td><?php 
 						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
 						$asset=new TAsset;
+						
 						if($commande->statut >= 5 && $asset->loadReference($PDOdb, $line['numserie'])) {
 							echo '<a href="'.dol_buildpath('/asset/fiche.php?id='.$asset->getId(),1).'">' .img_picto('Equipement lié à cet import', 'info.png'). '</a>';
 						}
-						else{
+						elseif($commande->statut >= 5) {
 							echo img_picto('Aucun équipement créé en Base', 'warning.png');
 							$warning_asset = true;
 						}
