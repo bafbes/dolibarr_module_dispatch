@@ -21,14 +21,14 @@
 	
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
-	
+
 	function _loadDetail(&$PDOdb,&$commandefourn){
 		
 		$TImport = array();
 		
 		foreach($commandefourn->lines as $line){
 		
-			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware
+			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.mfg, ca.firmware
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
@@ -41,6 +41,7 @@
 					'ref'=>$PDOdb->Get_field('ref')
 					,'numserie'=>$PDOdb->Get_field('serial_number')
 					,'imei'=>$PDOdb->Get_field('imei')
+					,'mfg' =>$PDOdb->Get_field('mfg')
 					,'firmware'=>$PDOdb->Get_field('firmware')
 					,'fk_product'=>$PDOdb->Get_field('rowid')
 					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
@@ -51,7 +52,7 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei, $mfg, $firmware){
 		global $db;
 			
 		//Charge le produit associé à l'équipement
@@ -64,6 +65,7 @@
 			,'numserie'=>$numserie
 			,'fk_product'=>$prodAsset->id
 			,'imei'=>$imei
+			,'mfg' => $mfg
 			,'firmware'=>$firmware
 		);
 		
@@ -92,6 +94,7 @@
 		$recepdetail->rang = $rang;
 		$recepdetail->serial_number = $numserie;
 		$recepdetail->imei = $imei;
+		$recepdetail->mfg = $mfg;
 		$recepdetail->firmware = $firmware;
 		$recepdetail->weight = 1;
 		$recepdetail->weight_reel = 1;
@@ -111,8 +114,8 @@
 		
 		foreach($f1 as $line) {
 			if(!(ctype_space($line))) {
-				list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware);
+				list($ref, $numserie, $imei, $mfg, $firmware)=str_getcsv($line,';','"');
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei, $mfg, $firmware);
 			}
 		}
 		
@@ -130,13 +133,12 @@
 
 	}
 	elseif(isset($_POST['bt_save'])) {
-		
 		foreach($_POST['TLine']  as $k=>$line) {
 			unset($TImport[(int)$k]);
 			$asset = new TAsset;
 			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
 					
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'],$line['firmware']);
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'], $line['mfg'], $line['firmware']);
 			}
 
 		}
@@ -151,7 +153,6 @@
 			
 		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
 		$TProdVentil = array();
-
 		foreach($TImport  as $k=>$line) {
 			
 			$asset =new TAsset;
@@ -159,13 +160,15 @@
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
 				//Seulement si nouvelle ligne
+				
 				if($k == -1){
-					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware']);
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'], $line['mfg'], $line['$firmware']);
 				}
 				
 				$asset->fk_product = $line['fk_product'];
 				$asset->serial_number =$line['numserie'];
 				$asset->firmware = $line['firmware'];
+				$asset->mfg = $line['mfg'];
 				$asset->imei= $line['imei'];
 				
 				$asset->contenancereel_value = 1;
@@ -314,6 +317,7 @@ global $langs, $db;
 			<td>Produit</td>
 			<td>Numéro de série</td>
 			<td>IMEI</td>
+			<td>MFG</td>
 			<td>Firmware</td>
 			<td>&nbsp;</td>
 		</tr>
@@ -326,12 +330,10 @@ global $langs, $db;
 
 		if(is_array($TImport)){
 			foreach ($TImport as $k=>$line) {
-							
 				if($prod->id==0 || $line['ref']!= $prod->ref) {
 					if(!empty( $line['fk_product']))$prod->fetch($line['fk_product']);
-					else $prod->fetch('', $line['ref']);
+					else if (!empty($line['ref'])) $prod->fetch('', $line['ref']);
 				} 		
-					
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
 					<td><?php 
@@ -349,6 +351,7 @@ global $langs, $db;
 					?>
 					</td>
 					<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
+					<td><?php echo $form->texte('', 'TLine[' . $k . '][mfg]', $line['mfg'], 30) ?></td>
 					<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
 					<td>
 						<?php 
@@ -369,6 +372,7 @@ global $langs, $db;
 					<td><?php $formDoli->select_produits(-1, 'TLine[-1][fk_product]') ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30)   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][imei]', '', 30)   ?></td>
+					<td><?php echo $form->texte('','TLine[-1][mfg]', '', 30)   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30)   ?></td>
 					<td>Nouveau
 					</td>
