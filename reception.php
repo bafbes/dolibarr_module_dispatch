@@ -255,11 +255,11 @@
 							$status = 4;
 						}
 						
-						break;
+						$lineFound = $line;
 					}
 				}
 				
-				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),$line->pu_ht,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),$lineFound->pu_ht,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 			}
 			
 			if($commandefourn->fk_statut == 0)
