@@ -221,6 +221,23 @@
 
 		//pre($commandefourn,true);exit;
 		
+		// Récupération des quantités déjà reçue
+		$sql = "SELECT cfd.fk_product, sum(cfd.qty) as qty";
+		$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
+		$sql.= " WHERE cfd.fk_commande = ".$commandefourn->id;
+		$sql.= " GROUP BY cfd.fk_product";
+
+		$resql = $db->query($sql);
+		$products_dispatched = array();
+		if ($resql)
+		{
+			while ( $row = $db->fetch_row($resql) )
+			{
+				$products_dispatched[$row[0]] = $row[1];
+			}
+			$db->free($resql);
+		}
+		
 		$status = $commandefourn->fk_statut;
 		
 		if(count($TProdVentil)>0) {
@@ -232,15 +249,16 @@
 				//Fonction standard ventilation commande fournisseur
 				
 				foreach($commandefourn->lines as $line){
-					if($line->fk_product = $id_prod){
-						if($qte < $line->qty && $totalementventile){
+					if($line->fk_product == $id_prod){
+						if($line->qty - $qte - (!empty($products_dispatched[$id_prod]) ? $products_dispatched[$id_prod] : 0) > 0) {
 							$totalementventile = false;
-							$status = 4;
 						}
+						
+						break;
 					}
 				}
 				
-				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),$line->pu_ht,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 			}
 			
 			if($commandefourn->fk_statut == 0)
