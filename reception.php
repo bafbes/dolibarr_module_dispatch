@@ -241,7 +241,7 @@
 		$status = $commandefourn->fk_statut;
 		
 		if(count($TProdVentil)>0) {
-			$status = $commandefourn->fk_statut;
+			$status = $commandefourn->statut;
 			
 			$totalementventile = true;
 			
@@ -252,6 +252,7 @@
 					if($line->fk_product == $id_prod){
 						if($line->qty - $qte - (!empty($products_dispatched[$id_prod]) ? $products_dispatched[$id_prod] : 0) > 0) {
 							$totalementventile = false;
+							$status = 4;
 						}
 						
 						break;
