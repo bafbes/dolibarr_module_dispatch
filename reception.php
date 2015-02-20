@@ -208,7 +208,8 @@
 				$asset->fk_societe_localisation = $societe->id;
 				$asset->etat = 0; //En stock
 				
-				$asset->save($PDOdb);
+				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
+				$asset->save($PDOdb, $user, '', 0, false, 0, true);
 				
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
 				$TProdVentil[$asset->fk_product] += 1;
