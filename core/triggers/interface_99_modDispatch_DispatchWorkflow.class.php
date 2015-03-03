@@ -198,7 +198,7 @@ class InterfaceDispatchWorkflow
 		$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
 		
 		$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
-		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref));
+		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref),0,false,0,true);
 		
 		return $poids_destocke;
 	}
