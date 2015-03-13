@@ -359,9 +359,12 @@ global $langs, $db;
 					<td><?php 
 						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
 						$asset=new TAsset;
-						
-						if($asset->loadReference($PDOdb, $line['numserie'])) {
-							echo '<a href="'.dol_buildpath('/asset/fiche.php?id='.$asset->getId(),1).'">' .img_picto('Equipement lié à cet import', 'info.png'). '</a>';
+						$asset->loadReference($PDOdb, $line['numserie']);
+						if($asset->getId()>0) {
+							if($asset->fk_product==$prod->id)
+								echo '<a href="'.dol_buildpath('/asset/fiche.php?id='.$asset->getId(),1).'">' .img_picto('Equipement lié à cet import', 'info.png'). '</a>';
+							else
+								echo 'Numéro de série trouvé mais dans un autre produit';
 						}
 						else {
 							echo img_picto('Aucun équipement créé en Base', 'warning.png');
