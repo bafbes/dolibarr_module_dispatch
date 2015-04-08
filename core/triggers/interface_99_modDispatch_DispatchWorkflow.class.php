@@ -151,8 +151,6 @@ class InterfaceDispatchWorkflow
 								
 								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret'])){
 									$asset->etat = 2; //Prêté
-									$asset->set_date('date_deb_pret', $object->date_valid);
-									$asset->set_date('date_fin_pret', strtotime('+'.$object->commande[0]->array_options['options_duree_pret'].'year',$object->date_valid));
 								}
 								else{
 									$asset->etat = 1; //Vendu
