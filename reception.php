@@ -133,11 +133,17 @@
 		
 		foreach($_POST['TLine']  as $k=>$line) {
 			unset($TImport[(int)$k]);
+			
+			$product = new Product($db);
+			$product->fetch($line['fk_product']);
+			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware']);
+/*
 			$asset = new TAsset;
 			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
 					
 				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'],$line['firmware']);
 			}
+ */
 
 		}
 
