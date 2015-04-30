@@ -51,21 +51,12 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$k=null){
 		global $db;
 			
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
 		$prodAsset->fetch('',$refproduit);
-		
-		//Rempli le tableau utilisé pour l'affichage des lignes
-		$TImport[] =array(
-			'ref'=>$prodAsset->ref
-			,'numserie'=>$numserie
-			,'fk_product'=>$prodAsset->id
-			,'imei'=>$imei
-			,'firmware'=>$firmware
-		);
 		
 		//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
 		foreach($commandefourn->lines as $commandeline){
@@ -79,9 +70,11 @@
 		
 		//Si déjà existant => MAj
 		$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset 
-						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$numserie." AND fk_commandedet = ".$fk_line);
+						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$PDOdb->quote($numserie)." AND fk_commandedet = ".$fk_line);
+		$lineFound = false;
 		if($PDOdb->Get_line()){
 			$recepdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
+			$lineFound = true;
 		}
 
 		$keys = array_keys($TImport);
@@ -99,6 +92,31 @@
 		$recepdetail->weight_reel_unit = 0;
 
 		$recepdetail->save($PDOdb);
+		
+		//Rempli le tableau utilisé pour l'affichage des lignes
+		if ($lineFound)
+		{
+			$TImport[$k] =array(
+				'ref'=>$prodAsset->ref
+				,'numserie'=>$numserie
+				,'fk_product'=>$prodAsset->id
+				,'imei'=>$imei
+				,'firmware'=>$firmware
+				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
+			);
+		}
+		else
+		{
+			$TImport[] =array(
+				'ref'=>$prodAsset->ref
+				,'numserie'=>$numserie
+				,'fk_product'=>$prodAsset->id
+				,'imei'=>$imei
+				,'firmware'=>$firmware
+				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
+			);
+		}
+		
 		
 		return $TImport;
 
@@ -118,13 +136,16 @@
 		
 	}
 	else if($action=='DELETE_LINE') {
-		unset($TImport[(int)GETPOST('k')]);
+		$k = (int)GETPOST('k');
+		unset($TImport[$k]);
 
 		$rowid = GETPOST('rowid');
-
+		
 		$recepdetail = new TRecepDetail;
 		$recepdetail->load($PDOdb, $rowid);
 		$recepdetail->delete($PDOdb);
+		
+		$TImport = _loadDetail($PDOdb,$commandefourn);
 		
 		setEventMessage('Ligne supprimée');
 
@@ -136,7 +157,7 @@
 			
 			$product = new Product($db);
 			$product->fetch($line['fk_product']);
-			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware']);
+			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'], $k);
 /*
 			$asset = new TAsset;
 			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
