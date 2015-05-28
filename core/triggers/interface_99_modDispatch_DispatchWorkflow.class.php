@@ -148,7 +148,6 @@ class InterfaceDispatchWorkflow
 								
 								//Localisation client
 								$asset->fk_societe_localisation = $object->socid;
-								
 								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret'])){
 									$asset->etat = 2; //Prêté
 								}
@@ -164,8 +163,11 @@ class InterfaceDispatchWorkflow
 								
 								$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
 
-								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $object->date_valid);
-								$asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
+								$date_valid=dol_now();
+
+								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $date_valid);
+								
+								if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
 
 								$asset->save($PDOdb);
 							}
