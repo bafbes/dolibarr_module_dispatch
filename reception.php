@@ -9,8 +9,7 @@
 	dol_include_once('/core/lib/fourn.lib.php' );
 	dol_include_once('/asset/class/asset.class.php');
 	
-	global $langs, $user;
-	$langs->load('orders');
+	global $langs, $user, $conf;
 	
 	$PDOdb = new TPDOdb;
 	
@@ -52,8 +51,8 @@
 	}
 	
 	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$k=null){
-		global $db;
-			
+		global $db, $conf;
+		
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
 		$prodAsset->fetch('',$refproduit);
@@ -65,18 +64,27 @@
 			}
 		}
 		
+		if (empty($_POST['TLine'][$k]) === false) {
+			if ($numserie != $_POST['TLine'][$k]['numserie']) {
+				$line_update = true;
+			}
+		}
+		
 		//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 		$recepdetail = new TRecepDetail;
 		
 		//Si déjà existant => MAj
 		$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset 
 						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$PDOdb->quote($numserie)." AND fk_commandedet = ".$fk_line);
+		
 		$lineFound = false;
-		if($PDOdb->Get_line()){
-			$recepdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
+		if($PDOdb->Get_line() || $line_update){
+			$rowid = ($line_exists ? $_POST['TLine'][$k]['commande_fournisseurdet_asset'] : $PDOdb->Get_field('rowid'));
+			$recepdetail->load($PDOdb, $rowid);
+			
 			$lineFound = true;
 		}
-
+		
 		$keys = array_keys($TImport);
 		$rang = $keys[count($keys)-1];
 
@@ -125,8 +133,6 @@
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
 		
-		$TImport = array();
-		
 		foreach($f1 as $line) {
 			if(!(ctype_space($line))) {
 				list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
@@ -154,10 +160,37 @@
 		
 		foreach($_POST['TLine']  as $k=>$line) {
 			unset($TImport[(int)$k]);
+
+			// Modification
+			if (empty($line['fk_product']) === false) {
+				$fk_product = $line['fk_product'];
+			} else if (empty($_POST['new_line_fk_product']) === false) { // Ajout
+				$fk_product = $_POST['new_line_fk_product'];
+			} 
+
+			// Si aucun produit renseigné mais numéro de série renseigné
+			if ($k == -1 && $fk_product == -1 && empty($line['numserie']) === false) {
+				$error = true;
+				setEventMessage('Veuillez saisir un produit.', 'errors');
+			}
+
+			// Si un produit est renseigné, on sauvegarde
+			if (!$error && $fk_product > 0) {
+				$product = new Product($db);
+				$product->fetch($fk_product);
+				
+				if (empty($product->id)) {
+					$error = true;
+					setEventMessage('Produit introuvable.', 'errors');
+				}
+				
+				if (!$error) {
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'], $k);
+				}
+			}
 			
-			$product = new Product($db);
-			$product->fetch($line['fk_product']);
-			$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'], $k);
+			$fk_product = -1; // Reset de la variable contenant la référence produit
+
 /*
 			$asset = new TAsset;
 			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
@@ -165,10 +198,11 @@
 				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'],$line['firmware']);
 			}
  */
-
 		}
-
-		setEventMessage('Modifications enregistrées');
+		
+		if (!$error) {
+			setEventMessage('Modifications enregistrées');
+		}
 	}
 	elseif(isset($_POST['bt_create'])) {
 		
@@ -230,8 +264,8 @@
 				$asset->fk_entrepot = GETPOST('id_entrepot');
 				
 				$societe = new Societe($db);
-				$societe->fetch('','NOMADIC SOLUTIONS');
-				
+				$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
+
 				$asset->fk_societe_localisation = $societe->id;
 				$asset->etat = 0; //En stock
 				
@@ -252,12 +286,12 @@
 			$status = $commandefourn->fk_statut;
 			
 			$totalementventile = true;
-			
+
 			foreach($TProdVentil as $id_prod => $qte){
 				//Fonction standard ventilation commande fournisseur
 				
 				foreach($commandefourn->lines as $line){
-					if($line->fk_product = $id_prod){
+					if($line->fk_product == $id_prod){
 						if($qte < $line->qty && $totalementventile){
 							$totalementventile = false;
 							$status = 4;
@@ -346,7 +380,7 @@ global $langs, $db;
 			<td>&nbsp;</td>
 		</tr>
 		
-	<?
+	<?php
 		if($commande->statut >= 5) $form->type_aff = "view";
 		$prod = new Product($db);
 
@@ -356,13 +390,18 @@ global $langs, $db;
 			foreach ($TImport as $k=>$line) {
 							
 				if($prod->id==0 || $line['ref']!= $prod->ref) {
-					if(!empty( $line['fk_product']))$prod->fetch($line['fk_product']);
-					else $prod->fetch('', $line['ref']);
+					if(empty($line['fk_product']) === false) {
+						$prod->fetch($line['fk_product']);
+					} else if (empty($line['ref']) === false) {
+						$prod->fetch('', $line['ref']);	
+					} else {
+						continue;
+					}
 				} 		
 					
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
-					<td><?php 
+					<td><?php
 						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
 						$asset=new TAsset;
 						
@@ -385,8 +424,7 @@ global $langs, $db;
 						}
 						?>
 					</td>
-				</tr>
-				
+				</tr>				
 				<?
 				
 			}
@@ -394,7 +432,7 @@ global $langs, $db;
 		
 		if($commande->statut < 5){
 			?><tr style="background-color: lightblue;">
-					<td><?php $formDoli->select_produits(-1, 'TLine[-1][fk_product]') ?></td>
+					<td><?php $formDoli->select_produits(-1, 'new_line_fk_product') ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30)   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][imei]', '', 30)   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30)   ?></td>
