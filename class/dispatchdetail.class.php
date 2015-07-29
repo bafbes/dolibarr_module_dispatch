@@ -7,7 +7,7 @@ class TDispatchDetail extends TObjetStd {
 		parent::set_table(MAIN_DB_PREFIX.'expeditiondet_asset');
 		parent::add_champs('fk_expeditiondet,fk_asset','type=entier;index;');
 		parent::add_champs('rang','type=entier;');
-		parent::add_champs('lot,carton,numerosuivi','type=chaine;');
+		parent::add_champs('lot_number,carton,numerosuivi','type=chaine;');
 		parent::add_champs('weight, weight_reel, tare','type=float;');
 		parent::add_champs('weight_unit, weight_reel_unit, tare_unit','type=entier;');
 		
@@ -58,7 +58,7 @@ class TRecepDetail extends TObjetStd {
 		parent::set_table(MAIN_DB_PREFIX.'commande_fournisseurdet_asset');
 		parent::add_champs('fk_commandedet,fk_product','type=entier;index;');
 		parent::add_champs('rang','type=entier;');
-		parent::add_champs('lot,carton,numerosuivi,imei,firmware,serial_number','type=chaine;');
+		parent::add_champs('lot_number,carton,numerosuivi,imei,firmware,serial_number','type=chaine;');
 		parent::add_champs('weight, weight_reel, tare','type=float;');
 		parent::add_champs('weight_unit, weight_reel_unit, tare_unit','type=entier;');
 		

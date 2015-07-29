@@ -6,6 +6,7 @@
 	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/product/stock/class/entrepot.class.php' );
+	dol_include_once('/core/lib/product.lib.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
 	dol_include_once('/asset/class/asset.class.php');
 	
@@ -27,7 +28,7 @@
 		
 		foreach($commandefourn->lines as $line){
 		
-			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware
+			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
@@ -39,6 +40,9 @@
 				$TImport[] =array(
 					'ref'=>$PDOdb->Get_field('ref')
 					,'numserie'=>$PDOdb->Get_field('serial_number')
+					,'lot_number'=>$PDOdb->Get_field('lot_number')
+					,'quantity'=>$PDOdb->Get_field('weight_reel')
+					,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
 					,'imei'=>$PDOdb->Get_field('imei')
 					,'firmware'=>$PDOdb->Get_field('firmware')
 					,'fk_product'=>$PDOdb->Get_field('rowid')
@@ -50,7 +54,7 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$k=null){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$k=null){
 		global $db, $conf;
 		
 		//Charge le produit associé à l'équipement
@@ -91,13 +95,18 @@
 		$recepdetail->fk_commandedet = $fk_line;
 		$recepdetail->fk_product = $prodAsset->id;
 		$recepdetail->rang = $rang;
+		$recepdetail->lot_number = $lot_number;
+		$recepdetail->weight_reel = $quantity;
+		$recepdetail->weight = $quantity;
+		$recepdetail->weight_unit = $quantity_unit;
+		$recepdetail->weight_reel_unit = $quantity_unit;
 		$recepdetail->serial_number = $numserie;
 		$recepdetail->imei = $imei;
 		$recepdetail->firmware = $firmware;
-		$recepdetail->weight = 1;
+		/*$recepdetail->weight = 1;
 		$recepdetail->weight_reel = 1;
 		$recepdetail->weight_unit = 0;
-		$recepdetail->weight_reel_unit = 0;
+		$recepdetail->weight_reel_unit = 0;*/
 
 		$recepdetail->save($PDOdb);
 		
@@ -107,6 +116,9 @@
 			$TImport[$k] =array(
 				'ref'=>$prodAsset->ref
 				,'numserie'=>$numserie
+				,'lot_number'=>$lot_number
+				,'quantity'=>$quantity
+				,'quantity_unit'=>$quantity_unit
 				,'fk_product'=>$prodAsset->id
 				,'imei'=>$imei
 				,'firmware'=>$firmware
@@ -118,6 +130,9 @@
 			$TImport[] =array(
 				'ref'=>$prodAsset->ref
 				,'numserie'=>$numserie
+				,'lot_number'=>$lot_number
+				,'quantity'=>$quantity
+				,'quantity_unit'=>$quantity_unit
 				,'fk_product'=>$prodAsset->id
 				,'imei'=>$imei
 				,'firmware'=>$firmware
@@ -135,8 +150,8 @@
 		
 		foreach($f1 as $line) {
 			if(!(ctype_space($line))) {
-				list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware);
+				list($ref, $numserie, $imei, $firmware, $lot_number)=str_getcsv($line,';','"');
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit);
 			}
 		}
 		
@@ -179,13 +194,25 @@
 				$product = new Product($db);
 				$product->fetch($fk_product);
 				
-				if (empty($product->id)) {
-					$error = true;
-					setEventMessage('Produit introuvable.', 'errors');
+				//On vérifie que le produit est bien présent dans la commande
+				$find = false;
+				foreach ($commandefourn->lines as $key => $l) {
+					if($l->fk_product == $product->id) $find = true;
 				}
 				
+				if (!$find) {
+					$error = true;
+					setEventMessage('Référence produit non présente dans la commande', 'errors');
+				}
+				
+				if (empty($product->id)) {
+					$error = true;
+					setEventMessage('Référence produit introuvable', 'errors');
+				}
+				
+				//pre($commandefourn,true);exit;
 				if (!$error) {
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'], $k);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'], $k);
 				}
 			}
 			
@@ -221,24 +248,30 @@
 				// si inexistant
 				//Seulement si nouvelle ligne
 				if($k == -1){
-					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware']);
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit']);
 				}
 				
-				$asset->fk_product = $line['fk_product'];
-				$asset->serial_number =$line['numserie'];
-				$asset->firmware = $line['firmware'];
-				$asset->imei= $line['imei'];
-				
-				$asset->contenancereel_value = 1;
-				
-				$nb_year_garantie = 0;
-				
 				$prod = new Product($db);
-				$prod->fetch($asset->fk_product);
-
+				$prod->fetch($line['fk_product']);
+				
 				//Affectation du type d'équipement pour avoir accès aux extrafields équipement
 				$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
 				$asset->load_asset_type($PDOdb);
+
+				$asset->fk_product = $line['fk_product'];
+				$asset->serial_number =$line['numserie'];
+				$asset->lot_number =$line['lot_number'];
+				$asset->contenance_value =($line['quantity']) ? $line['quantity'] : 1;
+				$asset->contenancereel_value =($line['quantity']) ? $line['quantity'] : 1 ;
+				$asset->contenancereel_units =($line['quantity_unit']) ? $line['quantity_unit'] : 0;
+				$asset->contenance_units =($line['quantity_unit']) ? $line['quantity_unit'] : 0;
+				$asset->lot_number =$line['lot_number'];
+				$asset->firmware = $line['firmware'];
+				$asset->imei= $line['imei'];
+				
+				//$asset->contenancereel_value = 1;
+				
+				$nb_year_garantie = 0;
 				
 				//Renseignement des extrafields
 				$asset->set_date('date_reception', $_REQUEST['date_recep']);
@@ -268,7 +301,7 @@
 
 				$asset->fk_societe_localisation = $societe->id;
 				$asset->etat = 0; //En stock
-				
+				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 				$asset->save($PDOdb, $user, '', 0, false, 0, true);
 				
@@ -374,9 +407,18 @@ global $langs, $db;
 	<table width="100%" class="border">
 		<tr class="liste_titre">
 			<td>Produit</td>
-			<td>Numéro de série</td>
-			<td>IMEI</td>
-			<td>Firmware</td>
+			<td>Numéro de Série</td>
+			<td>Numéro de Lot</td>
+			<td>Quantité</td>
+			<td>Unité</td>
+			<?php
+			if($conf->global->clinomadic->enabled){
+				?>
+				<td>IMEI</td>
+				<td>Firmware</td>
+				<?php
+			}
+			?>
 			<td>&nbsp;</td>
 		</tr>
 		
@@ -415,8 +457,17 @@ global $langs, $db;
 						echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)   
 					?>
 					</td>
-					<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
-					<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td>
+					<td><?php echo $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']);   ?></td>
+					<?php
+					if($conf->global->clinomadic->enabled){
+						?>
+						<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
+						<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
+						<?php
+					}
+					?>
 					<td>
 						<?php 
 						if($commande->statut < 5){
@@ -432,10 +483,19 @@ global $langs, $db;
 		
 		if($commande->statut < 5){
 			?><tr style="background-color: lightblue;">
-					<td><?php $formDoli->select_produits(-1, 'new_line_fk_product') ?></td>
-					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30)   ?></td>
-					<td><?php echo $form->texte('','TLine[-1][imei]', '', 30)   ?></td>
-					<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30)   ?></td>
+					<td><?php $formDoli->select_produits(-1, 'new_line_fk_product'); ?></td>
+					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
+					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
+					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
+					<td><?php echo $formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight');   ?></td>
+					<?php
+					if($conf->global->clinomadic->enabled){
+						?>
+						<td><?php echo $form->texte('','TLine[-1][imei]', '', 30);   ?></td>
+						<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30);   ?></td>
+						<?php
+					}
+					?>
 					<td>Nouveau
 					</td>
 				</tr>
