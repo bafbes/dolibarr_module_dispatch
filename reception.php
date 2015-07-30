@@ -14,6 +14,13 @@
 	
 	$PDOdb = new TPDOdb;
 	
+	$langs->load('companies');
+	$langs->load('suppliers');
+	$langs->load('products');
+	$langs->load('bills');
+	$langs->load('orders');
+	$langs->load('commercial');
+	
 	$id = GETPOST('id');
 
 	$commandefourn = new CommandeFournisseur($db);
@@ -244,6 +251,8 @@
 			
 			$asset =new TAsset;
 			
+			//pre($line,true);
+			
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
 				//Seulement si nouvelle ligne
@@ -259,7 +268,7 @@
 				$asset->load_asset_type($PDOdb);
 
 				$asset->fk_product = $line['fk_product'];
-				$asset->serial_number =$line['numserie'];
+				$asset->serial_number = ($line['numserie']) ? $line['numserie'] : $asset->getNextValue($PDOdb);
 				$asset->lot_number =$line['lot_number'];
 				$asset->contenance_value =($line['quantity']) ? $line['quantity'] : 1;
 				$asset->contenancereel_value =($line['quantity']) ? $line['quantity'] : 1 ;
@@ -276,12 +285,12 @@
 				//Renseignement des extrafields
 				$asset->set_date('date_reception', $_REQUEST['date_recep']);
 				
-				foreach($commandefourn->lines as $line){
-					if($line->fk_product == $asset->fk_product){
-						$asset->prix_achat  = number_format($line->subprice,2);
+				foreach($commandefourn->lines as $l){
+					if($l->fk_product == $asset->fk_product){
+						$asset->prix_achat  = number_format($l->subprice,2);
 						
 						$extension_garantie = 0;
-						$PDOdb->Execute('SELECT extension_garantie FROM '.MAIN_DB_PREFIX.'commande_fournisseurdet WHERE rowid = '.$line->id);
+						$PDOdb->Execute('SELECT extension_garantie FROM '.MAIN_DB_PREFIX.'commande_fournisseurdet WHERE rowid = '.$l->id);
 						if($PDOdb->Get_line()){
 							$extension_garantie = $PDOdb->Get_field('extension_garantie');
 						}
@@ -303,7 +312,17 @@
 				$asset->etat = 0; //En stock
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
-				$asset->save($PDOdb, $user, '', 0, false, 0, true);
+				$asset->save($PDOdb, $user, '', 0, false, 0, true,GETPOST('id_entrepot'));
+				
+				$stock = new TAssetStock;
+				$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $asset->contenancereel_value, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
+				
+				if($asset->serial_number != $line['numserie']){
+					$receptDetailLine = new TRecepDetail;
+					$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
+					$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
+					$receptDetailLine->save($PDOdb);
+				}
 				
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
 				$TProdVentil[$asset->fk_product] += 1;
