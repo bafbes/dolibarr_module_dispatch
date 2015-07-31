@@ -28,7 +28,7 @@
 
 		foreach($expedition->lines as $line){
 		
-			$sql = "SELECT a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet
+			$sql = "SELECT a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
 						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON ( a.rowid = ea.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
@@ -43,6 +43,9 @@
 					,'numserie'=>$PDOdb->Get_field('serial_number')
 					,'fk_product'=>$PDOdb->Get_field('rowid')
 					,'fk_expeditiondet'=>$PDOdb->Get_field('fk_expeditiondet')
+					,'lot_number'=>$PDOdb->Get_field('lot_number')
+					,'quantity'=>$PDOdb->Get_field('weight_reel')
+					,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
 				);
 			}
 		}
@@ -66,6 +69,10 @@
 				'ref'=>$prodAsset->ref
 				,'numserie'=>$numserie
 				,'fk_product'=>$prodAsset->id
+				,'fk_expeditiondet'=>$expedition->id
+				,'lot_number'=>$asset->lot_number
+				,'quantity'=>$asset->contenancereel_value
+				,'quantity_unit'=>$asset->contenancereel_units
 			);
 			
 			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
@@ -79,7 +86,7 @@
 			$dispatchdetail = new TDispatchDetail;
 			
 			//Si déjà existant => MAj
-			$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE fk_asset = ".$asset->rowid." AND fk_expeditiondet = ".$fk_line_expe);
+			$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE fk_asset = ".$asset->rowid." AND fk_expeditiondet = ".$fk_line_expe." ");
 			if($PDOdb->Get_line()){
 				$dispatchdetail->load($PDOdb,$PDOdb->Get_field('rowid'));
 			}
@@ -90,15 +97,16 @@
 			$dispatchdetail->fk_expeditiondet = $fk_line_expe;
 			$dispatchdetail->fk_asset = $asset->rowid;
 			$dispatchdetail->rang = $rang;
-			$dispatchdetail->weight = 1;
-			$dispatchdetail->weight_reel = 1;
-			$dispatchdetail->weight_unit = 0;
-			$dispatchdetail->weight_reel_unit = 0;
+			$dispatchdetail->lot_number = $asset->lot_number;
+			$dispatchdetail->weight = $asset->contenancereel_value;
+			$dispatchdetail->weight_reel = $asset->contenancereel_value;
+			$dispatchdetail->weight_unit = $asset->contenancereel_units;
+			$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
 
 			$dispatchdetail->save($PDOdb);
 
 		}
-		
+		//pre($TImport,true);
 		return $TImport;
 
 	}
@@ -193,13 +201,43 @@ global $langs, $db;
 						var json_results = $.parseJSON(results);
 
 						$('#numserie option').remove();
+						cpt = 0;
+						$.each(json_results, function(index) {
+							var obj = json_results[index];
+							cpt ++;
+							$('#numserie').append($('<option>', {
+								value: obj.serial_number,
+								text: obj.serial_number + ' - ' + obj.qty + ' ' +obj.unite_string
+							}));
+
+							$('#quantity').val(obj.qty);
+							$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
+						});
+					});
+				});
+				
+				$('#product').change(function() {
+					var productid = $(this).val();
+
+					$.ajax({
+						url: 'script/interface.php',
+						method: 'GET',
+						data: {
+							productid: productid,
+							type:'get',
+							get:'autocomplete_lot_number'
+						}
+					}).done(function(results) {
+						var json_results = $.parseJSON(results);
+
+						$('#lot_number option').remove();
 						
 						$.each(json_results, function(index) {
 							var obj = json_results[index];
 							
-							$('#numserie').append($('<option>', {
-								value: obj.serial_number,
-								text: obj.serial_number + ' - ' + obj.qty
+							$('#lot_number').append($('<option>', {
+								value: obj.lot_number,
+								text: obj.lot_number
 							}));
 						});
 					});
@@ -209,6 +247,7 @@ global $langs, $db;
 		<?php
 		
 		//Form pour ajouter un équipement directement
+		$DoliForm = new FormProduct($db);
 		$form=new TFormCore('auto', 'formaddasset','post', true);	
 		echo $form->hidden('action','edit');
 		echo $form->hidden('mode','addasset');
@@ -229,8 +268,25 @@ global $langs, $db;
 			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' - '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
 		}
 		
-		echo $form->combo('Numéro de Lot à ajouter', 'lot_number', $TLotNumber, '').'<br>';
-		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'');
+		$TProduct = array('');
+		$sql = "SELECT DISTINCT(p.rowid),p.ref,p.label 
+				FROM ".MAIN_DB_PREFIX."element_element as ee
+					LEFT JOIN ".MAIN_DB_PREFIX."commande as c ON (c.rowid = ee.fk_source)
+					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_commande = c.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = cd.fk_product)
+				WHERE ee.sourcetype = 'commande' AND ee.targettype = 'shipping' AND ee.fk_target = ".$expedition->id."";
+		//echo $sql;
+					
+		$PDOdb->Execute($sql);
+		while ($PDOdb->Get_line()) {
+			$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
+		}
+		
+		echo $form->combo('Produit expédié', 'product', $TProduct, '').'<br>';
+		echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
+		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
+		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
 		echo $form->btsubmit('Ajouter', 'btaddasset');
 		
 		$form->end();
@@ -258,6 +314,8 @@ global $langs, $db;
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de série</td>
+			<td>Numéro de Lot</td>
+			<td>Quantité</td>
 			<td>&nbsp;</td>
 		</tr>
 		
@@ -277,11 +335,16 @@ global $langs, $db;
 				$asset = new TAsset;
 				$asset->loadBy($PDOdb,$line['numserie'],'serial_number');
 				
+				$assetLot = new TAssetLot;
+				$assetLot->loadBy($PDOdb,$line['lot_number'],'lot_number');
+				
 				$Trowid = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX."expeditiondet_asset",array('fk_asset'=>$asset->rowid,'fk_expeditiondet'=>$line['fk_expeditiondet']));
 				
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
 					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>" target="_blank"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></a></td>
+					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>" target="_blank"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30)   ?></a></td>
+					<td><?php echo $line['quantity']." ".measuring_units_string($line['quantity_unit'],'weight'); ?></td>
 					<td>
 						<?php 
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';

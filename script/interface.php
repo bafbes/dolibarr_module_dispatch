@@ -24,6 +24,9 @@ function actions(&$PDOdb, $type) {
 	        case 'autocomplete_asset':
 	            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number')),'json');
 	            break;
+			case 'autocomplete_lot_number':
+	            __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
+	            break;
 		}
 	}
 }
@@ -41,7 +44,26 @@ function _autocomplete_asset(&$PDOdb, $lot_number) {
 	$Tres = array();
 	while ($PDOdb->Get_line()) {
 		$Tres[$PDOdb->Get_field('serial_number')]['serial_number'] = $PDOdb->Get_field('serial_number');
-		$Tres[$PDOdb->Get_field('serial_number')]['qty'] = $PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
+		$Tres[$PDOdb->Get_field('serial_number')]['qty'] = $PDOdb->Get_field('contenancereel_value');
+		$Tres[$PDOdb->Get_field('serial_number')]['unite_string'] = measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
+		$Tres[$PDOdb->Get_field('serial_number')]['unite'] = $PDOdb->Get_field('contenancereel_units');
+	}
+	return $Tres;
+}
+
+function _autocomplete_lot_number(&$PDOdb, $productid) {
+	global $db, $conf, $langs;
+	$langs->load('other');
+	dol_include_once('/core/lib/product.lib.php');
+	
+	$sql = "SELECT DISTINCT(lot_number) 
+			FROM ".MAIN_DB_PREFIX."asset 
+			WHERE fk_product = ".$productid;
+	$PDOdb->Execute($sql);
+	
+	$Tres = array('');
+	while ($PDOdb->Get_line()) {
+		$Tres[$PDOdb->Get_field('lot_number')]['lot_number'] = $PDOdb->Get_field('lot_number');
 	}
 	return $Tres;
 }
