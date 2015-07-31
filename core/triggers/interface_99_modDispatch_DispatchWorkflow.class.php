@@ -186,7 +186,7 @@ class InterfaceDispatchWorkflow
 	}
 	
 	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref) {
-		global $user, $langs;
+		global $user, $langs, $conf;
 		dol_include_once('/asset/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
@@ -194,8 +194,15 @@ class InterfaceDispatchWorkflow
 		$asset = new TAsset;
 		$asset->load($PDOdb,$linedetail->fk_asset);
 		
-		$poids_destocke = $this->calcule_poids_destocke($PDOdb,$linedetail);
-		$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
+		if($conf->global->clilatoxan){
+			$poids_destocke = $this->calcule_poids_destocke($PDOdb,$linedetail);
+			$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
+		}
+		else{
+			$poids_destocke = $linedetail->weight_reel;
+		}
+		/*pre($linedetail,true);
+		echo $poids_destocke;exit;*/
 		
 		$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref));
