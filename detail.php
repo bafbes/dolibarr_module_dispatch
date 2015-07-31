@@ -164,9 +164,11 @@ global $langs, $db;
 		$form=new TFormCore('auto','formimport','post', true);
 		echo $form->hidden('action', 'SAVE');
 		echo $form->hidden('id', $expedition->id);
-	
-		echo $form->fichier('Fichier à importer','file1','',80);
-		echo $form->btsubmit('Envoyer', 'btsend');
+		
+		if($conf->global->DISPATCH_USE_IMPORT_FILE){
+			echo $form->fichier('Fichier à importer','file1','',80);
+			echo $form->btsubmit('Envoyer', 'btsend');
+		}
 		
 		$form->end();
 		

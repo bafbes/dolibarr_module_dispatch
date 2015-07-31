@@ -384,7 +384,7 @@ function _by_ref(&$a, &$b) {
 	
 }
 function fiche(&$commande, &$TImport) {
-global $langs, $db;
+global $langs, $db, $conf;
 
 	llxHeader();
 
@@ -399,7 +399,7 @@ global $langs, $db;
 	echo $form->hidden('action', 'SAVE');
 	echo $form->hidden('id', $commande->id);
 	
-	if($commande->statut < 5){
+	if($commande->statut < 5 && $conf->global->DISPATCH_USE_IMPORT_FILE){
 		echo $form->fichier('Fichier à importer','file1','',80);
 		echo $form->btsubmit('Envoyer', 'btsend');
 	}

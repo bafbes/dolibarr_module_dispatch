@@ -1,2 +1,5 @@
 Module210008Name=Dispatch
 Module210008Desc=Gestion de l'expédition de commandes
+
+DispatchSetup=Administration du module Dispatch
+UseImportFile=Utiliser l'import de fichier pour créer les détails expédition/réception
