@@ -7,6 +7,7 @@
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/core/lib/admin.lib.php' );
 	dol_include_once('/core/lib/sendings.lib.php' );
+	dol_include_once('/core/lib/product.lib.php');
 	dol_include_once('/asset/class/asset.class.php');
 	
 	global $langs, $user,$db;
@@ -142,10 +143,10 @@
 		}		
 	}
 
-	fiche($expedition, $TImport);
+	fiche($PDOdb,$expedition, $TImport);
 
 
-function fiche(&$expedition, &$TImport) {
+function fiche(&$PDOdb,&$expedition, &$TImport) {
 global $langs, $db;
 
 	llxHeader();
@@ -161,16 +162,51 @@ global $langs, $db;
 	
 	if($expedition->statut == 0){
 		//Form pour import de fichier
-		$form=new TFormCore('auto','formimport','post', true);
-		echo $form->hidden('action', 'SAVE');
-		echo $form->hidden('id', $expedition->id);
-		
 		if($conf->global->DISPATCH_USE_IMPORT_FILE){
+			$form=new TFormCore('auto','formimport','post', true);
+			
+			echo $form->hidden('action', 'SAVE');
+			echo $form->hidden('id', $expedition->id);
+			
 			echo $form->fichier('Fichier à importer','file1','',80);
 			echo $form->btsubmit('Envoyer', 'btsend');
+		
+			$form->end();
 		}
 		
-		$form->end();
+		?>
+		<script>
+			$(document).ready(function() {
+
+				$('#lot_number').change(function() {
+					var lot_number = $(this).val();
+
+					$.ajax({
+						url: 'script/interface.php',
+						method: 'GET',
+						data: {
+							lot_number: lot_number,
+							type:'get',
+							get:'autocomplete_asset'
+						}
+					}).done(function(results) {
+						var json_results = $.parseJSON(results);
+
+						$('#numserie option').remove();
+						
+						$.each(json_results, function(index) {
+							var obj = json_results[index];
+							
+							$('#numserie').append($('<option>', {
+								value: obj.serial_number,
+								text: obj.serial_number + ' - ' + obj.qty
+							}));
+						});
+					});
+				});
+			});
+		</script>
+		<?php
 		
 		//Form pour ajouter un équipement directement
 		$form=new TFormCore('auto', 'formaddasset','post', true);	
@@ -178,8 +214,24 @@ global $langs, $db;
 		echo $form->hidden('mode','addasset');
 		
 		echo $form->hidden('id', $expedition->id);
-		echo $form->texte('Numéro de série à ajouter','numserie','',30,0,'autofocus');
-		echo $form->btsubmit('Ajouter', 'btaddasset');	
+		
+		$TLotNumber = array();
+		$sql = "SELECT DISTINCT(lot_number) FROM ".MAIN_DB_PREFIX."asset ORDER BY lot_number ASC";
+		$PDOdb->Execute($sql);
+		while ($PDOdb->Get_line()) {
+			$TLotNumber[$PDOdb->Get_field('lot_number')] = $PDOdb->Get_field('lot_number');
+		}
+		
+		$TSerialNumber = array('');
+		$sql = "SELECT DISTINCT(serial_number),contenancereel_value, contenancereel_units FROM ".MAIN_DB_PREFIX."asset ORDER BY serial_number ASC";
+		$PDOdb->Execute($sql);
+		while ($PDOdb->Get_line()) {
+			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' - '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
+		}
+		
+		echo $form->combo('Numéro de Lot à ajouter', 'lot_number', $TLotNumber, '').'<br>';
+		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'');
+		echo $form->btsubmit('Ajouter', 'btaddasset');
 		
 		$form->end();
 		
