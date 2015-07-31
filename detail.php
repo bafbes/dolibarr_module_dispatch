@@ -347,7 +347,7 @@ global $langs, $db;
 					<td><?php echo $line['quantity']." ".measuring_units_string($line['quantity_unit'],'weight'); ?></td>
 					<td>
 						<?php 
-							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
+							if($expedition->statut != 1) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
 						?>
 					</td>
 				</tr>
