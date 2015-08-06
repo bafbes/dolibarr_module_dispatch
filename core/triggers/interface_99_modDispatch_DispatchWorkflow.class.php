@@ -132,7 +132,6 @@ class InterfaceDispatchWorkflow
 						// Création des mouvements de stock de flacon
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
-
 							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
 
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
@@ -207,7 +206,8 @@ class InterfaceDispatchWorkflow
 		echo $poids_destocke;exit;*/
 
 		$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
-		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), 0, false, 0, true);
+    
+    $asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), 0, false, 0, $conf->global->STOCK_CALCULATE_ON_SHIPMENT);
 
 		return $poids_destocke;
 	}
