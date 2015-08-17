@@ -268,9 +268,10 @@ class moddispatch extends DolibarrModules
 
 		$result=$this->load_tables();
 
-		$url = dol_buildpath('/dispatch/script/create-maj-base.php',2);
-		file_get_contents($url);
-
+		define('INC_FROM_DOLIBARR',true);
+        dol_include_once('/dispatch/config.php');
+		dol_include_once("/dispatch/script/create-maj-base.php");
+		
 		return $this->_init($sql, $options);
 	}
 
