@@ -44,6 +44,13 @@
 	print ajax_constantonoff('DISPATCH_USE_IMPORT_FILE');
 	print '</td></tr>';
 	
+	print '<tr>';
+	print '<td>'.$langs->trans("DispatchRecepAutoQuantity").'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_RECEP_AUTO_QUANTITY');
+	print '</td></tr>';
+	
 	print "</table>";
 	
 	$form=new TFormCore;

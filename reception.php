@@ -204,7 +204,10 @@
 				//On vérifie que le produit est bien présent dans la commande
 				$find = false;
 				foreach ($commandefourn->lines as $key => $l) {
-					if($l->fk_product == $product->id) $find = true;
+					if($l->fk_product == $product->id){
+						$find = true; 
+						$quantityOrdered += $l->qty;
+					}
 				}
 				
 				if (!$find) {
@@ -219,7 +222,7 @@
 				
 				//pre($commandefourn,true);exit;
 				if (!$error) {
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'], $k);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'], $k);
 				}
 			}
 			
