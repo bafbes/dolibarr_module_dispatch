@@ -32,7 +32,7 @@
 	function _loadDetail(&$PDOdb,&$commandefourn){
 		
 		$TImport = array();
-		
+
 		foreach($commandefourn->lines as $line){
 		
 			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit
@@ -40,7 +40,7 @@
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
 						ORDER BY ca.rang ASC";
-			
+
 			$PDOdb->Execute($sql);
 
 			while ($PDOdb->Get_line()) {
@@ -501,8 +501,13 @@ global $langs, $db;
 		}
 		
 		if($commande->statut < 5){
+			
+			foreach($commande->lines as $line){
+				$productFilter .= ' '.$line->product_label;
+			}
+			
 			?><tr style="background-color: lightblue;">
-					<td><?php $formDoli->select_produits(-1, 'new_line_fk_product'); ?></td>
+					<td><?php print $formDoli->select_produits_list(-1, 'new_line_fk_product','',100,0,$productFilter); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
