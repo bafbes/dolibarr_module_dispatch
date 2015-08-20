@@ -60,6 +60,7 @@ class TRecepDetail extends TObjetStd {
 		parent::add_champs('rang','type=entier;');
 		parent::add_champs('lot_number,carton,numerosuivi,imei,firmware,serial_number','type=chaine;');
 		parent::add_champs('weight, weight_reel, tare','type=float;');
+		parent::add_champs('dluo','type=date;');
 		parent::add_champs('weight_unit, weight_reel_unit, tare_unit','type=entier;');
 		
 		parent::_init_vars();

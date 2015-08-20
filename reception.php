@@ -35,7 +35,7 @@
 
 		foreach($commandefourn->lines as $line){
 		
-			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit
+			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
@@ -53,6 +53,7 @@
 					,'imei'=>$PDOdb->Get_field('imei')
 					,'firmware'=>$PDOdb->Get_field('firmware')
 					,'fk_product'=>$PDOdb->Get_field('rowid')
+					,'dluo'=>$PDOdb->Get_field('dluo')
 					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
 				);
 			}
@@ -61,7 +62,7 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$k=null){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo,$k=null){
 		global $db, $conf;
 		
 		//Charge le produit associé à l'équipement
@@ -84,9 +85,11 @@
 		//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 		$recepdetail = new TRecepDetail;
 		
+		//pre($TImport,true);
+		
 		//Si déjà existant => MAj
 		$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset 
-						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$PDOdb->quote($numserie)." AND fk_commandedet = ".$fk_line);
+						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$PDOdb->quote($numserie)." AND fk_commandedet = ".$fk_line." AND rowid = ".$_POST['TLine'][$k]['commande_fournisseurdet_asset']);
 		
 		$lineFound = false;
 		if($PDOdb->Get_line() || $line_update){
@@ -102,6 +105,7 @@
 		$recepdetail->fk_commandedet = $fk_line;
 		$recepdetail->fk_product = $prodAsset->id;
 		$recepdetail->rang = $rang;
+		$recepdetail->set_date('dluo', $dluo);
 		$recepdetail->lot_number = $lot_number;
 		$recepdetail->weight_reel = $quantity;
 		$recepdetail->weight = $quantity;
@@ -129,6 +133,7 @@
 				,'fk_product'=>$prodAsset->id
 				,'imei'=>$imei
 				,'firmware'=>$firmware
+				,'dluo'=>$dluo
 				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
 			);
 		}
@@ -143,6 +148,7 @@
 				,'fk_product'=>$prodAsset->id
 				,'imei'=>$imei
 				,'firmware'=>$firmware
+				,'dluo'=>$dluo
 				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
 			);
 		}
@@ -158,7 +164,7 @@
 		foreach($f1 as $line) {
 			if(!(ctype_space($line))) {
 				list($ref, $numserie, $imei, $firmware, $lot_number)=str_getcsv($line,';','"');
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit);
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo);
 			}
 		}
 		
@@ -222,7 +228,7 @@
 				
 				//pre($commandefourn,true);exit;
 				if (!$error) {
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'], $k);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $k);
 				}
 			}
 			
@@ -281,6 +287,7 @@
 				$asset->lot_number =$line['lot_number'];
 				$asset->firmware = $line['firmware'];
 				$asset->imei= $line['imei'];
+				$asset->set_date('dluo', $line['dluo']);
 				$asset->entity = $conf->entity;
 				
 				//$asset->contenancereel_value = 1;
@@ -436,6 +443,7 @@ global $langs, $db;
 			<td>Produit</td>
 			<td>Numéro de Série</td>
 			<td>Numéro de Lot</td>
+			<td>DLUO</td>
 			<td>Quantité</td>
 			<td>Unité</td>
 			<?php
@@ -485,6 +493,7 @@ global $langs, $db;
 					?>
 					</td>
 					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
+					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
 					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td>
 					<td><?php echo ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight');  ?></td>					<?php
 					if($conf->global->clinomadic->enabled){
@@ -509,6 +518,7 @@ global $langs, $db;
 		
 		if($commande->statut < 5){
 			
+			$pListe[0] = "Sélectionnez un produit";
 			foreach($commande->lines as $line){
 				$pListe[$line->fk_product] = $line->product_label;
 			}
@@ -517,6 +527,7 @@ global $langs, $db;
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
+					<td><?php echo $form->calendrier('','TLine[-1][dluo]', '');   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
 					<td><?php echo $formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight');   ?></td>
 					<?php
