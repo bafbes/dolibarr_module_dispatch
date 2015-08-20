@@ -270,6 +270,7 @@
 				$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
 				$asset->load_asset_type($PDOdb);
 
+				//echo $asset->getNextValue($PDOdb);
 				$asset->fk_product = $line['fk_product'];
 				$asset->serial_number = ($line['numserie']) ? $line['numserie'] : $asset->getNextValue($PDOdb);
 				$asset->lot_number =$line['lot_number'];
@@ -280,6 +281,7 @@
 				$asset->lot_number =$line['lot_number'];
 				$asset->firmware = $line['firmware'];
 				$asset->imei= $line['imei'];
+				$asset->entity = $conf->entity;
 				
 				//$asset->contenancereel_value = 1;
 				
@@ -317,6 +319,8 @@
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 				$asset->save($PDOdb, $user, '', 0, false, 0, true,GETPOST('id_entrepot'));
 				
+				$TImport[$k]['numserie'] = $asset->serial_number;
+				
 				$stock = new TAssetStock;
 				$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $asset->contenancereel_value, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
 				
@@ -328,7 +332,7 @@
 				}
 				
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-				$TProdVentil[$asset->fk_product] += 1;
+				$TProdVentil[$asset->fk_product] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
 			
 		}
@@ -506,11 +510,11 @@ global $langs, $db;
 		if($commande->statut < 5){
 			
 			foreach($commande->lines as $line){
-				$productFilter .= ' '.$line->product_label;
+				$pListe[$line->fk_product] = $line->product_label;
 			}
 			
 			?><tr style="background-color: lightblue;">
-					<td><?php print $formDoli->select_produits_list(-1, 'new_line_fk_product','',100,0,$productFilter); ?></td>
+					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
