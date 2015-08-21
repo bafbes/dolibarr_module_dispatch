@@ -36,17 +36,25 @@ function _autocomplete_asset(&$PDOdb, $lot_number) {
 	$langs->load('other');
 	dol_include_once('/core/lib/product.lib.php');
 	
-	$sql = "SELECT DISTINCT(serial_number),contenancereel_value,contenancereel_units 
+	$sql = "SELECT DISTINCT(rowid)
 			FROM ".MAIN_DB_PREFIX."asset 
 			WHERE lot_number = '".$lot_number."'";
 	$PDOdb->Execute($sql);
+	$TAssetIds = $PDOdb->Get_All();
 	
 	$Tres = array();
-	while ($PDOdb->Get_line()) {
+	foreach ($TAssetIds as $res) {
+		
+		$asset = new TAsset;
+		$asset->load($PDOdb, $res->rowid);
+		$asset->load_asset_type($PDOdb);
+		
+		//pre($asset,true);
+		
 		$Tres[$PDOdb->Get_field('serial_number')]['serial_number'] = $PDOdb->Get_field('serial_number');
 		$Tres[$PDOdb->Get_field('serial_number')]['qty'] = $PDOdb->Get_field('contenancereel_value');
-		$Tres[$PDOdb->Get_field('serial_number')]['unite_string'] = measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
-		$Tres[$PDOdb->Get_field('serial_number')]['unite'] = $PDOdb->Get_field('contenancereel_units');
+		$Tres[$PDOdb->Get_field('serial_number')]['unite_string'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($PDOdb->Get_field('contenancereel_units'),$asset->assetType->measuring_units);
+		$Tres[$PDOdb->Get_field('serial_number')]['unite'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : $PDOdb->Get_field('contenancereel_units');
 	}
 	return $Tres;
 }

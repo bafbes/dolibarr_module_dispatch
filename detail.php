@@ -28,7 +28,7 @@
 
 		foreach($expedition->lines as $line){
 		
-			$sql = "SELECT a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit
+			$sql = "SELECT a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
 						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON ( a.rowid = ea.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
@@ -36,16 +36,18 @@
 						ORDER BY ea.rang ASC";
 
 			$PDOdb->Execute($sql);
-
-			while ($PDOdb->Get_line()) {
+			$Tres = $PDOdb->Get_All();
+			
+			foreach ($Tres as $res) {
+				
 				$TImport[] =array(
-					'ref'=>$PDOdb->Get_field('ref')
-					,'numserie'=>$PDOdb->Get_field('serial_number')
-					,'fk_product'=>$PDOdb->Get_field('rowid')
-					,'fk_expeditiondet'=>$PDOdb->Get_field('fk_expeditiondet')
-					,'lot_number'=>$PDOdb->Get_field('lot_number')
-					,'quantity'=>$PDOdb->Get_field('weight_reel')
-					,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
+					'ref'=>$res->ref
+					,'numserie'=>$res->serial_number
+					,'fk_product'=>$res->rowid
+					,'fk_expeditiondet'=>$res->fk_expeditiondet
+					,'lot_number'=>$res->lot_number
+					,'quantity'=>$res->weight_reel
+					,'quantity_unit'=>$res->weight_reel_unit
 				);
 			}
 		}
@@ -63,18 +65,7 @@
 			//Charge le produit associé à l'équipement
 			$prodAsset = new Product($db);
 			$prodAsset->fetch($asset->fk_product);
-			
-			//Rempli le tableau utilisé pour l'affichage des lignes
-			$TImport[] =array(
-				'ref'=>$prodAsset->ref
-				,'numserie'=>$numserie
-				,'fk_product'=>$prodAsset->id
-				,'fk_expeditiondet'=>$expedition->id
-				,'lot_number'=>$asset->lot_number
-				,'quantity'=>$asset->contenancereel_value
-				,'quantity_unit'=>$asset->contenancereel_units
-			);
-			
+
 			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
 			foreach($expedition->lines as $expeline){
 				if($expeline->fk_product == $prodAsset->id){
@@ -98,12 +89,24 @@
 			$dispatchdetail->fk_asset = $asset->rowid;
 			$dispatchdetail->rang = $rang;
 			$dispatchdetail->lot_number = $asset->lot_number;
-			$dispatchdetail->weight = $asset->contenancereel_value;
-			$dispatchdetail->weight_reel = $asset->contenancereel_value;
+			$dispatchdetail->weight = (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value;
+			$dispatchdetail->weight_reel = (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value;
 			$dispatchdetail->weight_unit = $asset->contenancereel_units;
 			$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
 
 			$dispatchdetail->save($PDOdb);
+			
+			//Rempli le tableau utilisé pour l'affichage des lignes
+			$TImport[] =array(
+				'ref'=>$prodAsset->ref
+				,'numserie'=>$numserie
+				,'fk_product'=>$prodAsset->id
+				,'fk_expeditiondet'=>$expedition->id
+				,'lot_number'=>$asset->lot_number
+				,'quantity'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value
+				,'quantity_unit'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_units
+			);
+			
 
 		}
 		//pre($TImport,true);
@@ -211,7 +214,16 @@ global $langs, $db;
 							}));
 
 							$('#quantity').val(obj.qty);
-							$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
+							if(obj.unite != 'unité(s)'){
+								$('#quantity_unit').show();
+								$('#units_lable').remove();
+								$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
+							}
+							else{
+								$('#quantity_unit').hide();
+								$('#quantity_unit option[value=0]').attr("selected","selected");
+								$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+							}
 						});
 					});
 				});
@@ -334,6 +346,7 @@ global $langs, $db;
 				
 				$asset = new TAsset;
 				$asset->loadBy($PDOdb,$line['numserie'],'serial_number');
+				$asset->load_asset_type($PDOdb);
 				
 				$assetLot = new TAssetLot;
 				$assetLot->loadBy($PDOdb,$line['lot_number'],'lot_number');
@@ -342,9 +355,9 @@ global $langs, $db;
 				
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
-					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>" target="_blank"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></a></td>
-					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>" target="_blank"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30)   ?></a></td>
-					<td><?php echo $line['quantity']." ".measuring_units_string($line['quantity_unit'],'weight'); ?></td>
+					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></a></td>
+					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30)   ?></a></td>
+					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 					<td>
 						<?php 
 							if($expedition->statut != 1) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
