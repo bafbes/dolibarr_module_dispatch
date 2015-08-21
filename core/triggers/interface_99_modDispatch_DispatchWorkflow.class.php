@@ -206,7 +206,10 @@ class InterfaceDispatchWorkflow
 		echo $poids_destocke;exit;*/
 
 		//$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
-    	$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, !$conf->global->STOCK_CALCULATE_ON_SHIPMENT); //inverse de $conf->global->STOCK_CALCULATE_ON_SHIPMENT car test inversé dans fonction
+    	$asset->save($PDOdb);
+    	
+    	$stock = new TAssetStock;
+		$stock->mouvement_stock($PDOdb, $user, $asset->getId(), -$poids_destocke, $langs->trans("ShipmentValidatedInDolibarr",$numref), $linedetail->fk_expeditiondet);
 
 		return $poids_destocke;
 	}
