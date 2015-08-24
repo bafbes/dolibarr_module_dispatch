@@ -344,7 +344,7 @@
 			
 		}
 
-		//pre($commandefourn,true);exit;
+		//pre($TProdVentil,true);
 		
 		$status = $commandefourn->fk_statut;
 		
@@ -355,6 +355,7 @@
 
 			foreach($TProdVentil as $id_prod => $qte){
 				//Fonction standard ventilation commande fournisseur
+				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 				
 				foreach($commandefourn->lines as $line){
 					if($line->fk_product == $id_prod){
@@ -364,8 +365,6 @@
 						}
 					}
 				}
-				
-				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 			}
 
 			if($commandefourn->statut == 0){
