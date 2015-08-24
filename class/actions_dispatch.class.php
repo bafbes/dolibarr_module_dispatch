@@ -15,6 +15,7 @@ class ActionsDispatch
 			
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/dispatch/config.php');
+			dol_include_once('/asset/class/asset.class.php');
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 			
 			if(isset($parameters['object']) && get_class($object) == 'Expedition'){
@@ -22,11 +23,25 @@ class ActionsDispatch
 				$PDOdb = new TPDOdb;
 				
 				foreach($object->lines as &$line){
-					$sql = 'SELECT DISTINCT(lot_number) FROM '.MAIN_DB_PREFIX.'expeditiondet_asset WHERE fk_expeditiondet = '.$line->line_id;
+					$sql = 'SELECT DISTINCT(lot_number),rowid FROM '.MAIN_DB_PREFIX.'expeditiondet_asset WHERE fk_expeditiondet = '.$line->line_id;
 					$PDOdb->Execute($sql);
-					$line->desc .= "<br>Lot expédié : ";
-					while ($PDOdb->Get_line()) {
-						$line->desc .= $PDOdb->Get_field('lot_number')." ";
+					
+					$TRes = $PDOdb->Get_All();
+					
+					if(count($TRes)>0){
+						$line->desc .= "<br>Lot expédié : ";
+						foreach($TRes as $res){
+							$dispatchDetail = new TDispatchDetail;
+							$dispatchDetail->load($PDOdb, $res->rowid);
+							
+							$asset = new TAsset;
+							$asset->load($PDOdb, $dispatchDetail->fk_asset);
+							$asset->load_asset_type($PDOdb);
+							
+							$unite = (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($dispatchDetail->weight_reel_unit, $asset->assetType->measuring_units));
+
+							$line->desc .= "<br>- ".$res->lot_number." x ".$dispatchDetail->weight_reel." ".$unite.' (DLUO : '.$asset->get_date('dluo').')';
+						}	
 					}
 				}
 			}
