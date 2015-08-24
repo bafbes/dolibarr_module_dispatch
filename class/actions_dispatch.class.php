@@ -29,7 +29,7 @@ class ActionsDispatch
 					$TRes = $PDOdb->Get_All();
 					
 					if(count($TRes)>0){
-						$line->desc .= "<br>Lot expédié : ";
+						$line->desc .= "<br>Lot(s) expédié(s) : ";
 						foreach($TRes as $res){
 							$dispatchDetail = new TDispatchDetail;
 							$dispatchDetail->load($PDOdb, $res->rowid);
