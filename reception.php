@@ -42,7 +42,7 @@
 						ORDER BY ca.rang ASC";
 
 			$PDOdb->Execute($sql);
-
+			
 			while ($PDOdb->Get_line()) {
 				$TImport[] =array(
 					'ref'=>$PDOdb->Get_field('ref')
@@ -101,11 +101,11 @@
 		
 		$keys = array_keys($TImport);
 		$rang = $keys[count($keys)-1];
-
+		
 		$recepdetail->fk_commandedet = $fk_line;
 		$recepdetail->fk_product = $prodAsset->id;
 		$recepdetail->rang = $rang;
-		$recepdetail->set_date('dluo', $dluo);
+		$recepdetail->set_date('dluo', ($dluo) ? $dluo : date('Y-m-d H:i:s'));
 		$recepdetail->lot_number = $lot_number;
 		$recepdetail->weight_reel = $quantity;
 		$recepdetail->weight = $quantity;
@@ -121,7 +121,7 @@
 
 		$recepdetail->save($PDOdb);
 		
-		//Rempli le tableau utilisé pour l'affichage des lignes
+		//Rempli le tableau utilisé pour l'affichage des lignes		
 		if ($lineFound)
 		{
 			$TImport[$k] =array(
@@ -133,7 +133,7 @@
 				,'fk_product'=>$prodAsset->id
 				,'imei'=>$imei
 				,'firmware'=>$firmware
-				,'dluo'=>$dluo
+				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
 				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
 			);
 		}
@@ -148,7 +148,7 @@
 				,'fk_product'=>$prodAsset->id
 				,'imei'=>$imei
 				,'firmware'=>$firmware
-				,'dluo'=>$dluo
+				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
 				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
 			);
 		}
@@ -209,6 +209,7 @@
 				
 				//On vérifie que le produit est bien présent dans la commande
 				$find = false;
+				$quantityOrdered = 0;
 				foreach ($commandefourn->lines as $key => $l) {
 					if($l->fk_product == $product->id){
 						$find = true; 
