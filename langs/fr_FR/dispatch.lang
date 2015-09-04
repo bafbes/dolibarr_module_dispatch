@@ -4,3 +4,4 @@ Module210008Desc=Gestion de l'expédition de commandes
 DispatchSetup=Administration du module Dispatch
 UseImportFile=Utiliser l'import de fichier pour créer les détails expédition/réception
 DispatchRecepAutoQuantity=Renseigné automatiquement la quantité commandé lors de la réception d'un produit
+DispatchDLUOByDefault=Renseigner automatiquement la DLUO avec date du jour + X (X étant l'ajout de jour, mois ou année au format sql ex: +1 year)

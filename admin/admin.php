@@ -4,7 +4,7 @@
 	//require('../lib/asset.lib.php');
 	require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 	
-	global $user,$langs;
+	global $user,$langs,$db,$const,$conf;
 	
 	$langs->load('dispatch@dispatch');
 	$langs->load('admin');
@@ -23,6 +23,12 @@
 		
 		setEventMessage("Configuration enregistrée");
 	}
+
+	if($action == 'setconst') {
+		$const = GETPOST('const', 'alpha');
+		dolibarr_set_const($db,$const,GETPOST($const,'alpha'),'chaine',0,'',$conf->entity);
+	}
+	
 
 	llxHeader('','Gestion des détails Réception/Expédidion, à propos', '');
 	
@@ -51,69 +57,26 @@
 	print ajax_constantonoff('DISPATCH_RECEP_AUTO_QUANTITY');
 	print '</td></tr>';
 	
-	print "</table>";
-	
 	$form=new TFormCore;
+	
+	print '<tr class="liste_titre">';
+	print '<td>'.$langs->trans("Réception commande fournisseur").'</td>'."\n";
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="100">'.$langs->trans("Value").'</td>'."\n";
+	print '<tr>';
+	
+	// Champ supplémentaire contenant le code comptable produit pour les ventes CEE
+	$var=! $var;
+	$form = new TFormCore($_SERVER["PHP_SELF"],'const_dluo_by_default');
+	print $form->hidden('action','setconst');
+	print $form->hidden('const','DISPATCH_DLUO_BY_DEFAULT');
+	print '<tr '.$bc[$var].'><td>';
+	print $langs->trans("DispatchDLUOByDefault");
+	print '</td><td align="right">';
+	print $form->texte('', 'DISPATCH_DLUO_BY_DEFAULT',$conf->global->DISPATCH_DLUO_BY_DEFAULT,30,255);
+	print '</td><td align="right">';
+	print '<input type="submit" class="button" value="'.$langs->trans("Modify").'" />';
+	print "</td></tr>\n";
+	$form->end();
 
-	//showParameters($form);
-
-function showParameters(&$form) {
-	global $db,$conf,$langs;
-	dol_include_once('/product/class/html.formproduct.class.php');
-	
-	$formProduct = new FormProduct($db);
-	
-	?><form action="<?php echo $_SERVER['PHP_SELF'] ?>" name="load-<?php echo $typeDoc ?>" method="POST" enctype="multipart/form-data">
-		<input type="hidden" name="action" value="save" />
-		<table width="100%" class="noborder">
-			<tr class="liste_titre">
-				<td colspan="2"><?php echo $langs->trans('ParametersWarehouse') ?></td>
-			</tr>
-			
-			<tr class="pair">
-				<td><?php echo $langs->trans('UseManualWarehouse') ?></td><td><?php echo ajax_constantonoff('ASSET_MANUAL_WAREHOUSE'); ?></td>
-			</tr> 
-			
-			<tr id="USE_DEFAULT_WAREHOUSE">
-				<td><?php echo $langs->trans('UseDefinedWarehouse') ?></td><td><?php echo ajax_constantonoff('ASSET_USE_DEFAULT_WAREHOUSE', array('showhide' => array('#WAREHOUSE_TO_MAKE', '#WAREHOUSE_NEEDED'), 'hide' => array('#WAREHOUSE_TO_MAKE', '#WAREHOUSE_NEEDED'))); ?></td>
-			</tr> 
-			
-			<tr id="WAREHOUSE_TO_MAKE" class="pair" <?php if (empty($conf->global->ASSET_USE_DEFAULT_WAREHOUSE)) echo "style='display:none;'" ?>>
-				<td><?php echo $langs->trans('DefaultWarehouseIdToMake') ?></td><td><?php echo $formProduct->selectWarehouses($conf->global->ASSET_DEFAULT_WAREHOUSE_ID_TO_MAKE,'TAsset[ASSET_DEFAULT_WAREHOUSE_ID_TO_MAKE]'); ?></td>
-			</tr>
-			
-			<tr id="WAREHOUSE_NEEDED" <?php if (empty($conf->global->ASSET_USE_DEFAULT_WAREHOUSE)) echo "style='display:none;'" ?>>
-				<td><?php echo $langs->trans('DefaultWarehouseIdNeeded') ?></td><td><?php echo $formProduct->selectWarehouses($conf->global->ASSET_DEFAULT_WAREHOUSE_ID_NEEDED,'TAsset[ASSET_DEFAULT_WAREHOUSE_ID_NEEDED]'); ?></td>
-			</tr> 
-			
-		</table>
-		
-		<script type="text/javascript">
-			$(function() {
-				$('#set_ASSET_MANUAL_WAREHOUSE').click(function() {
-					if ($('#del_ASSET_USE_DEFAULT_WAREHOUSE').css('display') != 'none') {
-						$('#del_ASSET_USE_DEFAULT_WAREHOUSE').click();
-					}
-				});
-				
-				$('#set_ASSET_USE_DEFAULT_WAREHOUSE').click(function() {
-					if ($('#del_ASSET_MANUAL_WAREHOUSE').css('display') != 'none') {
-						$('#del_ASSET_MANUAL_WAREHOUSE').click();
-					}
-				});
-			});
-		</script>
-		
-		<p align="right">	
-			<input class="button" type="submit" name="bt_save" value="<?php echo $langs->trans('Save') ?>" /> 
-		</p>
-	
-	</form>
-	<p align="center" style="background: #fff;">
-	   Développé par <br />
-	   <a href="http://www.atm-consulting.fr/" target="_blank"><img src="../img/ATM_logo_petit.jpg" /></a>
-	</p>
-	
-	<br /><br />
-	<?php
-}
+	print "</table>";

@@ -427,7 +427,7 @@ global $langs, $db, $conf;
 }
 
 function tabImport(&$TImport,&$commande) {
-global $langs, $db;		
+global $langs, $db, $conf;		
 	
 	$PDOdb=new TPDOdb;
 	
@@ -523,11 +523,18 @@ global $langs, $db;
 				$pListe[$line->fk_product] = $line->product_label;
 			}
 			
+			$defaultDLUO = '';
+			if($conf->global->DISPATCH_DLUO_BY_DEFAULT){
+				$defaultDLUO = date('d/m/Y',strtotime(date('Y-m-d')." ".$conf->global->DISPATCH_DLUO_BY_DEFAULT));
+			}
+			
+			echo $defaultDLUO;
+			
 			?><tr style="background-color: lightblue;">
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
-					<td><?php echo $form->calendrier('','TLine[-1][dluo]', '');   ?></td>
+					<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
 					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
 					<td><?php echo $formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight');   ?></td>
 					<?php
