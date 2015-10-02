@@ -132,7 +132,7 @@ class InterfaceDispatchWorkflow
 						// Création des mouvements de stock de flacon
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
-							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
+							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,$object->fk_soc);
 
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 
@@ -186,7 +186,7 @@ class InterfaceDispatchWorkflow
 		return 0;
 	}
 
-	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref) {
+	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref,$fk_soc = 0) {
 		global $user, $langs, $conf;
 		dol_include_once('/asset/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
@@ -206,6 +206,7 @@ class InterfaceDispatchWorkflow
 		echo $poids_destocke;exit;*/
 
 		//$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
+		$asset->fk_societe_localisation = $fk_soc;
     	$asset->save($PDOdb);
     	
     	$stock = new TAssetStock;
