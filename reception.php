@@ -106,6 +106,7 @@
 		return $TImport;
 
 	}
+$_POST['bt_create'] = true;
 	
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -146,7 +147,6 @@
 		setEventMessage('Modifications enregistrées');
 	}
 	elseif(isset($_POST['bt_create'])) {
-		
 		$PDOdb=new TPDOdb;
 
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
@@ -239,7 +239,7 @@
 			$db->free($resql);
 		}
 		
-		$status = $commandefourn->fk_statut;
+		$status = $commandefourn->statut;
 		
 		if(count($TProdVentil)>0) {
 			$status = $commandefourn->statut;
@@ -263,7 +263,7 @@
 				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),$lineFound->pu_ht,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 			}
 			
-			if($commandefourn->fk_statut == 0)
+			if($commandefourn->statut == 0)
 				$commandefourn->valid($user);
 			
 			if($totalementventile){
@@ -276,7 +276,8 @@
 			setEventMessage('Equipements créés');
 			
 		}
-		
+        
+        $ret = $commandefourn->log($user, $status, date("Y-m-d H:i:s"), '');
 
 	}
 
