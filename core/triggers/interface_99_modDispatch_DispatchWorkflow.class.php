@@ -207,11 +207,12 @@ class InterfaceDispatchWorkflow
 
 		//$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
 		$asset->fk_societe_localisation = $fk_soc;
-    	$asset->save($PDOdb);
+		//Vas destocker l'équipement mais pas dolibarr
+    	$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
     	
-    	$stock = new TAssetStock;
+    	/*$stock = new TAssetStock;
 		$stock->mouvement_stock($PDOdb, $user, $asset->getId(), -$poids_destocke, $langs->trans("ShipmentValidatedInDolibarr",$numref), $linedetail->fk_expeditiondet);
-
+*/
 		return $poids_destocke;
 	}
 
