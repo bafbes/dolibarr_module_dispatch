@@ -109,21 +109,21 @@ class InterfaceDispatchWorkflow
 		global $conf,$db;
 		
 		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
-		
+
 		if ($action == 'SHIPPING_VALIDATE') {
 			dol_include_once('/dispatch/config.php');
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
-			
+
 			$PDOdb = new TPDOdb();
 			
 			// Pour chaque ligne de l'expédition
 			foreach($object->lines as $line) {
 				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
 				$dd = new TDispatchDetail();
-				
+
 				$TIdExpeditionDet = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'expeditiondet', array('fk_expedition' => $object->id, 'fk_origin_line' => $line->fk_origin_line));
 				$idExpeditionDet = $TIdExpeditionDet[0];
-				
+				print $idExpeditionDet;
 				//if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
 				if(!empty($idExpeditionDet)) {
 					$dd->loadLines($PDOdb, $idExpeditionDet);
@@ -136,6 +136,7 @@ class InterfaceDispatchWorkflow
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 							
 							if($conf->clinomadic->enabled){
+								$nb_year_garantie = 0;
 								$asset = new TAsset;
 								$asset->load($PDOdb, $detail->fk_asset);
 	
@@ -169,11 +170,13 @@ class InterfaceDispatchWorkflow
 								
 								if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
 
+//print $asset->serial_number.' '. date('Y-m-d',$asset->date_fin_garantie_cli).'<br />';
+//exit('!');
 								$asset->save($PDOdb);
 							}
 						}
 					}
-					//exit;
+//					exit;
 				}/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
 					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 				}*/
@@ -181,7 +184,6 @@ class InterfaceDispatchWorkflow
 			
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 		}
-
 		return 0;
 	}
 	
