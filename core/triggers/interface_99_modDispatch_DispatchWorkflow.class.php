@@ -156,9 +156,9 @@ class InterfaceDispatchWorkflow
 									$asset->etat = 1; //Vendu
 								}
 
-								foreach($object->linkedObjects['commande'][0]->lines as $line){
-									if($line->fk_product == $asset->fk_product){									
-										$extension_garantie = $line->array_options['options_extension_garantie'];
+								foreach($object->linkedObjects['commande'][0]->lines as $linecommande){
+									if($linecommande->fk_product == $asset->fk_product){									
+										$extension_garantie = $linecommande->array_options['options_extension_garantie'];
 									}
 								}
 								
