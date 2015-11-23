@@ -123,7 +123,7 @@ class InterfaceDispatchWorkflow
 
 				$TIdExpeditionDet = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'expeditiondet', array('fk_expedition' => $object->id, 'fk_origin_line' => $line->fk_origin_line));
 				$idExpeditionDet = $TIdExpeditionDet[0];
-				print $idExpeditionDet;
+				//print $idExpeditionDet;
 				//if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
 				if(!empty($idExpeditionDet)) {
 					$dd->loadLines($PDOdb, $idExpeditionDet);
@@ -157,19 +157,25 @@ class InterfaceDispatchWorkflow
 								}
 
 								foreach($object->linkedObjects['commande'][0]->lines as $linecommande){
-									if($linecommande->fk_product == $asset->fk_product){									
-										$extension_garantie = $linecommande->array_options['options_extension_garantie'];
+									if($linecommande->fk_product == $asset->fk_product){
+										$linecommande->fetch_optionals($linecommande->rowid);
+
+										$fk_service = $linecommande->array_options['options_extension_garantie'];
+
+										$extension = new Product($db);
+										$extension->fetch($fk_service);
+										$extension_garantie = $extension->array_options['options_duree_garantie_client'];
 									}
 								}
 								
 								$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
 
 								$date_valid=dol_now();
-
+								//echo $nb_year_garantie.'<br>';
 								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $date_valid);
-								
+								//echo $extension_garantie.'<br>';
 								if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
-
+								//exit;
 //print $asset->serial_number.' '. date('Y-m-d',$asset->date_fin_garantie_cli).'<br />';
 //exit('!');
 								$asset->save($PDOdb);
