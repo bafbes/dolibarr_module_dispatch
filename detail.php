@@ -197,6 +197,7 @@ global $langs, $db;
 						method: 'GET',
 						data: {
 							lot_number: lot_number,
+							productid: $('#product').val(),
 							type:'get',
 							get:'autocomplete_asset'
 						}
@@ -249,7 +250,7 @@ global $langs, $db;
 							
 							$('#lot_number').append($('<option>', {
 								value: obj.lot_number,
-								text: obj.lot_number
+								text: obj.label
 							}));
 						});
 					});
@@ -267,29 +268,33 @@ global $langs, $db;
 		echo $form->hidden('id', $expedition->id);
 		
 		$TLotNumber = array();
-		$sql = "SELECT DISTINCT(lot_number) FROM ".MAIN_DB_PREFIX."asset ORDER BY lot_number ASC";
+		$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit FROM ".MAIN_DB_PREFIX."asset GROUP BY lot_number ORDER BY lot_number ASC";
+
 		$PDOdb->Execute($sql);
-		while ($PDOdb->Get_line()) {
-			$TLotNumber[$PDOdb->Get_field('lot_number')] = $PDOdb->Get_field('lot_number');
+		$Tres = $PDOdb->Get_All();
+		foreach($Tres as $res){
+			
+			$asset = new TAsset;
+			$asset->load($PDOdb, $res->rowid);
+			$asset->load_asset_type($PDOdb);
+			//pre($asset,true);exit;
+			$TLotNumber[$res->lot_number] = $res->lot_number." / ".$res->qty." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($res->unit,$asset->assetType->measuring_units));
 		}
 		
 		$TSerialNumber = array('');
 		$sql = "SELECT DISTINCT(serial_number),contenancereel_value, contenancereel_units FROM ".MAIN_DB_PREFIX."asset ORDER BY serial_number ASC";
 		$PDOdb->Execute($sql);
 		while ($PDOdb->Get_line()) {
-			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' - '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
+			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' / '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
 		}
 		
 		$TProduct = array('');
 		$sql = "SELECT DISTINCT(p.rowid),p.ref,p.label 
-				FROM ".MAIN_DB_PREFIX."element_element as ee
-					LEFT JOIN ".MAIN_DB_PREFIX."commande as c ON (c.rowid = ee.fk_source)
-					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_commande = c.rowid)
+				FROM ".MAIN_DB_PREFIX."product as p
+					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
 					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
-					LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = cd.fk_product)
-				WHERE ee.sourcetype = 'commande' AND ee.targettype = 'shipping' AND ee.fk_target = ".$expedition->id."";
-		//echo $sql;
-					
+				WHERE ed.fk_expedition = ".$expedition->id."";
+		
 		$PDOdb->Execute($sql);
 		while ($PDOdb->Get_line()) {
 			$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');

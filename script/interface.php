@@ -22,7 +22,7 @@ function actions(&$PDOdb, $type) {
 	
 		switch (GETPOST('get')) {
 	        case 'autocomplete_asset':
-	            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number')),'json');
+	            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid')),'json');
 	            break;
 			case 'autocomplete_lot_number':
 	            __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
@@ -31,14 +31,15 @@ function actions(&$PDOdb, $type) {
 	}
 }
 
-function _autocomplete_asset(&$PDOdb, $lot_number) {
+function _autocomplete_asset(&$PDOdb, $lot_number, $productid) {
 	global $db, $conf, $langs;
 	$langs->load('other');
 	dol_include_once('/core/lib/product.lib.php');
 	
 	$sql = "SELECT DISTINCT(rowid)
 			FROM ".MAIN_DB_PREFIX."asset 
-			WHERE lot_number = '".$lot_number."'";
+			WHERE lot_number = '".$lot_number."'
+			AND fk_product = ".$productid;
 	$PDOdb->Execute($sql);
 	$TAssetIds = $PDOdb->Get_All();
 	
@@ -64,14 +65,22 @@ function _autocomplete_lot_number(&$PDOdb, $productid) {
 	$langs->load('other');
 	dol_include_once('/core/lib/product.lib.php');
 	
-	$sql = "SELECT DISTINCT(lot_number) 
+	$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit
 			FROM ".MAIN_DB_PREFIX."asset 
 			WHERE fk_product = ".$productid;
 	$PDOdb->Execute($sql);
 	
-	$Tres = array('');
-	while ($PDOdb->Get_line()) {
-		$Tres[$PDOdb->Get_field('lot_number')]['lot_number'] = $PDOdb->Get_field('lot_number');
+	$TLotNumber = array('');
+	$PDOdb->Execute($sql);
+	$Tres = $PDOdb->Get_All();
+	foreach($Tres as $res){
+		
+		$asset = new TAsset;
+		$asset->load($PDOdb, $res->rowid);
+		$asset->load_asset_type($PDOdb);
+		//pre($asset,true);exit;
+		$TLotNumber[$res->lot_number]['lot_number'] = $res->lot_number;
+		$TLotNumber[$res->lot_number]['label'] = $res->lot_number." / ".$res->qty." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($res->unit,$asset->assetType->measuring_units));
 	}
-	return $Tres;
+	return $TLotNumber;
 }
