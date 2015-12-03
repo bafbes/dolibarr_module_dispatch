@@ -67,7 +67,7 @@ function _autocomplete_lot_number(&$PDOdb, $productid) {
 	
 	$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit
 			FROM ".MAIN_DB_PREFIX."asset 
-			WHERE fk_product = ".$productid;
+			WHERE fk_product = ".$productid." GROUP BY lot_number";
 	$PDOdb->Execute($sql);
 	
 	$TLotNumber = array('');
