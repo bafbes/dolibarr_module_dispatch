@@ -139,7 +139,7 @@ class InterfaceDispatchWorkflow
 							if($conf->clinomadic->enabled){
 								$nb_year_garantie = 0;
 								$asset = new TAsset;
-								$asset->load($PDOdb, $detail->fk_asset);
+								$asset->load($PDOdb, $detail->fk_asset, false);
 	
 								$prod = new Product($db);
 								$prod->fetch($asset->fk_product);
