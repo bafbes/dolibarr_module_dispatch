@@ -136,59 +136,10 @@ class InterfaceDispatchWorkflow
 						foreach($dd->lines as &$detail) 
 						{
 							// Création du mouvement de stock standard
-							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
+							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref, $object);
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 							
-							if($conf->clinomadic->enabled)
-							{
-								$nb_year_garantie = 0;
-								$asset = new TAsset;
-								$asset->load($PDOdb, $detail->fk_asset, false);
-	
-								$prod = new Product($db);
-								$prod->fetch($asset->fk_product);
-								
-								//Affectation du type d'équipement pour avoir accès aux extrafields équipement
-								$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
-								$asset->load_asset_type($PDOdb);
-								
-								//Localisation client
-								$asset->fk_societe_localisation = $object->socid;
-								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret']))
-								{
-									$asset->etat = 2; //Prêté
-								}
-								else
-								{
-									$asset->etat = 1; //Vendu
-								}
-
-								foreach($object->linkedObjects['commande'][0]->lines as &$linecommande)
-								{
-									if($linecommande->fk_product == $asset->fk_product)
-									{
-										$linecommande->fetch_optionals($linecommande->rowid);
-
-										$fk_service = $linecommande->array_options['options_extension_garantie'];
-										$extension_garantie = null;
-										if ($fk_service > 0)
-										{
-											$extension = new Product($db);
-											$extension->fetch($fk_service);
-											$extension_garantie = $extension->array_options['options_duree_garantie_client'];	
-										}
-									}
-								}
-								
-								$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
-
-								$date_valid=dol_now();
-								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $date_valid);
-								
-								if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
-
-								$asset->save($PDOdb);
-							}
+							
 						}
 					}
 //					exit;
@@ -203,22 +154,82 @@ class InterfaceDispatchWorkflow
 		return 0;
 	}
 	
-	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref) {
+	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref, &$object) {
 		global $user, $langs;
 		dol_include_once('/asset/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
 		
 		$asset = new TAsset;
-		$asset->load($PDOdb,$linedetail->fk_asset);
+		$asset->load($PDOdb,$linedetail->fk_asset,false);
 		
 		$poids_destocke = $this->calcule_poids_destocke($PDOdb,$linedetail);
 		$poids_destocke = $poids_destocke * pow(10,$asset->contenancereel_units);
 		
 		$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
+		
+		
+		if($conf->clinomadic->enabled)
+		{
+			$this->update_asset($PDOdb, $asset, $object);
+		}
+		
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref),0,false,0,true);
 		
 		return $poids_destocke;
+	}
+	
+	private function update_asset(&$PDOdb, &$asset, &$object)
+	{
+		global $db; 
+		
+		$nb_year_garantie = 0;
+		//$asset = new TAsset;
+		//$asset->load($PDOdb, $detail->fk_asset, false);
+
+		$prod = new Product($db);
+		$prod->fetch($asset->fk_product);
+		
+		//Affectation du type d'équipement pour avoir accès aux extrafields équipement
+		$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
+		$asset->load_asset_type($PDOdb);
+		
+		//Localisation client
+		$asset->fk_societe_localisation = $object->socid;
+		if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret']))
+		{
+			$asset->etat = 2; //Prêté
+		}
+		else
+		{
+			$asset->etat = 1; //Vendu
+		}
+
+		foreach($object->linkedObjects['commande'][0]->lines as &$linecommande)
+		{
+			if($linecommande->fk_product == $asset->fk_product)
+			{
+				$linecommande->fetch_optionals($linecommande->rowid);
+
+				$fk_service = $linecommande->array_options['options_extension_garantie'];
+				$extension_garantie = null;
+				if ($fk_service > 0)
+				{
+					$extension = new Product($db);
+					$extension->fetch($fk_service);
+					$extension_garantie = $extension->array_options['options_duree_garantie_client'];	
+				}
+			}
+		}
+		
+		$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
+
+		$date_valid=dol_now();
+		$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $date_valid);
+		
+		if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
+
+		//$asset->save($PDOdb);
 	}
 	
 	/*private function create_standard_stock_mouvement(&$line, $qty, $numref) {
