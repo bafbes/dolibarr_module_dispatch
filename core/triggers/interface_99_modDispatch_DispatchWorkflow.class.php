@@ -115,7 +115,7 @@ class InterfaceDispatchWorkflow
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
 			$PDOdb = new TPDOdb();
-			
+		
 			// Pour chaque ligne de l'expédition
 			foreach($object->lines as $line) {
 				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
@@ -133,6 +133,7 @@ class InterfaceDispatchWorkflow
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
 							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
+							
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 							
 							if($conf->clinomadic->enabled){
@@ -161,10 +162,13 @@ class InterfaceDispatchWorkflow
 										$linecommande->fetch_optionals($linecommande->rowid);
 
 										$fk_service = $linecommande->array_options['options_extension_garantie'];
-
-										$extension = new Product($db);
-										$extension->fetch($fk_service);
-										$extension_garantie = $extension->array_options['options_duree_garantie_client'];
+										$extension_garantie = null;
+										if ($fk_service > 0)
+										{
+											$extension = new Product($db);
+											$extension->fetch($fk_service);
+											$extension_garantie = $extension->array_options['options_duree_garantie_client'];	
+										}
 									}
 								}
 								
