@@ -104,39 +104,43 @@ class InterfaceDispatchWorkflow
      *      @param  conf		$conf       Object conf
      *      @return int         			<0 if KO, 0 if no triggered ran, >0 if OK
      */
-	function run_trigger($action,$object,$user,$langs,$conf)
+	function run_trigger(&$action,&$object,&$user,&$langs,&$conf)
 	{
 		global $conf,$db;
 		
 		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
 
-		if ($action == 'SHIPPING_VALIDATE') {
+		if ($action == 'SHIPPING_VALIDATE') 
+		{
 			dol_include_once('/dispatch/config.php');
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
 			$PDOdb = new TPDOdb();
 		
 			// Pour chaque ligne de l'expédition
-			foreach($object->lines as $line) {
+			foreach($object->lines as &$line) 
+			{
 				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
 				$dd = new TDispatchDetail();
 
 				$TIdExpeditionDet = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'expeditiondet', array('fk_expedition' => $object->id, 'fk_origin_line' => $line->fk_origin_line));
 				$idExpeditionDet = $TIdExpeditionDet[0];
-				//print $idExpeditionDet;
-				//if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
-				if(!empty($idExpeditionDet)) {
+				
+				if(!empty($idExpeditionDet)) 
+				{
 					$dd->loadLines($PDOdb, $idExpeditionDet);
 					
-					if($conf->asset->enabled){
+					if($conf->asset->enabled)
+					{
 						// Création des mouvements de stock de flacon
-						foreach($dd->lines as $detail) {
+						foreach($dd->lines as &$detail) 
+						{
 							// Création du mouvement de stock standard
 							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref);
-							
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 							
-							if($conf->clinomadic->enabled){
+							if($conf->clinomadic->enabled)
+							{
 								$nb_year_garantie = 0;
 								$asset = new TAsset;
 								$asset->load($PDOdb, $detail->fk_asset, false);
@@ -150,15 +154,19 @@ class InterfaceDispatchWorkflow
 								
 								//Localisation client
 								$asset->fk_societe_localisation = $object->socid;
-								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret'])){
+								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret']))
+								{
 									$asset->etat = 2; //Prêté
 								}
-								else{
+								else
+								{
 									$asset->etat = 1; //Vendu
 								}
 
-								foreach($object->linkedObjects['commande'][0]->lines as $linecommande){
-									if($linecommande->fk_product == $asset->fk_product){
+								foreach($object->linkedObjects['commande'][0]->lines as &$linecommande)
+								{
+									if($linecommande->fk_product == $asset->fk_product)
+									{
 										$linecommande->fetch_optionals($linecommande->rowid);
 
 										$fk_service = $linecommande->array_options['options_extension_garantie'];
@@ -175,19 +183,17 @@ class InterfaceDispatchWorkflow
 								$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
 
 								$date_valid=dol_now();
-								//echo $nb_year_garantie.'<br>';
 								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $date_valid);
-								//echo $extension_garantie.'<br>';
+								
 								if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
-								//exit;
-//print $asset->serial_number.' '. date('Y-m-d',$asset->date_fin_garantie_cli).'<br />';
-//exit('!');
+
 								$asset->save($PDOdb);
 							}
 						}
 					}
 //					exit;
-				}/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
+				}
+				/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
 					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 				}*/
 			}
