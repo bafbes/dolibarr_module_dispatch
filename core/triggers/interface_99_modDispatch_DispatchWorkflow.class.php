@@ -155,7 +155,7 @@ class InterfaceDispatchWorkflow
 	}
 	
 	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref, &$object) {
-		global $user, $langs;
+		global $user, $langs, $conf;
 		dol_include_once('/asset/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
@@ -181,7 +181,7 @@ class InterfaceDispatchWorkflow
 	
 	private function update_asset(&$PDOdb, &$asset, &$object)
 	{
-		global $db; 
+		global $db, $user, $langs, $conf;
 		
 		$nb_year_garantie = 0;
 		//$asset = new TAsset;
@@ -228,8 +228,9 @@ class InterfaceDispatchWorkflow
 		$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $date_valid);
 		
 		if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
-
-		//$asset->save($PDOdb);
+		
+		//pre($asset,true);exit;
+		$asset->save($PDOdb);
 	}
 	
 	/*private function create_standard_stock_mouvement(&$line, $qty, $numref) {
