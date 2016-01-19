@@ -46,7 +46,7 @@ class moddispatch extends DolibarrModules
 
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
-		$this->numero = 210008;
+		$this->numero = 104970;
 		// Key text used to identify module (for permissions, menus, etc...)
 		$this->rights_class = 'dispatch';
 
@@ -56,9 +56,9 @@ class moddispatch extends DolibarrModules
 		// Module label (no space allowed), used if translation string 'ModuleXXXName' not found (where XXX is value of numeric property 'numero' of module)
 		$this->name = preg_replace('/^mod/i','',get_class($this));
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
-		$this->description = "Gestion de l'expédition des commandes";
+		$this->description = "Module104970Desc";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '0.1';
+		$this->version = '1.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -119,7 +119,8 @@ class moddispatch extends DolibarrModules
         //                              'objecttype:-tabname':NU:conditiontoremove);                                                     						// To remove an existing tab identified by code tabname
         
         $this->tabs = array(
-        	'delivery:+dispatch:Détail expédition:@expedition:/custom/dispatch/detail.php?id=__ID__'
+        	'delivery:+dispatch:Détail expédition:dispatch@dispatch:/custom/dispatch/detail.php?id=__ID__'
+        	,'contract:+dispatch:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&object=contrat'
         	,'supplier_order:+recepasset:Réception équipement:dispatch@dispacth:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
 		);
         

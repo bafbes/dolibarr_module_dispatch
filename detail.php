@@ -336,7 +336,7 @@ global $langs, $db;
 			<td>&nbsp;</td>
 		</tr>
 		
-	<?
+	<?php
 		$prod = new Product($db);
 		
 		$form->Set_typeaff('view');
@@ -370,7 +370,7 @@ global $langs, $db;
 					</td>
 				</tr>
 				
-				<?
+				<?php
 				
 			}
 		}	
@@ -379,7 +379,7 @@ global $langs, $db;
 		
 	</table>
 	<br>
-	<?
+	<?php
 	
 }
 

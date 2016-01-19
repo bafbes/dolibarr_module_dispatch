@@ -1,5 +1,5 @@
-Module210008Name=Dispatch
-Module210008Desc=Gestion de l'expédition de commandes
+Module104970Name=Dispatch
+Module104970Desc=Gestion de la ventilation des équipements sur réception, expédition, ...
 
 DispatchSetup=Administration du module Dispatch
 UseImportFile=Utiliser l'import de fichier pour créer les détails expédition/réception

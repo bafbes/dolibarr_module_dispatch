@@ -3,22 +3,29 @@
  * Script créant et vérifiant que les champs requis s'ajoutent bien
  * 
  */
- 	dol_include_once('/dispatch/class/dispatchdetail.class.php');
- 
+ 	
  	if(!defined('INC_FROM_DOLIBARR')) {
         define('INC_FROM_CRON_SCRIPT', true);
         require('../config.php');
-        $ATMdb=new TPDOdb;
-        $ATMdb->debug=true;
+        $PDOdb=new TPDOdb;
+        $PDOdb->debug=true;
     }
     else{
-        $ATMdb=new TPDOdb;
+        $PDOdb=new TPDOdb;
     }
-	
-	//$ATMdb->debug=true;
 
+	dol_include_once('/dispatch/class/dispatchdetail.class.php');
+	dol_include_once('/dispatch/class/dispatchasset.class.php');
+ 
 	$o=new TDispatchDetail;
-	$o->init_db_by_vars($ATMdb);
+	$o->init_db_by_vars($PDOdb);
 
 	$o=new TRecepDetail;
-	$o->init_db_by_vars($ATMdb);
+	$o->init_db_by_vars($PDOdb);
+
+
+	$o=new TDispatch;
+	$o->init_db_by_vars($PDOdb);
+
+	$o=new TDispatchAsset;
+	$o->init_db_by_vars($PDOdb);
