@@ -72,7 +72,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 	<table width="100%" class="border">
 		<tr class="liste_titre">
 			<td>Ligne concernée</td>
-			<td>Numéro de Série</td>
+			<td>Equipement</td>
 			<td>Numéro de Lot</td>
 			<td>DLUO</td>
 			
@@ -97,7 +97,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 		
 		?><tr class="<?php echo $class ?>">
 			<td><?php echo $pListe[$da->fk_object]; ?></td>
-			<td><?php echo $da->asset->getNomUrl(); ?></td>
+			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<td><?php echo $da->asset->lot_number; ?></td>
 			<td><?php echo $da->asset->dluo ? dol_print_date($da->asset->dluo) : 'N/A'; ?></td>
 			
