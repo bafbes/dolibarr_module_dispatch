@@ -16,6 +16,7 @@
 
 	dol_include_once('/dispatch/class/dispatchdetail.class.php');
 	dol_include_once('/dispatch/class/dispatchasset.class.php');
+	dol_include_once('/asset/class/asset.class.php');
  
 	$o=new TDispatchDetail;
 	$o->init_db_by_vars($PDOdb);

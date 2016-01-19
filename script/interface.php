@@ -12,23 +12,48 @@ dol_include_once('/asset/class/asset.class.php');
 //Interface qui renvoie les emprunts de ressources d'un utilisateur
 $PDOdb=new TPDOdb;
 global $langs;
-$type = GETPOST('type');
 
-actions($PDOdb, $type);
+$get = GETPOST('get');
+_get($PDOdb, $get);
 
-function actions(&$PDOdb, $type) {
+function _get(&$PDOdb, $get) {
 	
-	if($type == 'get'){
-	
-		switch (GETPOST('get')) {
-	        case 'autocomplete_asset':
-	            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid')),'json');
-	            break;
-			case 'autocomplete_lot_number':
-	            __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
-	            break;
-		}
+	switch ($get) {
+		case 'serial_number':
+			
+			__out(_serial_number($PDOdb, GETPOST('term')),'json');
+			
+			break;
+        case 'autocomplete_asset':
+            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid')),'json');
+            break;
+		case 'autocomplete_lot_number':
+            __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
+            break;
 	}
+
+}
+
+function _serial_number(&$PDOdb, $sn) {
+	
+	$sql = "SELECT DISTINCT(rowid) as id, serial_number
+			FROM ".MAIN_DB_PREFIX."asset 
+			WHERE serial_number LIKE '".$sn."%'";
+	$PDOdb->Execute($sql);
+	$Tab=array();
+	
+	while($obj=$PDOdb->Get_line()) {
+		/*
+		$Tab[]=array(
+			'value'=>$obj->id
+			,'label'=>$obj->serial_number
+		);
+		*/
+		
+		$Tab[]=$obj->serial_number;
+	}
+	
+	return $Tab;
 }
 
 function _autocomplete_asset(&$PDOdb, $lot_number, $productid) {

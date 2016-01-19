@@ -120,7 +120,7 @@ class moddispatch extends DolibarrModules
         
         $this->tabs = array(
         	'delivery:+dispatch:Détail expédition:dispatch@dispatch:/custom/dispatch/detail.php?id=__ID__'
-        	,'contract:+dispatch:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&object=contrat'
+        	,'contract:+dispatch:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=contrat'
         	,'supplier_order:+recepasset:Réception équipement:dispatch@dispacth:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
 		);
         
