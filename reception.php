@@ -3,6 +3,7 @@
 	require('config.php');
 
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
+	dol_include_once('/fourn/class/fournisseur.product.class.php' );
 	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/product/stock/class/entrepot.class.php' );
@@ -370,7 +371,7 @@
 				}
 				
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-				$TProdVentil[$asset->fk_product] += ($line['quantity']) ? $line['quantity'] : 1;
+				$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
 			
 		}
@@ -382,11 +383,18 @@
 			
 			foreach($TOrderLine as &$line) {
 				
-				if(!empty($line['serialized'] )) continue;
+				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
 				
-				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']] = 0;
+				// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
+				if(empty($line['serialized'] )) $TProdVentil[$line['fk_product']]['qty']+=$line['qty'];
 				
-				$TProdVentil[$line['fk_product']]+=$line['qty'];
+				$TProdVentil[$line['fk_product']]['supplier_price']=$line['supplier_price'];
+				
+				if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
+				{
+					$TProdVentil[$line['fk_product']]['supplier_qty']=$line['supplier_qty'];
+					$TProdVentil[$line['fk_product']]['generate_supplier_tarif']=$line['generate_supplier_tarif'];
+				}
 				
 			}
 			
@@ -395,17 +403,63 @@
 		
 		//pre($TProdVentil,true);
 		
-		$status = $commandefourn->fk_statut;
+		$status = $commandefourn->statut;
 		
 		if(count($TProdVentil)>0) {
-			$status = $commandefourn->fk_statut;
+			
+			$status = $commandefourn->statut;
 			
 			$totalementventile = true;
 
-			foreach($TProdVentil as $id_prod => $qte){
+			foreach($TProdVentil as $id_prod => $item){
 				//Fonction standard ventilation commande fournisseur
 				//TODO AA dans la 3.9 il y a l'id de la ligne concernée... Ce qui implique de ne plus sélectionner un produit mais une ligne à ventiler. Adaptation à faire dans une future version
-				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+					
+				$sup_price = $item['supplier_price'];
+				
+				$lineprod = searchProductInCommandeLine($commandefourn->lines, $id_prod);
+				$unitaire = ($sup_price / $lineprod->qty);
+				$prix =  $unitaire * $lineprod->qty;
+				
+				if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
+				{
+					$sup_qty = $item['supplier_qty'];
+					$generate = ($item['generate_supplier_tarif'] == 'on')?true:false;
+					// On va générer le prix s'il est coché
+					if($generate)
+					{
+						$fourn = new Fournisseur($db);
+						$fourn->fetch($commandefourn->socid);
+						$prix =  $unitaire * $sup_qty;
+						$fournisseurproduct = new ProductFournisseur($db);
+						$fournisseurproduct->id = $id_prod;
+						$fournisseurproduct->update_buyprice($sup_qty, $prix, $user, 'HT', $fourn, 0, $lineprod->ref_supplier, '20');
+					}
+				}else{
+					$sup_qty += $lineprod->qty;
+				}
+				
+				if($lineprod->subprice != $unitaire && $unitaire > 0)
+				{	
+					$prixtva = $prix * ($lineprod->tva_tx/100);
+					$total = $prix + $prixtva;
+				
+					$lineprod->subprice = ''.$unitaire;
+					$lineprod->total_ht = ''.$prix;
+					$lineprod->total_tva = ''.$prixtva;
+					$lineprod->total_ttc = ''.$total;
+					
+					$_REQUEST['lineid'] = $line->id;
+					
+					
+					$commandefourn->brouillon = true; // obligatoire pour mettre a jour les lignes
+					$commandefourn->updateline($lineprod->id, $lineprod->desc, $lineprod->subprice, $lineprod->qty, $lineprod->remise_percent, $lineprod->tva_tx, 
+					$lineprod->localtax1_tx, $lineprod->localtax2_tx, 'HT', 0, 0, 0, false, null, null, 0, null);
+					$commandefourn->brouillon = false;
+				}
+				// END NEW CODE
+				
+				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], GETPOST('id_entrepot'),null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 				
 				foreach($commandefourn->lines as $line){
 					if($line->fk_product == $id_prod){ //TODO attention ! si un produit plusieurs fois dans la commande ça c'est de la merde
@@ -439,6 +493,20 @@
 
 	fiche($commandefourn, $TImport);
 
+
+function searchProductInCommandeLine($array, $idprod)
+{
+	$line=false;
+	foreach($array as $item)
+	{
+		if($item->fk_product == $idprod)
+		{
+			$line = $item;
+			break;
+		}
+	}
+    return $line;
+}
 
 function _by_ref(&$a, &$b) {
 	
@@ -544,6 +612,12 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					print '<td></td>';
 					print '<td></td>';
 					print '<td></td>';
+					
+					// NEW CODE FOR PRICE
+					if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) print '<td align="right">'.$langs->trans("SupplierQtyPrice").'</td>';
+					print '<td align="right">'.$langs->trans("TotalPriceOrdered").'</td>';
+					if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) print '<td align="right">'.$langs->trans("GenerateSupplierTarif").'</td>';
+					
 					print '<td align="right">'.$langs->trans("QtyOrdered").'</td>';
 					print '<td align="right">'.$langs->trans("QtyDispatchedShort").'</td>';
 					print '<td align="right">'.$langs->trans("QtyToDispatchShort").'</td>';
@@ -615,6 +689,24 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						$up_ht_disc=$objp->subprice;
 						if (! empty($objp->remise_percent) && empty($conf->global->STOCK_EXCLUDE_DISCOUNT_FOR_PMP)) $up_ht_disc=price2num($up_ht_disc * (100 - $objp->remise_percent) / 100, 'MU');
 
+						// NEW CODE FOR PRICE
+						$exprice = $objp->subprice * $objp->qty;
+						if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) 
+						{
+							print '<td align="right">';
+							print '<input type="text" id="TOrderLine['.$objp->rowid.'][supplier_qty]" name="TOrderLine['.$objp->rowid.'][supplier_qty]" size="8" value="'.$objp->qty.'">';
+							print '</td>';
+						}
+						print '<td align="right">';
+						print '<input type="text" id="TOrderLine['.$objp->rowid.'][supplier_price]" name="TOrderLine['.$objp->rowid.'][supplier_price]" size="8" value="'.$exprice.'">';
+						print '</td>';
+						if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) 
+						{
+							print '<td align="right">';
+							print '<input type="checkbox" id="TOrderLine['.$objp->rowid.'][generate_supplier_tarif]" name="TOrderLine['.$objp->rowid.'][generate_supplier_tarif]">';
+							print '</td>';
+						}
+							
 						// Qty ordered
 						print '<td align="right">'.$objp->qty.'</td>';
 
@@ -654,7 +746,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						/*print $form->checkbox1('', 'TOrderLine['.$objp->rowid.'][serialized]', 1, $serializedProduct); */
 						
 						if($serializedProduct) print $langs->trans('Yes').img_info('SerializedProductInfo');
-						else print $form->btsubmit('SerializeThisProduct','ToDispatch['.$objp->fk_product.']['.$remaintodispatch.']').img_info('SerializeThisProductInfo');
+						else print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$remaintodispatch.']').img_info('SerializeThisProductInfo');
 						
 						print '</td>';
 						print $form->hidden('TOrderLine['.$objp->rowid.'][fk_product]', $objp->fk_product);

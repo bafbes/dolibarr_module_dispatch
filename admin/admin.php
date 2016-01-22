@@ -43,14 +43,16 @@
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="100">'.$langs->trans("Value").'</td>'."\n";
 	
-	print '<tr>';
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
 	print '<td>'.$langs->trans("UseImportFile").'</td>';
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="300">';
 	print ajax_constantonoff('DISPATCH_USE_IMPORT_FILE');
 	print '</td></tr>';
 	
-	print '<tr>';
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
 	print '<td>'.$langs->trans("DispatchRecepAutoQuantity").'</td>';
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="300">';
@@ -74,9 +76,17 @@
 	print $langs->trans("DispatchDLUOByDefault");
 	print '</td><td align="right">';
 	print $form->texte('', 'DISPATCH_DLUO_BY_DEFAULT',$conf->global->DISPATCH_DLUO_BY_DEFAULT,30,255);
-	print '</td><td align="right">';
+	print '</td><td align="center">';
 	print '<input type="submit" class="button" value="'.$langs->trans("Modify").'" />';
 	print "</td></tr>\n";
 	$form->end();
+	
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans("DISPATCH_CREATE_SUPPLIER_PRICE").'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff("DISPATCH_CREATE_SUPPLIER_PRICE");
+	print '</td></tr>';
 
 	print "</table>";

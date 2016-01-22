@@ -9,6 +9,15 @@ ReceptionTab=Réception équipements/produits
 SerializedProduct=Produit sérialisé
 SerializeThisProductInfo=Réceptionner des équipements de ce produit
 SerializedProductInfo=Ce produit est en réception sérialisé. Pour réceptionner ce produit de manière standard, supprimez les lignes adéquates des équipements
-SerializeThisProduct=Sériliser cette ligne
+SerializeThisProduct=Sérialiser cette ligne
 SerialNumberNeeded=Numéro de série requis
 AssetVentil=Ventiler les produits et créer les équipements
+
+ErrorSupplierTarif=Quantité tarif et Prix Total (si coché)
+ErrorSupplierTarifNoConf=Prix Total payé
+
+SupplierQtyPrice=Qté mini du tarif
+TotalPriceOrdered=Prix Total payé
+GenerateSupplierTarif=Créer le tarif
+
+DISPATCH_CREATE_SUPPLIER_PRICE=Générer des prix fournisseurs à la réception des produits vers stocks

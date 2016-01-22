@@ -1,0 +1,10 @@
+Module104970Name=Dispatch
+
+ErrorSupplierTarif=Quantity price and Total price (if checked)
+ErrorSupplierTarifNoConf=Total price
+
+SupplierQtyPrice=Mini quantity for price
+TotalPriceOrdered=Total price payed
+GenerateSupplierTarif=Create new price
+
+DISPATCH_CREATE_SUPPLIER_PRICE=Create supplier price at products reception to stock
