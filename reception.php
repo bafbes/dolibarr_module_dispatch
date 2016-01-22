@@ -10,8 +10,6 @@
 	dol_include_once('/core/lib/fourn.lib.php' );
 	dol_include_once('/asset/class/asset.class.php');
 	
-	global $langs, $user, $conf;
-	
 	$PDOdb = new TPDOdb;
 	
 	$langs->load('companies');
@@ -20,6 +18,7 @@
 	$langs->load('bills');
 	$langs->load('orders');
 	$langs->load('commercial');
+	$langs->load('dispatch@dispatch');
 	
 	$id = GETPOST('id');
 
@@ -184,6 +183,36 @@
 		setEventMessage('Ligne supprimée');
 
 	}
+	else if ($_POST['ToDispatch']) {
+		$ToDispatch = GETPOST('ToDispatch');
+		if(!empty($ToDispatch)) {
+			foreach($ToDispatch as $fk_product=>$tab) {
+				
+				$product = new Product($db);
+				$product->fetch($fk_product);
+				
+				foreach($tab as $qty=>$null) {
+					
+					for($ii = 0; $ii < $qty; $ii++) {
+						$TImport[] =array(
+							'ref'=>$product->ref
+							,'numserie'=>''
+							,'lot_number'=>''
+							,'quantity'=>1
+							,'quantity_unit'=>0
+							,'fk_product'=>$product->id
+							,'imei'=>''
+							,'firmware'=>''
+							,'dluo'=>date('Y-m-d')
+							,'commande_fournisseurdet_asset'=>0
+						);
+					}
+					
+				}
+			}
+		}
+	
+	}
 	elseif(isset($_POST['bt_save'])) {
 		
 		foreach($_POST['TLine']  as $k=>$line) {
@@ -242,6 +271,7 @@
 				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'],$line['firmware']);
 			}
  */
+ 
 		}
 		
 		if (!$error) {
@@ -345,6 +375,24 @@
 			
 		}
 
+		// prise en compte des lignes non ventilés en réception simple
+		$TOrderLine=GETPOST('TOrderLine');
+		
+		if(!empty($TOrderLine)) {
+			
+			foreach($TOrderLine as &$line) {
+				
+				if(!empty($line['serialized'] )) continue;
+				
+				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']] = 0;
+				
+				$TProdVentil[$line['fk_product']]+=$line['qty'];
+				
+			}
+			
+		}
+
+		
 		//pre($TProdVentil,true);
 		
 		$status = $commandefourn->fk_statut;
@@ -356,10 +404,11 @@
 
 			foreach($TProdVentil as $id_prod => $qte){
 				//Fonction standard ventilation commande fournisseur
+				//TODO AA dans la 3.9 il y a l'id de la ligne concernée... Ce qui implique de ne plus sélectionner un produit mais une ligne à ventiler. Adaptation à faire dans une future version
 				$commandefourn->DispatchProduct($user, $id_prod, $qte, GETPOST('id_entrepot'),'',$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 				
 				foreach($commandefourn->lines as $line){
-					if($line->fk_product == $id_prod){
+					if($line->fk_product == $id_prod){ //TODO attention ! si un produit plusieurs fois dans la commande ça c'est de la merde
 						if($qte < $line->qty && $totalementventile){
 							$totalementventile = false;
 							$status = 4;
@@ -379,7 +428,7 @@
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
 	
-			setEventMessage('Equipements créés');
+			setEventMessage('Equipements créés / produits ventilés');
 			
 		}
 		
@@ -426,6 +475,207 @@ global $langs, $db, $conf;
 	llxFooter();
 }
 
+function _show_product_ventil(&$TImport, &$commande,&$form) {
+	global $langs, $db, $conf;
+		$langs->load('dispatch@dispatch');
+	
+		$TProductCount = array();
+		foreach($TImport as &$line) {
+			if(empty($TProductCount[$line['fk_product']]))$TProductCount[$line['fk_product']] = 0;
+			$TProductCount[$line['fk_product']] ++;
+		}
+		
+		?>
+		<style type="text/css">
+			input.text_readonly {
+				background-color: #eee;
+			}
+		</style>
+		<?php
+	
+	
+		print '<table class="noborder" width="100%">';
+
+			// Set $products_dispatched with qty dispatched for each product id
+			$products_dispatched = array();
+			$sql = "SELECT cfd.fk_product, sum(cfd.qty) as qty";
+			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
+			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."commande_fournisseurdet as l on l.rowid = cfd.fk_commandefourndet";
+			$sql.= " WHERE cfd.fk_commande = ".$commande->id;
+			$sql.= " GROUP BY cfd.fk_product";
+
+			$resql = $db->query($sql);
+			if ($resql)
+			{
+				$num = $db->num_rows($resql);
+				$i = 0;
+				
+				if ($num)
+				{
+					while ($i < $num)
+					{
+						$objd = $db->fetch_object($resql);
+						$products_dispatched[$objd->fk_product] = price2num($objd->qty, 5);
+						$i++;
+					}
+				}
+				$db->free($resql);
+			}
+			
+			$sql = "SELECT l.rowid, l.fk_product, l.subprice, l.remise_percent, SUM(l.qty) as qty,";
+			$sql.= " p.ref, p.label, p.tobatch";
+			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseurdet as l";
+			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
+			$sql.= " WHERE l.fk_commande = ".$commande->id;
+			$sql.= " GROUP BY l.fk_product";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
+			$sql.= " ORDER BY p.ref, p.label";
+
+			$resql = $db->query($sql);
+			if ($resql)
+			{
+				$num = $db->num_rows($resql);
+				$i = 0;
+
+				if ($num)
+				{
+					print '<tr class="liste_titre">';
+
+					print '<td>'.$langs->trans("Description").'</td>';
+					print '<td></td>';
+					print '<td></td>';
+					print '<td></td>';
+					print '<td align="right">'.$langs->trans("QtyOrdered").'</td>';
+					print '<td align="right">'.$langs->trans("QtyDispatchedShort").'</td>';
+					print '<td align="right">'.$langs->trans("QtyToDispatchShort").'</td>';
+					print '<td align="right">'.$langs->trans("SerializedProduct").'</td>';
+					print "</tr>\n";
+
+					
+
+				}
+
+				$nbfreeproduct=0;
+				$nbproduct=0;
+
+				$var=true;
+				while ($i < $num)
+				{
+					$objp = $db->fetch_object($resql);
+					$serializedProduct = 0;
+					// On n'affiche pas les produits personnalises
+					if (! $objp->fk_product > 0)
+					{
+						$nbfreeproduct++;
+					}
+					else
+					{
+						
+						$TOrderLine = GETPOST('TOrderLine');
+						
+						if(!empty($TProductCount[$objp->fk_product])) {
+								$remaintodispatch = $TProductCount[$objp->fk_product];
+								$serializedProduct = 1;	
+						}
+						else if(!empty($TOrderLine[$objp->rowid]['qty']) && !isset($_POST['bt_create'])) {
+							$remaintodispatch = $TOrderLine[$objp->rowid]['qty'];
+						}
+						else {
+							$remaintodispatch=price2num($objp->qty - ((float) $products_dispatched[$objp->fk_product]), 5);	// Calculation of dispatched
+						}
+						
+						if ($remaintodispatch < 0) $remaintodispatch=0;
+
+						$nbproduct++;
+
+						$var=!$var;
+
+						// To show detail cref and description value, we must make calculation by cref
+						//print ($objp->cref?' ('.$objp->cref.')':'');
+						//if ($objp->description) print '<br>'.nl2br($objp->description);
+						if ((empty($conf->productbatch->enabled)) || $objp->tobatch==0)
+						{
+							$suffix='_'.$i;
+						} else {
+							$suffix='_0_'.$i;
+						}
+
+
+						print "\n";
+						print '<!-- Line '.$suffix.' -->'."\n";
+						print "<tr ".$bc[$var].">";
+
+						$linktoprod='<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
+						$linktoprod.=' - '.$objp->label."\n";
+
+						
+						print '<td colspan="4">';
+						print $linktoprod;
+						print "</td>";
+					
+						$up_ht_disc=$objp->subprice;
+						if (! empty($objp->remise_percent) && empty($conf->global->STOCK_EXCLUDE_DISCOUNT_FOR_PMP)) $up_ht_disc=price2num($up_ht_disc * (100 - $objp->remise_percent) / 100, 'MU');
+
+						// Qty ordered
+						print '<td align="right">'.$objp->qty.'</td>';
+
+						// Already dispatched
+						print '<td align="right">'.$products_dispatched[$objp->fk_product].'</td>';
+
+												// Dispatch
+						print '<td align="right">';
+						
+						if($serializedProduct) {
+							echo $form->texteRO('', 'TOrderLine['.$objp->rowid.'][qty]', $remaintodispatch, 5,30);	
+						}
+						else {
+							echo $form->texte('', 'TOrderLine['.$objp->rowid.'][qty]', $remaintodispatch, 5,30);
+						}
+						
+						print '</td>';
+/* TODO manage multiple wahehouse
+							// Warehouse
+							print '<td align="right">';
+							if (count($listwarehouses)>1)
+							{
+								print $form->selectarray("entrepot".$suffix, $listwarehouses, GETPOST("entrepot".$suffix), 1, 0, 0, '', 0, 0, $disabled);
+							}
+							elseif  (count($listwarehouses)==1)
+							{
+								print $form->selectarray("entrepot".$suffix, $listwarehouses, GETPOST("entrepot".$suffix), 0, 0, 0, '', 0, 0, $disabled);
+							}
+							else
+							{
+								print $langs->trans("NoWarehouseDefined");
+							}
+							print "</td>\n";
+*/
+
+						print '<td align="right">';
+						/*print $form->checkbox1('', 'TOrderLine['.$objp->rowid.'][serialized]', 1, $serializedProduct); */
+						
+						if($serializedProduct) print $langs->trans('Yes').img_info('SerializedProductInfo');
+						else print $form->btsubmit('SerializeThisProduct','ToDispatch['.$objp->fk_product.']['.$remaintodispatch.']').img_info('SerializeThisProductInfo');
+						
+						print '</td>';
+						print $form->hidden('TOrderLine['.$objp->rowid.'][fk_product]', $objp->fk_product);
+						print $form->hidden('TOrderLine['.$objp->rowid.'][serialized]', $serializedProduct);
+						print "</tr>\n";
+						
+					}
+					$i++;
+				}
+				$db->free($resql);
+			}
+			else
+			{
+				dol_print_error($db);
+			}
+
+			print "</table>\n";
+			print "<br/>\n";
+	
+}
+
 function tabImport(&$TImport,&$commande) {
 global $langs, $db, $conf;		
 	
@@ -435,6 +685,15 @@ global $langs, $db, $conf;
 	$formDoli =	new Form($db);
 	$formproduct=new FormProduct($db);
 	
+	if($commande->statut >= 5 || $commande->statut<=2) $form->type_aff = "view";
+	
+	if ($commande->statut <= 2 || $commande->statut >= 6)
+	{
+		print $langs->trans("OrderStatusNotReadyToDispatch");
+	}
+
+	_show_product_ventil($TImport,$commande,$form);
+		
 	print count($TImport).' équipement(s) dans votre réception';
 	
 	?>
@@ -458,7 +717,7 @@ global $langs, $db, $conf;
 		</tr>
 		
 	<?php
-		if($commande->statut >= 5) $form->type_aff = "view";
+		
 		$prod = new Product($db);
 
 		$warning_asset = false;
@@ -482,7 +741,11 @@ global $langs, $db, $conf;
 						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
 						$asset=new TAsset;
 						
-						if($asset->loadReference($PDOdb, $line['numserie'])) {
+						if(empty($line['numserie'])) {
+							echo img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
+							$warning_asset = true;
+						}
+						else if($asset->loadReference($PDOdb, $line['numserie'])) {
 							echo '<a href="'.dol_buildpath('/asset/fiche.php?id='.$asset->getId(),1).'">' .img_picto('Equipement lié à cet import', 'info.png'). '</a>';
 						}
 						else {
@@ -516,7 +779,7 @@ global $langs, $db, $conf;
 			}
 		}
 		
-		if($commande->statut < 5){
+		if($commande->statut < 5 && $commande->statut>2){
 			
 			$pListe[0] = "Sélectionnez un produit";
 			foreach($commande->lines as $line){
@@ -557,7 +820,9 @@ global $langs, $db, $conf;
 	<?php
 	if($commande->statut < 5 || $warning_asset){
 			
-		if($commande->statut < 5 ) echo $form->btsubmit('Enregistrer', 'bt_save');
+		if($commande->statut < 5 ) {
+			echo '<div class="tabsAction">'.$form->btsubmit('Enregistrer', 'bt_save').'</div>';
+		} 
 			
 			
 		$form->type_aff = 'edit';	
@@ -571,7 +836,7 @@ global $langs, $db, $conf;
 		
 		print " <b>Entrepôt</b> ".$formproduct->selectWarehouses($entrepot->id,'id_entrepot','',1);
 		
-		echo $form->btsubmit('Créer les équipements', 'bt_create');
+		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
 	}
 	
 }
