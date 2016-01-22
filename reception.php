@@ -60,7 +60,7 @@
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
 		$prodAsset->fetch('',$refproduit);
-		pre($prodAsset,true);
+		//pre($prodAsset,true);
 		//Rempli le tableau utilisé pour l'affichage des lignes
 		$TImport[] =array(
 			'ref'=>$prodAsset->ref
