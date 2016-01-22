@@ -21,7 +21,9 @@
 	
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
-
+	
+	//pre($_REQUEST,true);	
+	
 	function _loadDetail(&$PDOdb,&$commandefourn){
 		
 		$TImport = array();
@@ -58,7 +60,7 @@
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
 		$prodAsset->fetch('',$refproduit);
-		
+		pre($prodAsset,true);
 		//Rempli le tableau utilisé pour l'affichage des lignes
 		$TImport[] =array(
 			'ref'=>$prodAsset->ref
@@ -106,7 +108,8 @@
 		return $TImport;
 
 	}
-$_POST['bt_create'] = true;
+	
+	$_POST['bt_create'] = true;
 	
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -137,10 +140,10 @@ $_POST['bt_create'] = true;
 		foreach($_POST['TLine']  as $k=>$line) {
 			unset($TImport[(int)$k]);
 			$asset = new TAsset;
-			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
-					
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'], $line['mfg'], $line['firmware']);
-			}
+			//if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
+			//pre($8RE,true);
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$_POST['search_TLine_new_fk_product'],$line['numserie'],$line['imei'], $line['mfg'], $line['firmware']);
+			//}
 
 		}
 
@@ -393,7 +396,7 @@ global $langs, $db;
 		
 		if($commande->statut < 5){
 			?><tr style="background-color: lightblue;">
-					<td><?php $formDoli->select_produits(-1, 'TLine[-1][fk_product]') ?></td>
+					<td><?php $formDoli->select_produits(-1, 'TLine_new_fk_product') ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30)   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][imei]', '', 30)   ?></td>
 					<td><?php echo $form->texte('','TLine[-1][mfg]', '', 30)   ?></td>
