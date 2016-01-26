@@ -73,7 +73,11 @@ function _fiche(&$PDOdb,&$dispatch) {
 		<tr class="liste_titre">
 			<td>Ligne concernée</td>
 			<td>Equipement</td>
-			<td>Numéro de Lot</td>
+			<?php
+				if(!empty($conf->global->USE_LOT_IN_OF)) {
+				?><td>Numéro de Lot</td><?php
+				}
+			?>
 			<td>DLUO</td>
 			
 			<?php
@@ -99,7 +103,12 @@ function _fiche(&$PDOdb,&$dispatch) {
 			<td><?php echo $pListe[$da->fk_object]; ?></td>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<td><?php echo $da->asset->lot_number; ?></td>
-			<td><?php echo $da->asset->dluo ? dol_print_date($da->asset->dluo) : 'N/A'; ?></td>
+			<?php
+				if(!empty($conf->global->USE_LOT_IN_OF)) {
+					?><td><?php echo $da->asset->dluo ? dol_print_date($da->asset->dluo) : 'N/A'; ?></td><?php
+				}
+			?>
+			
 			
 			
 			<?php
@@ -129,7 +138,11 @@ function _fiche(&$PDOdb,&$dispatch) {
 	?><tr style="background-color: lightblue;">
 			<td><?php echo $form->combo('', 'TLine[-1][fk_object]', $pListe, ''); ?></td>
 			<td><?php echo $form->texte('','TLine[-1][serial_number]', '', 30); ?></td>
-			<td><?php echo /*$form->texte('','TLine[-1][lot_number]', '', 30); */ '&nbsp;'  ?></td>
+			<?php
+				if(!empty($conf->global->USE_LOT_IN_OF)) {
+					?><td>&nbsp;</td><?php
+				}
+			?>
 			<td>&nbsp;</td>
 			<?php
 			if($conf->global->clinomadic->enabled){
