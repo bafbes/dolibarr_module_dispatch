@@ -112,7 +112,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 			?>
 			<td><?php
 			
-					if($object->statut == 0) echo '<a href="?action=delete-line&k='.$k.'&id='.$object->id.'&type_object='.$dispatch->type_object.'">'.img_delete().'</a>';
+					if($object->statut == 0 || $type_object == 'contrat') echo '<a href="?action=delete-line&k='.$k.'&id='.$object->id.'&type_object='.$dispatch->type_object.'">'.img_delete().'</a>';
 						
 			?></td>
 		</tr>
@@ -124,7 +124,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 	
 	
 	$formproduct=new FormProduct($db);
-	if($object->statut == 0) {
+	if($object->statut == 0 || $type_object == 'contrat') {
 		
 	?><tr style="background-color: lightblue;">
 			<td><?php echo $form->combo('', 'TLine[-1][fk_object]', $pListe, ''); ?></td>
