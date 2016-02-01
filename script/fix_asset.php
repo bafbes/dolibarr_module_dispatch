@@ -3,7 +3,7 @@
  * Script créant et vérifiant que les champs requis s'ajoutent bien
  * 
  */
-	
+	set_time_limit(0);
 	require('../config.php');
 	dol_include_once('/dispatch/class/dispatchdetail.class.php');
 	dol_include_once('/asset/class/asset.class.php');
@@ -136,8 +136,9 @@
 		if ($extension_garantie !== null) $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
 		
 		//pre($asset,true);exit;
-		echo " ====> ASSET : ".$asset->serial_number.'<br>';
-		$asset->save($PDOdb);
+		echo " ====> ASSET ".$asset->etat." : ".$asset->serial_number.'<br>';
+		flush();
+		//$asset->save($PDOdb);
 	}
 	
 	/*private function create_standard_stock_mouvement(&$line, $qty, $numref) {
