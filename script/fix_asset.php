@@ -58,6 +58,12 @@
 				$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 			}*/
 		}
+
+        // Appel des triggers
+        $interface=new Interfaces($db);
+        $result=$interface->run_triggers('SHIPPING_VALIDATE',$expedition,$user,$langs,$conf);
+        if ($result < 0) { $error++; echo($interface->errors); }
+        // Fin appel triggers
 	}
 
 	function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref, &$object) {
@@ -65,6 +71,7 @@
 		dol_include_once('/asset/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
+		dol_include_once('/core/class/interfaces.class.php');
 		
 		$asset = new TAsset;
 		$asset->load($PDOdb,$linedetail->fk_asset,false);
@@ -110,7 +117,7 @@
 		{
 			$asset->etat = 1; //Vendu
 		}
-
+		
 		foreach($object->linkedObjects['commande'][0]->lines as &$linecommande)
 		{
 			if($linecommande->fk_product == $asset->fk_product)
