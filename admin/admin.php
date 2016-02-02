@@ -83,10 +83,20 @@
 	
 	$var=!$var;
 	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans("DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION").'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff("DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION");
+	print '</td></tr>';
+	
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
 	print '<td>'.$langs->trans("DISPATCH_CREATE_SUPPLIER_PRICE").'</td>';
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="300">';
 	print ajax_constantonoff("DISPATCH_CREATE_SUPPLIER_PRICE");
 	print '</td></tr>';
 
+	
+	
 	print "</table>";

@@ -20,4 +20,5 @@ SupplierQtyPrice=Qté mini du tarif
 TotalPriceOrdered=Prix Total payé
 GenerateSupplierTarif=Créer le tarif
 
+DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Mettre à jour les prix de la commande lors de la ventillation
 DISPATCH_CREATE_SUPPLIER_PRICE=Générer des prix fournisseurs à la réception des produits vers stocks
