@@ -4,6 +4,7 @@
 	dol_include_once('/dispatch/class/dispatchasset.class.php');
 	dol_include_once('/contrat/class/contrat.class.php');
 	dol_include_once('/product/class/html.formproduct.class.php' );
+	dol_include_once('/fichinter/class/fichinter.class.php' );
 	dol_include_once('/asset/class/asset.class.php');
 	dol_include_once('/core/lib/product.lib.php');	
 	
@@ -62,7 +63,10 @@ function _fiche(&$PDOdb,&$dispatch) {
 	$object = _header($dispatch->fk_object,$dispatch->type_object);
 	$pListe[0] = "Sélectionnez une ligne";
 	foreach($object->lines as $k=>&$line){
-		$pListe[$line->id] = ($k+1).'/ '.$line->label;
+		$label = !empty($line->label) ? $line->label : $line->libelle;
+		if(empty($label) && !empty($line->desc))$label = $line->desc;
+		
+		$pListe[$line->id] = ($k+1).'/ '.$label;
 	}
 	
 	
@@ -197,6 +201,13 @@ function _header($id,$object_type) {
 		
 		
 		
+	}
+	else if($object_type=='intervention') {
+		$object=new Fichinter($db);
+		$object->fetch($id);
+		dol_include_once('/core/lib/fichinter.lib.php');
+		$head = fichinter_prepare_head($object);
+		dol_fiche_head($head, 'dispatch', $langs->trans("InterventionCard"), 0, 'intervention');
 	}
 	
 	return $object;
