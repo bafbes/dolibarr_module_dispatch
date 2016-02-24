@@ -595,7 +595,13 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			}
 			
 			$sql = "SELECT l.rowid, l.fk_product, l.subprice, l.remise_percent, SUM(l.qty) as qty,";
-			$sql.= " p.ref, p.label, p.tobatch";
+			$sql.= " p.ref, p.label";
+			
+			if(DOL_VERSION>=3.8) {
+				$sql.=", p.tobatch";	
+			}
+			
+			
 			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseurdet as l";
 			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
 			$sql.= " WHERE l.fk_commande = ".$commande->id;
@@ -670,7 +676,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						// To show detail cref and description value, we must make calculation by cref
 						//print ($objp->cref?' ('.$objp->cref.')':'');
 						//if ($objp->description) print '<br>'.nl2br($objp->description);
-						if ((empty($conf->productbatch->enabled)) || $objp->tobatch==0)
+						if (DOL_VERSION<3.8 || (empty($conf->productbatch->enabled)) || $objp->tobatch==0)
 						{
 							$suffix='_'.$i;
 						} else {
