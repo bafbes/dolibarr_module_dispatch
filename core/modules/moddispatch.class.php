@@ -120,11 +120,11 @@ class moddispatch extends DolibarrModules
         
         $this->tabs = array(
         	'delivery:+dispatch:Détail expédition:dispatch@dispatch:/custom/dispatch/detail.php?id=__ID__'
-        	,'contract:+dispatch:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=contrat'
-        	,'intervention:+dispatch:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=intervention'
+        	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=contrat'
+        	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=intervention'
         	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispacth:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
         	,'supplier_order:-dispatch'
-		);
+		);
         
 		// where objecttype can be
 		// 'thirdparty'       to add a tab in third party view

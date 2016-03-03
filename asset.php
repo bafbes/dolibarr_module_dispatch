@@ -52,14 +52,14 @@
 	
 function _fiche(&$PDOdb,&$dispatch) {
 	global $db,$conf,$langs;
-	
+
 	llxHeader();
-	
+
 	$form=new TFormCore('auto','asset','post');
 	echo $form->hidden('action', 'save');
 	echo $form->hidden('id', $dispatch->fk_object);
 	echo $form->hidden('type_object', $dispatch->type_object);
-	
+
 	$object = _header($dispatch->fk_object,$dispatch->type_object);
 	$pListe[0] = "Sélectionnez une ligne";
 	foreach($object->lines as $k=>&$line){
@@ -197,7 +197,7 @@ function _header($id,$object_type) {
 		$object->fetch($id);
 		dol_include_once('/core/lib/contract.lib.php');
 		$head = contract_prepare_head($object);
-        dol_fiche_head($head, 'dispatch', $langs->trans("Contract"), 0, 'contract');
+        dol_fiche_head($head, 'dispatchAsset', $langs->trans("Contract"), 0, 'contract');
 		
 		
 		
