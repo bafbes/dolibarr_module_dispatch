@@ -116,6 +116,7 @@ class InterfaceDispatchWorkflow
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
 			$PDOdb = new TPDOdb();
+			set_time_limit(0);
 		
 			// Pour chaque ligne de l'expédition
 			foreach($object->lines as &$line) 
