@@ -282,7 +282,7 @@ global $langs, $db;
 		}
 		*/
 		
-		$TSerialNumber = array(' -- aucun produit sélectionné -- ');
+		$TSerialNumber = array(' -- aucun lot sélectionné -- ');
 		/*$sql = "SELECT DISTINCT(serial_number),contenancereel_value, contenancereel_units FROM ".MAIN_DB_PREFIX."asset ORDER BY serial_number ASC";
 		$PDOdb->Execute($sql);
 		while ($PDOdb->Get_line()) {
