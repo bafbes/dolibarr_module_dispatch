@@ -267,8 +267,8 @@ global $langs, $db;
 		
 		echo $form->hidden('id', $expedition->id);
 		
-		$TLotNumber = array();
-		$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit FROM ".MAIN_DB_PREFIX."asset GROUP BY lot_number ORDER BY lot_number ASC";
+		$TLotNumber = array(' -- aucun produit sélectionné -- ');
+		/*$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit FROM ".MAIN_DB_PREFIX."asset GROUP BY lot_number ORDER BY lot_number ASC";
 
 		$PDOdb->Execute($sql);
 		$Tres = $PDOdb->Get_All();
@@ -280,14 +280,15 @@ global $langs, $db;
 			//pre($asset,true);exit;
 			$TLotNumber[$res->lot_number] = $res->lot_number." / ".$res->qty." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($res->unit,$asset->assetType->measuring_units));
 		}
+		*/
 		
-		$TSerialNumber = array('');
-		$sql = "SELECT DISTINCT(serial_number),contenancereel_value, contenancereel_units FROM ".MAIN_DB_PREFIX."asset ORDER BY serial_number ASC";
+		$TSerialNumber = array(' -- aucun produit sélectionné -- ');
+		/*$sql = "SELECT DISTINCT(serial_number),contenancereel_value, contenancereel_units FROM ".MAIN_DB_PREFIX."asset ORDER BY serial_number ASC";
 		$PDOdb->Execute($sql);
 		while ($PDOdb->Get_line()) {
 			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' / '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
 		}
-		
+		*/
 		$TProduct = array('');
 		$sql = "SELECT DISTINCT(p.rowid),p.ref,p.label 
 				FROM ".MAIN_DB_PREFIX."product as p
