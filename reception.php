@@ -347,7 +347,8 @@
 				$asset->date_fin_garantie_fourn = strtotime('+'.$nb_year_garantie.'year', $time_date_recep);
 				$asset->date_fin_garantie_fourn = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_fourn);
 				$asset->fk_soc = $commandefourn->socid;
-				$asset->fk_entrepot = GETPOST('id_entrepot');
+				$fk_entrepot = !empty($line['entrepot']) ? $line['entrepot'] : GETPOST('id_entrepot');
+				$asset->fk_entrepot = $fk_entrepot;
 				
 				$societe = new Societe($db);
 				$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
@@ -356,7 +357,7 @@
 				$asset->etat = 0; //En stock
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
-				$asset->save($PDOdb, $user, '', 0, false, 0, true,GETPOST('id_entrepot'));
+				$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 				
 				$TImport[$k]['numserie'] = $asset->serial_number;
 				
@@ -463,7 +464,7 @@
 				}
 				// END NEW CODE
 				
-				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], GETPOST('id_entrepot'),null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 				
 				foreach($commandefourn->lines as $line){
 					if($line->fk_product == $id_prod){ //TODO attention ! si un produit plusieurs fois dans la commande ça c'est de la merde
@@ -543,7 +544,7 @@ global $langs, $db, $conf;
 	tabImport($TImport,$commande);
 	
 	$form->end();
-	
+	_list_already_dispatched($commande);
 	llxFooter();
 }
 
@@ -631,10 +632,33 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					print '<td align="right">'.$langs->trans("QtyOrdered").'</td>';
 					print '<td align="right">'.$langs->trans("QtyDispatchedShort").'</td>';
 					print '<td align="right">'.$langs->trans("QtyToDispatchShort").'</td>';
+					
+					$formproduct=new FormProduct($db);
+					$formproduct->loadWarehouses();
+					
+					print '<td align="right">'.$langs->trans("Warehouse").' : '.$formproduct->selectWarehouses(GETPOST('id_entrepot'), 'id_entrepot','',1,0,0,'',0,1).'</td>';
 					print '<td align="right">'.$langs->trans("SerializedProduct").'</td>';
 					print "</tr>\n";
 
+					?>
+					<script type="text/javascript">
+						$(document).ready(function() {
+							$('#id_entrepot').change(function() {
+								$('td[rel=entrepot] select').val($(this).val());
+							});
+							
+							$('td[rel=entrepot] select').change(function() {
+								
+								var fk_product = $(this).closest('td').attr('fk_product');
+								console.log(fk_product);
+								$('#dispatchAsset td[rel=entrepot][fk_product='+fk_product+'] select').val($(this).val());
+								
+							});
+							
+						});
+					</script>
 					
+					<?php
 
 				}
 
@@ -737,23 +761,27 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						}
 						
 						print '</td>';
-/* TODO manage multiple wahehouse
-							// Warehouse
-							print '<td align="right">';
-							if (count($listwarehouses)>1)
-							{
-								print $form->selectarray("entrepot".$suffix, $listwarehouses, GETPOST("entrepot".$suffix), 1, 0, 0, '', 0, 0, $disabled);
-							}
-							elseif  (count($listwarehouses)==1)
-							{
-								print $form->selectarray("entrepot".$suffix, $listwarehouses, GETPOST("entrepot".$suffix), 0, 0, 0, '', 0, 0, $disabled);
-							}
-							else
-							{
-								print $langs->trans("NoWarehouseDefined");
-							}
-							print "</td>\n";
-*/
+
+
+						print '<td align="right" rel="entrepot" fk_product="'.$objp->fk_product.'">';
+						
+						$formproduct=new FormProduct($db);
+						$formproduct->loadWarehouses();
+						
+						if (count($formproduct->cache_warehouses)>1)
+						{
+							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TOrderLine['.$objp->rowid.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+						}
+						elseif  (count($formproduct->cache_warehouses)==1)
+						{
+							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TOrderLine['.$objp->rowid.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
+						}
+						else
+						{
+							print $langs->trans("NoWarehouseDefined");
+						}
+						print "</td>\n";
+						
 
 						print '<td align="right">';
 						/*print $form->checkbox1('', 'TOrderLine['.$objp->rowid.'][serialized]', 1, $serializedProduct); */
@@ -762,6 +790,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						else print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$remaintodispatch.']').img_info('SerializeThisProductInfo');
 						
 						print '</td>';
+						
 						print $form->hidden('TOrderLine['.$objp->rowid.'][fk_product]', $objp->fk_product);
 						print $form->hidden('TOrderLine['.$objp->rowid.'][serialized]', $serializedProduct);
 						print "</tr>\n";
@@ -778,7 +807,150 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 			print "</table>\n";
 			print "<br/>\n";
+			
+			
 	
+}
+
+function _list_already_dispatched(&$commande) {
+	global $db, $langs;
+	
+	// List of lines already dispatched
+		$sql = "SELECT p.ref, p.label,";
+		$sql.= " e.rowid as warehouse_id, e.label as entrepot,";
+		$sql.= " cfd.rowid as dispatchlineid, cfd.fk_product, cfd.qty, cfd.eatby, cfd.sellby, cfd.batch, cfd.comment, cfd.status";
+		$sql.= " FROM ".MAIN_DB_PREFIX."product as p,";
+		$sql.= " ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
+		$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."entrepot as e ON cfd.fk_entrepot = e.rowid";
+		$sql.= " WHERE cfd.fk_commande = ".$commande->id;
+		$sql.= " AND cfd.fk_product = p.rowid";
+		$sql.= " ORDER BY cfd.rowid ASC";
+
+		$resql = $db->query($sql);
+		if ($resql)
+		{
+			$num = $db->num_rows($resql);
+			$i = 0;
+
+			if ($num > 0)
+			{
+				print "<br/>\n";
+
+				print load_fiche_titre($langs->trans("ReceivingForSameOrder"));
+
+				print '<table class="noborder" width="100%">';
+
+				print '<tr class="liste_titre">';
+				print '<td>'.$langs->trans("Description").'</td>';
+				if (! empty($conf->productbatch->enabled))
+				{
+					print '<td>'.$langs->trans("batch_number").'</td>';
+					print '<td>'.$langs->trans("l_eatby").'</td>';
+					print '<td>'.$langs->trans("l_sellby").'</td>';
+				}
+				print '<td align="right">'.$langs->trans("QtyDispatched").'</td>';
+				print '<td></td>';
+				print '<td>'.$langs->trans("Warehouse").'</td>';
+				print '<td>'.$langs->trans("Comment").'</td>';
+				if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS)) print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
+				print "</tr>\n";
+
+				$var=false;
+
+				while ($i < $num)
+				{
+					$objp = $db->fetch_object($resql);
+
+					print "<tr ".$bc[$var].">";
+					print '<td>';
+					print '<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
+					print ' - '.$objp->label;
+					print "</td>\n";
+
+					if (! empty($conf->productbatch->enabled))
+					{
+						print '<td>'.$objp->batch.'</td>';
+						print '<td>'.dol_print_date($db->jdate($objp->eatby),'day').'</td>';
+						print '<td>'.dol_print_date($db->jdate($objp->sellby),'day').'</td>';
+					}
+
+					// Qty
+					print '<td align="right">'.$objp->qty.'</td>';
+					print '<td>&nbsp;</td>';
+
+					// Warehouse
+					print '<td>';
+					$warehouse_static->id=$objp->warehouse_id;
+					$warehouse_static->libelle=$objp->entrepot;
+					print $warehouse_static->getNomUrl(1);
+					print '</td>';
+
+					// Comment
+					print '<td>'.dol_trunc($objp->comment).'</td>';
+
+					// Status
+					if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS))
+					{
+						print '<td align="right">';
+						$supplierorderdispatch->status = (empty($objp->status)?0:$objp->status);
+						//print $supplierorderdispatch->status;
+						print $supplierorderdispatch->getLibStatut(5);
+						print '</td>';
+
+						// Add button to check/uncheck disaptching
+						print '<td align="center">';
+						if ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && empty($user->rights->fournisseur->commande->receptionner))
+       					|| (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && empty($user->rights->fournisseur->commande_advance->check))
+							)
+						{
+							if (empty($objp->status))
+							{
+								print '<a class="button buttonRefused" href="#">'.$langs->trans("Approve").'</a>';
+								print '<a class="button buttonRefused" href="#">'.$langs->trans("Deny").'</a>';
+							}
+							else
+							{
+								print '<a class="button buttonRefused" href="#">'.$langs->trans("Disapprove").'</a>';
+								print '<a class="button buttonRefused" href="#">'.$langs->trans("Deny").'</a>';
+							}
+						}
+						else
+						{
+							$disabled='';
+							if ($commande->statut == 5) $disabled=1;
+							if (empty($objp->status))
+							{
+								print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=checkdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Approve").'</a>';
+								print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=denydispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Deny").'</a>';
+							}
+							if ($objp->status == 1)
+							{
+								print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=uncheckdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Reinit").'</a>';
+								print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=denydispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Deny").'</a>';
+							}
+							if ($objp->status == 2)
+							{
+								print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=uncheckdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Reinit").'</a>';
+								print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=checkdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Approve").'</a>';
+							}
+						}
+						print '</td>';
+					}
+
+					print "</tr>\n";
+
+					$i++;
+					$var=!$var;
+				}
+				$db->free($resql);
+
+				print "</table>\n";
+			}
+		}
+		else
+		{
+			dol_print_error($db);
+		}
 }
 
 function tabImport(&$TImport,&$commande) {
@@ -802,11 +974,12 @@ global $langs, $db, $conf;
 	print count($TImport).' équipement(s) dans votre réception';
 	
 	?>
-	<table width="100%" class="border">
+	<table width="100%" class="border" id="dispatchAsset">
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de Série</td>
 			<td>Numéro de Lot</td>
+			<td><?php echo $langs->trans('Warehouse'); ?></td>
 			<td>DLUO</td>
 			<td>Quantité</td>
 			<td>Unité</td>
@@ -861,6 +1034,26 @@ global $langs, $db, $conf;
 					?>
 					</td>
 					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
+					<td rel="entrepot" fk_product="<?php echo $prod->id ?>"><?php 
+					
+						$formproduct=new FormProduct($db);
+						$formproduct->loadWarehouses();
+						
+						if (count($formproduct->cache_warehouses)>1)
+						{
+							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+						}
+						elseif  (count($formproduct->cache_warehouses)==1)
+						{
+							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+						}
+						else
+						{
+							print $langs->trans("NoWarehouseDefined");
+						}
+					
+					?></td>
+					
 					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
 					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td>
 					<td><?php echo ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight');  ?></td>					<?php
@@ -934,12 +1127,9 @@ global $langs, $db, $conf;
 		?>
 		<hr />
 		<?php
-		echo $form->calendrier('Date de réception', 'date_recep', time());
+		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
 		
-		$entrepot = new Entrepot($db);
-		$entrepot->fetch('','Neuf');
-		
-		print " <b>Entrepôt</b> ".$formproduct->selectWarehouses($entrepot->id,'id_entrepot','',1);
+		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', $_POST["comment"]?GETPOST("comment"):$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 		
 		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
 	}
