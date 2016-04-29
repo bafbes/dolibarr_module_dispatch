@@ -980,7 +980,9 @@ global $langs, $db, $conf;
 			<td>Numéro de Série</td>
 			<td>Numéro de Lot</td>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
-			<td>DLUO</td>
+			<?php if($conf->global->OUTPUT_DLUO){ ?>
+				<td>DLUO</td>
+			<?php } ?>
 			<td>Quantité</td>
 			<td>Unité</td>
 			<?php
@@ -1053,8 +1055,9 @@ global $langs, $db, $conf;
 						}
 					
 					?></td>
-					
+					<?php if($conf->global->OUTPUT_DLUO){ ?>
 					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
+					<?php } ?>
 					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td>
 					<td><?php echo ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight');  ?></td>					<?php
 					if($conf->global->clinomadic->enabled){
