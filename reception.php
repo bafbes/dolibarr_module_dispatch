@@ -980,7 +980,7 @@ global $langs, $db, $conf;
 			<td>Numéro de Série</td>
 			<td>Numéro de Lot</td>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
-			<?php if($conf->global->OUTPUT_DLUO){ ?>
+			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
 				<td>DLUO</td>
 			<?php } ?>
 			<td>Quantité</td>
@@ -1055,7 +1055,7 @@ global $langs, $db, $conf;
 						}
 					
 					?></td>
-					<?php if($conf->global->OUTPUT_DLUO){ ?>
+					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
 					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
 					<?php } ?>
 					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td>
