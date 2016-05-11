@@ -770,11 +770,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TOrderLine['.$objp->rowid.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->rowid]) ? $TOrderLine[$objp->rowid]['entrepot'] : '', 'TOrderLine['.$objp->rowid.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TOrderLine['.$objp->rowid.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->rowid]) ? $TOrderLine[$objp->rowid]['entrepot'] : '', 'TOrderLine['.$objp->rowid.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
 						}
 						else
 						{
