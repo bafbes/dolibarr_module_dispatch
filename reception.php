@@ -1017,7 +1017,7 @@ global $langs, $db, $conf;
 				} 		
 					
 				?><tr>
-					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
+					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
 					<td><?php
 						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
 						$asset=new TAsset;
@@ -1085,7 +1085,7 @@ global $langs, $db, $conf;
 			
 			$pListe[0] = "Sélectionnez un produit";
 			foreach($commande->lines as $line){
-				if($line->fk_product) $pListe[$line->fk_product] = $line->product_label;
+				if($line->fk_product) $pListe[$line->fk_product] = $line->product_ref." - ".$line->product_label;
 			}
 			
 			$defaultDLUO = '';
