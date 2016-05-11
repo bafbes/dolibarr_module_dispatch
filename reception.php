@@ -880,6 +880,7 @@ function _list_already_dispatched(&$commande) {
 
 					// Warehouse
 					print '<td>';
+					$warehouse_static = new Entrepot($db);
 					$warehouse_static->id=$objp->warehouse_id;
 					$warehouse_static->libelle=$objp->entrepot;
 					print $warehouse_static->getNomUrl(1);
@@ -1084,7 +1085,7 @@ global $langs, $db, $conf;
 			
 			$pListe[0] = "Sélectionnez un produit";
 			foreach($commande->lines as $line){
-				$pListe[$line->fk_product] = $line->product_label;
+				if($line->fk_product) $pListe[$line->fk_product] = $line->product_label;
 			}
 			
 			$defaultDLUO = '';
@@ -1098,7 +1099,9 @@ global $langs, $db, $conf;
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
-					<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
+					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
+						<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
+					<?php } ?>
 					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
 					<td><?php echo $formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight');   ?></td>
 					<?php
