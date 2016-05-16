@@ -1099,6 +1099,25 @@ global $langs, $db, $conf;
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
+					<td><?php 
+					
+						$formproduct=new FormProduct($db);
+						$formproduct->loadWarehouses();
+						
+						if (count($formproduct->cache_warehouses)>1)
+						{
+							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
+						}
+						elseif  (count($formproduct->cache_warehouses)==1)
+						{
+							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine[-1][entrepot]','',0,0,$prod->id,'',0,1);
+						}
+						else
+						{
+							print $langs->trans("NoWarehouseDefined");
+						}
+					
+					?></td>
 					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
 						<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
 					<?php } ?>
