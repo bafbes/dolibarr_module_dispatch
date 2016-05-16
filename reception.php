@@ -651,7 +651,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 								
 								var fk_product = $(this).closest('td').attr('fk_product');
 								console.log(fk_product);
-								$('#dispatchAsset td[rel=entrepot][fk_product='+fk_product+'] select').val($(this).val());
+								$('#dispatchAsset td[rel=entrepotChild][fk_product='+fk_product+'] select').val($(this).val());
 								
 							});
 							
@@ -1037,7 +1037,7 @@ global $langs, $db, $conf;
 					?>
 					</td>
 					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
-					<td rel="entrepot" fk_product="<?php echo $prod->id ?>"><?php 
+					<td rel="entrepotChild" fk_product="<?php echo $prod->id ?>"><?php 
 					
 						$formproduct=new FormProduct($db);
 						$formproduct->loadWarehouses();
