@@ -1049,11 +1049,11 @@ global $langs, $db, $conf;
 						
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
 						}
 						else
 						{
@@ -1111,11 +1111,11 @@ global $langs, $db, $conf;
 						
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine[-1][entrepot]','',0,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',0,0,$prod->id,'',0,1);
 						}
 						else
 						{
