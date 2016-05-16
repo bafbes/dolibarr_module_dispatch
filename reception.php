@@ -35,7 +35,7 @@
 
 		foreach($commandefourn->lines as $line){
 		
-			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
+			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
@@ -53,6 +53,7 @@
 					,'imei'=>$PDOdb->Get_field('imei')
 					,'firmware'=>$PDOdb->Get_field('firmware')
 					,'fk_product'=>$PDOdb->Get_field('rowid')
+					,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
 					,'dluo'=>$PDOdb->Get_field('dluo')
 					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
 				);
@@ -132,6 +133,7 @@
 				,'quantity'=>$quantity
 				,'quantity_unit'=>$quantity_unit
 				,'fk_product'=>$prodAsset->id
+				,'fk_warehouse'=>$entrepot
 				,'imei'=>$imei
 				,'firmware'=>$firmware
 				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
@@ -147,6 +149,7 @@
 				,'quantity'=>$quantity
 				,'quantity_unit'=>$quantity_unit
 				,'fk_product'=>$prodAsset->id
+				,'fk_warehouse'=>$entrepot
 				,'imei'=>$imei
 				,'firmware'=>$firmware
 				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
@@ -203,6 +206,7 @@
 							,'quantity'=>1
 							,'quantity_unit'=>0
 							,'fk_product'=>$product->id
+							,'fk_warehouse'=>0
 							,'imei'=>''
 							,'firmware'=>''
 							,'dluo'=>date('Y-m-d')
