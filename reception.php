@@ -62,7 +62,7 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo,$k=null){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null){
 		global $db, $conf;
 		
 		//Charge le produit associé à l'équipement
@@ -114,6 +114,7 @@
 		$recepdetail->serial_number = $numserie;
 		$recepdetail->imei = $imei;
 		$recepdetail->firmware = $firmware;
+		$recepdetail->fk_warehouse = $entrepot;
 		/*$recepdetail->weight = 1;
 		$recepdetail->weight_reel = 1;
 		$recepdetail->weight_unit = 0;
@@ -259,7 +260,7 @@
 				
 				//pre($commandefourn,true);exit;
 				if (!$error) {
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $k);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
 				}
 			}
 			
@@ -298,7 +299,7 @@
 				// si inexistant
 				//Seulement si nouvelle ligne
 				if($k == -1){
-					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit']);
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['entrepot']);
 				}
 				
 				$prod = new Product($db);
