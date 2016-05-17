@@ -35,7 +35,7 @@
 
 		foreach($commandefourn->lines as $line){
 		
-			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
+			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 					WHERE ca.fk_commandedet = ".$line->id."
@@ -53,6 +53,7 @@
 					,'imei'=>$PDOdb->Get_field('imei')
 					,'firmware'=>$PDOdb->Get_field('firmware')
 					,'fk_product'=>$PDOdb->Get_field('rowid')
+					,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
 					,'dluo'=>$PDOdb->Get_field('dluo')
 					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
 				);
@@ -62,7 +63,7 @@
 		return $TImport;
 	}
 	
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo,$k=null){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null){
 		global $db, $conf;
 		
 		//Charge le produit associé à l'équipement
@@ -114,6 +115,7 @@
 		$recepdetail->serial_number = $numserie;
 		$recepdetail->imei = $imei;
 		$recepdetail->firmware = $firmware;
+		$recepdetail->fk_warehouse = $entrepot;
 		/*$recepdetail->weight = 1;
 		$recepdetail->weight_reel = 1;
 		$recepdetail->weight_unit = 0;
@@ -131,6 +133,7 @@
 				,'quantity'=>$quantity
 				,'quantity_unit'=>$quantity_unit
 				,'fk_product'=>$prodAsset->id
+				,'fk_warehouse'=>$entrepot
 				,'imei'=>$imei
 				,'firmware'=>$firmware
 				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
@@ -146,6 +149,7 @@
 				,'quantity'=>$quantity
 				,'quantity_unit'=>$quantity_unit
 				,'fk_product'=>$prodAsset->id
+				,'fk_warehouse'=>$entrepot
 				,'imei'=>$imei
 				,'firmware'=>$firmware
 				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
@@ -202,6 +206,7 @@
 							,'quantity'=>1
 							,'quantity_unit'=>0
 							,'fk_product'=>$product->id
+							,'fk_warehouse'=>0
 							,'imei'=>''
 							,'firmware'=>''
 							,'dluo'=>date('Y-m-d')
@@ -259,7 +264,7 @@
 				
 				//pre($commandefourn,true);exit;
 				if (!$error) {
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $k);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
 				}
 			}
 			
@@ -298,7 +303,7 @@
 				// si inexistant
 				//Seulement si nouvelle ligne
 				if($k == -1){
-					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit']);
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['entrepot']);
 				}
 				
 				$prod = new Product($db);
@@ -651,7 +656,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 								
 								var fk_product = $(this).closest('td').attr('fk_product');
 								console.log(fk_product);
-								$('#dispatchAsset td[rel=entrepot][fk_product='+fk_product+'] select').val($(this).val());
+								$('#dispatchAsset td[rel=entrepotChild][fk_product='+fk_product+'] select').val($(this).val());
 								
 							});
 							
@@ -1037,18 +1042,18 @@ global $langs, $db, $conf;
 					?>
 					</td>
 					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
-					<td rel="entrepot" fk_product="<?php echo $prod->id ?>"><?php 
+					<td rel="entrepotChild" fk_product="<?php echo $prod->id ?>"><?php 
 					
 						$formproduct=new FormProduct($db);
 						$formproduct->loadWarehouses();
 						
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses($TOrderLine[$objp->rowid]['entrepot'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
 						}
 						else
 						{
@@ -1099,6 +1104,25 @@ global $langs, $db, $conf;
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
+					<td><?php 
+					
+						$formproduct=new FormProduct($db);
+						$formproduct->loadWarehouses();
+						
+						if (count($formproduct->cache_warehouses)>1)
+						{
+							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
+						}
+						elseif  (count($formproduct->cache_warehouses)==1)
+						{
+							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',0,0,$prod->id,'',0,1);
+						}
+						else
+						{
+							print $langs->trans("NoWarehouseDefined");
+						}
+					
+					?></td>
 					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
 						<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
 					<?php } ?>
