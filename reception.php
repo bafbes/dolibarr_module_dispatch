@@ -1,6 +1,8 @@
 <?php
 
 	require('config.php');
+	
+	set_time_limit(0);
 
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
 	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
