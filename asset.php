@@ -22,7 +22,9 @@
 		case 'save':
 			
 			$TLine = GETPOST('TLine');
-			if(!empty($TLine[-1]['serial_number']) && !empty($TLine[-1]['fk_object'])) {
+			if(!empty($TLine[-1]['serial_number']) && (!empty($TLine[-1]['fk_object']) || GETPOST('type_object') === 'ticketsup')) 
+			// Si type_object == ticketsup on n'empêche pas l'ajout si aucune ligne est sélectionnée car aucun sens d'associer un asset à un message sur un ticket
+			{
 				
 				$asset = new TAsset;
 				$asset->loadReference($PDOdb, $TLine[-1]['serial_number']);
@@ -104,7 +106,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 		$class= ($class == 'pair') ? 'impair' : 'pair';
 		
 		?><tr class="<?php echo $class ?>">
-			<td><?php echo $pListe[$da->fk_object]; ?></td>
+			<td><?php echo empty($da->fk_object) ? 'Aucune' : $pListe[$da->fk_object]; ?></td>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<td><?php echo $da->asset->lot_number; ?></td>
 			<?php
@@ -192,12 +194,15 @@ function _fiche(&$PDOdb,&$dispatch) {
 function _header($id,$object_type) {
 	global $db,$langs;
 	
+	$langs->load('interventions');
+	$langs->load('contracts');
+	
 	if($object_type == 'contrat') {
 		$object=new Contrat($db);
 		$object->fetch($id);
 		dol_include_once('/core/lib/contract.lib.php');
 		$head = contract_prepare_head($object);
-        dol_fiche_head($head, 'dispatch', $langs->trans("Contract"), 0, 'contract');
+        dol_fiche_head($head, 'dispatchAsset', $langs->trans("Contract"), 0, 'contract');
 		
 		
 		
@@ -207,7 +212,15 @@ function _header($id,$object_type) {
 		$object->fetch($id);
 		dol_include_once('/core/lib/fichinter.lib.php');
 		$head = fichinter_prepare_head($object);
-		dol_fiche_head($head, 'dispatch', $langs->trans("InterventionCard"), 0, 'intervention');
+		dol_fiche_head($head, 'dispatchAsset', $langs->trans("InterventionCard"), 0, 'intervention');
+	}
+	else if($object_type=='ticketsup') {
+		dol_include_once('/ticketsup/class/ticketsup.class.php');
+		dol_include_once('/ticketsup/lib/ticketsup.lib.php');
+		$object = new Ticketsup($db);
+		$object->fetch($id);
+		$head = ticketsup_prepare_head($object);
+		dol_fiche_head($head, 'dispatchAsset', $langs->trans("Ticket"), 0, 'ticketsup@ticketsup');
 	}
 	
 	return $object;
