@@ -77,15 +77,16 @@ function _fiche(&$PDOdb,&$dispatch) {
 	?>
 	<table width="100%" class="border">
 		<tr class="liste_titre">
-			<td>Ligne concernée</td>
+			<?php
+				if(GETPOST('type_object') !== 'ticketsup') print '<td>Ligne concernée</td>';
+			?>
 			<td>Equipement</td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
 				?><td>Numéro de Lot</td><?php
 				}
+				print '<td>DLUO</td>';
 			?>
-			<td>DLUO</td>
-			
 			<?php
 			if($conf->global->clinomadic->enabled){
 				?>
@@ -106,7 +107,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 		$class= ($class == 'pair') ? 'impair' : 'pair';
 		
 		?><tr class="<?php echo $class ?>">
-			<td><?php echo empty($da->fk_object) ? 'Aucune' : $pListe[$da->fk_object]; ?></td>
+			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$pListe[$da->fk_object].'</td>'; ?>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<td><?php echo $da->asset->lot_number; ?></td>
 			<?php
@@ -142,7 +143,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 	if($object->statut == 0 || $type_object == 'contrat') {
 		
 	?><tr style="background-color: lightblue;">
-			<td><?php echo $form->combo('', 'TLine[-1][fk_object]', $pListe, ''); ?></td>
+			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$form->combo('', 'TLine[-1][fk_object]', $pListe, '').'</td>'; ?>
 			<td><?php echo $form->texte('','TLine[-1][serial_number]', '', 30); ?></td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
