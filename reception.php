@@ -392,8 +392,9 @@
 				$receptDetailLine->save($PDOdb);
 			}
 			
+			// TODO revoir le formatage de $TProdVentil car par de fk_entrepot cible pour les qty
 			//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-			$TProdVentil[$asset->fk_product]['qty'] += ($quantity_to_ventile) ? $quantity_to_ventile : 1;
+			$TProdVentil[$asset->fk_product]['qty'] += $quantity_to_ventile;
 			
 				/*	
 		$delta = $quantity - $recepdetail->qty_ventile;
