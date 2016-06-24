@@ -63,7 +63,38 @@ class TRecepDetail extends TObjetStd {
 		parent::add_champs('dluo','type=date;');
 		parent::add_champs('weight_unit, weight_reel_unit, tare_unit','type=entier;');
 		
+		parent::add_champs('qty_ventile', array('type' => 'float'));
+		
 		parent::_init_vars();
 		parent::start();
+	}
+	
+	function load(&$PDOdb, $id, $load_product=true) {
+		parent::load($PDOdb, $id);
+		
+		$this->commande_fournisseurdet_asset = $this->getId(); // retrocompatibilité
+		$this->entrepot = $this->fk_warehouse; // retrocompatibilité
+		$this->numserie = $this->serial_number;
+		
+		if ($load_product) $this->loadProductInfo();
+	}
+	
+	function loadProductInfo() {
+		global $db;
+		
+		$this->product = new Product($db);
+		if (!empty($this->fk_product))
+		{
+			if (!class_exists('Product')) dol_include_once('/product/class/product.class.php');
+			
+			$this->product->fetch($this->fk_product);
+			$this->ref = $this->product->ref;
+		}
+	}
+
+	function save(&$PDOdb) {
+		parent::save($PDOdb);
+		
+		if (empty($this->product)) $this->loadProductInfo();
 	}
 }
