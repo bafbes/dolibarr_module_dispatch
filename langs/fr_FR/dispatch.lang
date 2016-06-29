@@ -22,3 +22,6 @@ GenerateSupplierTarif=Créer le tarif
 
 DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Mettre à jour les prix de la commande lors de la ventillation
 DISPATCH_CREATE_SUPPLIER_PRICE=Générer des prix fournisseurs à la réception des produits vers stocks
+
+dispatch_error_empty_serial_number=Erreur lors de la génération du numéro de série, aucun masque de défini sur le produit [%s]
+dispatch_error_stock_mvt_dolibarr=Erreur lors de la ventilation, l'identifiant produit [%s] n'a pas d'entrepôt cible

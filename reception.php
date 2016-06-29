@@ -35,13 +35,6 @@
 
 		foreach($commandefourn->lines as $line){
 		
-			/* TODO remove
-			 * $sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
-					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
-						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
-					WHERE ca.fk_commandedet = ".$line->id."
-						ORDER BY ca.rang ASC";
-			*/
 			$sql = "SELECT ca.rowid
 					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 					LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
@@ -55,20 +48,6 @@
 					$o->load($PDOdb, $l['rowid']);
 					
 					$TImport[$o->getId()] = $o;
-					/* TODO remove
-					 * $TImport[] =array(
-						'ref'=>$PDOdb->Get_field('ref')
-						,'numserie'=>$PDOdb->Get_field('serial_number')
-						,'lot_number'=>$PDOdb->Get_field('lot_number')
-						,'quantity'=>$PDOdb->Get_field('weight_reel')
-						,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
-						,'imei'=>$PDOdb->Get_field('imei')
-						,'firmware'=>$PDOdb->Get_field('firmware')
-						,'fk_product'=>$PDOdb->Get_field('rowid')
-						,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
-						,'dluo'=>$PDOdb->Get_field('dluo')
-						,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
-					);*/
 				}	
 			}
 			
@@ -160,10 +139,6 @@
 		
 	}
 	else if($action=='DELETE_LINE') {
-		/* FIXME [PH] c'est useless $TImport est redéfini plus bas
-		$k = (int)GETPOST('k');
-		unset($TImport[$k]);
-		*/
 		$rowid = GETPOST('rowid');
 		
 		$recepdetail = new TRecepDetail;
@@ -198,27 +173,19 @@
 						$o->quantity = 1;
 						$o->fk_product = $product->id;
 						$o->fk_warehouse = $TOrderLine[$rowid]['entrepot'];
-						$o->dluo = date('Y-m-d');
+						if(!empty($conf->global->DISPATCH_DLUO_BY_DEFAULT))
+						{
+							$o->dluo = date('Y-m-d',strtotime(date('Y-m-d')." ".$conf->global->DISPATCH_DLUO_BY_DEFAULT));
+						} 
+						else
+						{
+							$o->dluo = date('Y-m-d');
+						}
 						$o->commande_fournisseurdet_asset = 0;
 						$o->qty_ventile = 0;
 						
 						$TImport[] = $o;
 						
-						/* TODO remove
-						 * $TImport[] =array(
-							'ref'=>$product->ref
-							,'numserie'=>''
-							,'lot_number'=>''
-							,'quantity'=>1
-							,'quantity_unit'=>0
-							,'fk_product'=>$product->id
-							,'fk_warehouse'=>$TOrderLine[$rowid]['entrepot']
-							,'imei'=>''
-							,'firmware'=>''
-							,'dluo'=>date('Y-m-d')
-							,'commande_fournisseurdet_asset'=>0
-							,'qty_ventile' => 0
-						);*/
 					}
 					
 				}
@@ -273,9 +240,6 @@
 				
 				//pre($commandefourn,true);exit;
 				if (!$error) {
-					/*
-					 * TODO repacer par là
-					 */
 					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $line['fk_recepdetail'], $line['entrepot']);
 				}
 			}
@@ -293,11 +257,13 @@
 	elseif(isset($_POST['bt_create'])) {
 		
 		$PDOdb=new TPDOdb;
+		$TError = array();
+		$error = 0;
 
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
 			
 		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
-		$TProdVentil = array();
+		$TProdVentil = array('tarif' => array(), 'ventile' => array());
 		$TLine = GETPOST('TLine');
 		
 		foreach($TImport  as $k=> &$line) {
@@ -328,6 +294,13 @@
 				//echo $asset->getNextValue($PDOdb);
 				$asset->fk_product = $line->fk_product;
 				$asset->serial_number = ($line->numserie) ? $line->numserie : $asset->getNextValue($PDOdb);
+				
+				if (empty($asset->serial_number )) {
+					$TError[$line->fk_product] = $langs->trans('dispatch_error_empty_serial_number', $line->product->ref);
+					$error++;
+					continue;
+				}
+				
 				$asset->contenance_value = $quantity_to_ventile;
 				$asset->contenancereel_value = $quantity_to_ventile;
 			}
@@ -377,33 +350,36 @@
 			// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 			$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 			
-			
 			$line->numserie = $asset->serial_number; // Si le numserie n'été pas communiqué alors il a été généré
 			
-			// TODO bordel, le mvt de stock ne veux pas ce faire !!!! X_X
 			$stock = new TAssetStock;
 			$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $quantity_to_ventile, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
 			
-			// FIXME [PH] à quoi sa sert car quelques lignes plus haut on force : $line->numserie = $asset->serial_number
+			// FIXME [PH] à quoi sa sert car quelques lignes plus haut on force : $line->numserie = $asset->serial_number => donc téchniquement on n'y passe jamais
 			if($asset->serial_number != $line->numserie){
 				$receptDetailLine = new TRecepDetail;
 				$receptDetailLine->load($PDOdb, $line->commande_fournisseurdet_asset);
 				$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
 				$receptDetailLine->save($PDOdb);
 			}
-			
-			// TODO revoir le formatage de $TProdVentil car par de fk_entrepot cible pour les qty
+
+			// J'update la quantité ventilé de cette ligne 
+			$line->qty_ventile += $quantity_to_ventile;
+			$line->save($PDOdb);		
+	
 			//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-			$TProdVentil[$asset->fk_product]['qty'] += $quantity_to_ventile;
 			
-				/*	
-		$delta = $quantity - $recepdetail->qty_ventile;
-		var_dump($delta , $quantity , $recepdetail->qty_ventile);exit;
-		// TODO qty_ventile à mettre quelque part par là
-		
-			*/
+			// J'instancie un tableau si l'index n'existe pas, ça évite de remplir la log PHP selon la version
+			if (empty($TProdVentil['ventile'][$asset->fk_product])) $TProdVentil[$asset->fk_product] = array();
+			if (empty($TProdVentil['ventile'][$asset->fk_product][$line->fk_warehouse])) $TProdVentil[$asset->fk_product][$line->fk_warehouse] = array('qty' => 0);
 			
+			$TProdVentil['ventile'][$asset->fk_product][$line->fk_warehouse]['qty'] += $quantity_to_ventile;
+			
+			if (empty($TProdVentil['tarif'][$asset->fk_product])) $TProdVentil['tarif'][$asset->fk_product] = array('qty' => 0);
+			$TProdVentil['tarif'][$asset->fk_product]['qty'] += $quantity_to_ventile;
 		}
+
+		if (!empty($TError)) setEventMessages('', $TError, 'errors');
 
 		// prise en compte des lignes non ventilés en réception simple
 		$TOrderLine=GETPOST('TOrderLine');
@@ -412,38 +388,37 @@
 			
 			foreach($TOrderLine as &$line) {
 				
-				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
+				if(!isset($TProdVentil['tarif'][$line['fk_product']])) $TProdVentil['tarif'][$line['fk_product']]['qty'] = 0;
 				
 				// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
-				if(empty($line['serialized'] )) $TProdVentil[$line['fk_product']]['qty']+=$line['qty'];
+				if(empty($line['serialized'] )) $TProdVentil['tarif'][$line['fk_product']]['qty'] += $line['qty'];
 				
 				if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
 				{
-					$TProdVentil[$line['fk_product']]['supplier_price']=$line['supplier_price'];
+					$TProdVentil['tarif'][$line['fk_product']]['supplier_price'] = $line['supplier_price'];
 				}
 				
 				if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
 				{
-					$TProdVentil[$line['fk_product']]['supplier_qty']=$line['supplier_qty'];
-					$TProdVentil[$line['fk_product']]['generate_supplier_tarif']=$line['generate_supplier_tarif'];
+					$TProdVentil['tarif'][$line['fk_product']]['supplier_qty'] = $line['supplier_qty'];
+					$TProdVentil['tarif'][$line['fk_product']]['generate_supplier_tarif'] = $line['generate_supplier_tarif'];
 				}
 				
 			}
 			
 		}
-
 		
 		//pre($TProdVentil,true);
-		
+		$TError = array();
 		$status = $commandefourn->statut;
 		
-		if(count($TProdVentil)>0) {
+		if(count($TProdVentil['tarif'])>0) {
 			
 			$status = $commandefourn->statut;
 			
 			$totalementventile = true;
 
-			foreach($TProdVentil as $id_prod => $item){
+			foreach($TProdVentil['tarif'] as $id_prod => $item){
 				//Fonction standard ventilation commande fournisseur
 				//TODO AA dans la 3.9 il y a l'id de la ligne concernée... Ce qui implique de ne plus sélectionner un produit mais une ligne à ventiler. Adaptation à faire dans une future version
 				if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
@@ -492,7 +467,20 @@
 				}
 				// END NEW CODE
 				
-				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+				if (!empty($TProdVentil['ventile'][$id_prod]))
+				{
+					foreach ($TProdVentil['ventile'][$id_prod] as $fk_warehouse => $row)
+					{
+						if ($fk_warehouse == -1) $fk_warehouse = GETPOST('id_entrepot');
+						if ($fk_warehouse == -1) {
+							if (empty($lineprod)) $lineprod = searchProductInCommandeLine($commandefourn->lines, $id_prod);
+							$TError[$id_prod] = $langs->trans('dispatch_error_stock_mvt_dolibarr', !empty($lineprod) ? $lineprod->ref : $id_prod);
+							$error++;
+							continue;
+						}
+						$ret = $commandefourn->dispatchProduct($user, $id_prod, $row['qty'], $fk_warehouse,null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+					}
+				}
 				
 				foreach($commandefourn->lines as $line){
 					if($line->fk_product == $id_prod){ //TODO attention ! si un produit plusieurs fois dans la commande ça c'est de la merde
@@ -515,11 +503,15 @@
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
 	
-			setEventMessage('Equipements créés / produits ventilés');
+			if (!empty($TError)) setEventMessages('', $TError, 'errors');
+			
+			if ($error > 0) setEventMessages('Equipements créés / produits ventilés', array(), 'warnings');
+			else setEventMessage('Equipements créés / produits ventilés');
 			
 		}
 		
-
+		header('Location: '.dol_buildpath('/dispatch/reception.php?id='.GETPOST('id'), 1));
+		exit;
 	}
 
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
@@ -1012,7 +1004,7 @@ global $langs, $db, $conf;
 			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
 				<td>DLUO</td>
 			<?php } ?>
-			<td>Quantité / Déjà ventilé</td>
+			<td>Quantité à ventiler / Déjà ventilé</td>
 			<td>Unité</td>
 			<?php
 			if($conf->global->clinomadic->enabled){
@@ -1086,7 +1078,7 @@ global $langs, $db, $conf;
 					
 					?></td>
 					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
-					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
+					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line->dluo)));   ?></td>
 					<?php } ?>
 					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', 0, 10); ?> / <?php echo $line->qty_ventile; ?></td>
 					<td><?php echo ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line->quantity_unit) : measuring_units_string($line->quantity_unit,'weight');  ?></td><?php
@@ -1118,7 +1110,7 @@ global $langs, $db, $conf;
 			}
 			
 			$defaultDLUO = '';
-			if($conf->global->DISPATCH_DLUO_BY_DEFAULT){
+			if(!empty($conf->global->DISPATCH_DLUO_BY_DEFAULT)){
 				$defaultDLUO = date('d/m/Y',strtotime(date('Y-m-d')." ".$conf->global->DISPATCH_DLUO_BY_DEFAULT));
 			}
 			
