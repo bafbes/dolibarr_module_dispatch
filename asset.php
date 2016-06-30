@@ -22,7 +22,9 @@
 		case 'save':
 			
 			$TLine = GETPOST('TLine');
-			if(!empty($TLine[-1]['serial_number']) && !empty($TLine[-1]['fk_object'])) {
+			if(!empty($TLine[-1]['serial_number']) && (!empty($TLine[-1]['fk_object']) || GETPOST('type_object') === 'ticketsup')) 
+			// Si type_object == ticketsup on n'empêche pas l'ajout si aucune ligne est sélectionnée car aucun sens d'associer un asset à un message sur un ticket
+			{
 				
 				$asset = new TAsset;
 				$asset->loadReference($PDOdb, $TLine[-1]['serial_number']);
@@ -75,15 +77,16 @@ function _fiche(&$PDOdb,&$dispatch) {
 	?>
 	<table width="100%" class="border">
 		<tr class="liste_titre">
-			<td>Ligne concernée</td>
+			<?php
+				if(GETPOST('type_object') !== 'ticketsup') print '<td>Ligne concernée</td>';
+			?>
 			<td>Equipement</td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
 				?><td>Numéro de Lot</td><?php
 				}
+				print '<td>DLUO</td>';
 			?>
-			<td>DLUO</td>
-			
 			<?php
 			if($conf->global->clinomadic->enabled){
 				?>
@@ -104,7 +107,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 		$class= ($class == 'pair') ? 'impair' : 'pair';
 		
 		?><tr class="<?php echo $class ?>">
-			<td><?php echo $pListe[$da->fk_object]; ?></td>
+			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$pListe[$da->fk_object].'</td>'; ?>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<td><?php echo $da->asset->lot_number; ?></td>
 			<?php
@@ -140,7 +143,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 	if($object->statut == 0 || $type_object == 'contrat') {
 		
 	?><tr style="background-color: lightblue;">
-			<td><?php echo $form->combo('', 'TLine[-1][fk_object]', $pListe, ''); ?></td>
+			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$form->combo('', 'TLine[-1][fk_object]', $pListe, '').'</td>'; ?>
 			<td><?php echo $form->texte('','TLine[-1][serial_number]', '', 30); ?></td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
@@ -192,6 +195,9 @@ function _fiche(&$PDOdb,&$dispatch) {
 function _header($id,$object_type) {
 	global $db,$langs;
 	
+	$langs->load('interventions');
+	$langs->load('contracts');
+	
 	if($object_type == 'contrat') {
 		$object=new Contrat($db);
 		$object->fetch($id);
@@ -207,7 +213,15 @@ function _header($id,$object_type) {
 		$object->fetch($id);
 		dol_include_once('/core/lib/fichinter.lib.php');
 		$head = fichinter_prepare_head($object);
-		dol_fiche_head($head, 'dispatch', $langs->trans("InterventionCard"), 0, 'intervention');
+		dol_fiche_head($head, 'dispatchAsset', $langs->trans("InterventionCard"), 0, 'intervention');
+	}
+	else if($object_type=='ticketsup') {
+		dol_include_once('/ticketsup/class/ticketsup.class.php');
+		dol_include_once('/ticketsup/lib/ticketsup.lib.php');
+		$object = new Ticketsup($db);
+		$object->fetch($id);
+		$head = ticketsup_prepare_head($object);
+		dol_fiche_head($head, 'dispatchAsset', $langs->trans("Ticket"), 0, 'ticketsup@ticketsup');
 	}
 	
 	return $object;

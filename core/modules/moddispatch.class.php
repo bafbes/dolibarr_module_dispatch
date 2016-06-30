@@ -122,6 +122,7 @@ class moddispatch extends DolibarrModules
         	'delivery:+dispatch:Détail expédition:dispatch@dispatch:/custom/dispatch/detail.php?id=__ID__'
         	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=contrat'
         	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=intervention'
+        	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=ticketsup'
         	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispacth:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
         	,'supplier_order:-dispatch'
 		);
