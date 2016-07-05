@@ -196,7 +196,9 @@
 				$product = new Product($db);
 				$product->fetch($fk_product);
 				
-				foreach($tab as $qty=>$null) {
+				foreach($tab as $idline=>$null) {
+					$qty = (int)$_POST['TOrderLine'][$idline]['qty'];
+					$fk_warehouse =(int) empty($_POST['TOrderLine'][$idline]['entrepot']) ? GETPOST('id_entrepot') : $_POST['TOrderLine'][$idline]['entrepot'];
 					
 					for($ii = 0; $ii < $qty; $ii++) {
 						$TImport[] =array(
@@ -206,7 +208,7 @@
 							,'quantity'=>1
 							,'quantity_unit'=>0
 							,'fk_product'=>$product->id
-							,'fk_warehouse'=>0
+							,'fk_warehouse'=>$fk_warehouse
 							,'imei'=>''
 							,'firmware'=>''
 							,'dluo'=>date('Y-m-d')
@@ -234,7 +236,7 @@
 			// Si aucun produit renseigné mais numéro de série renseigné
 			if ($k == -1 && $fk_product == -1 && empty($line['numserie']) === false) {
 				$error = true;
-				setEventMessage('Veuillez saisir un produit.', 'errors');
+				setEventMessage('Veuillez sélectioner un produit.', 'errors');
 			}
 
 			// Si un produit est renseigné, on sauvegarde
@@ -264,7 +266,7 @@
 				
 				//pre($commandefourn,true);exit;
 				if (!$error) {
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : $quantityOrdered,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
 				}
 			}
 			
@@ -293,7 +295,7 @@
 		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
 		$TProdVentil = array();
 
-		foreach($TImport  as $k=>$line) {
+		foreach($TImport as $k=>$line) {
 			
 			$asset =new TAsset;
 			
@@ -302,8 +304,9 @@
 			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
 				//Seulement si nouvelle ligne
+				
 				if($k == -1){
-					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['entrepot']);
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['fk_warehouse']);
 				}
 				
 				$prod = new Product($db);
@@ -352,9 +355,9 @@
 				$asset->date_fin_garantie_fourn = strtotime('+'.$nb_year_garantie.'year', $time_date_recep);
 				$asset->date_fin_garantie_fourn = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_fourn);
 				$asset->fk_soc = $commandefourn->socid;
-				$fk_entrepot = !empty($line['entrepot']) ? $line['entrepot'] : GETPOST('id_entrepot');
+				$fk_entrepot = (!empty($line['fk_warehouse']) && $line['fk_warehouse']>0) ? $line['fk_warehouse'] : GETPOST('id_entrepot');
 				$asset->fk_entrepot = $fk_entrepot;
-				
+			
 				$societe = new Societe($db);
 				$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
 
@@ -362,13 +365,13 @@
 				$asset->etat = 0; //En stock
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
-				$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
+				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
 				
-				$TImport[$k]['numserie'] = $asset->serial_number;
+/*				$TImport[$k]['numserie'] = $asset->serial_number;
 				
 				$stock = new TAssetStock;
 				$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $asset->contenancereel_value, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
-				
+	*/			
 				if($asset->serial_number != $line['numserie']){
 					$receptDetailLine = new TRecepDetail;
 					$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
@@ -377,7 +380,7 @@
 				}
 				
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-				$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
+			//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
 			
 		}
@@ -390,9 +393,13 @@
 			foreach($TOrderLine as &$line) {
 				
 				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
-				
 				// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
 				if(empty($line['serialized'] )) $TProdVentil[$line['fk_product']]['qty']+=$line['qty'];
+				
+				if(!empty($line['entrepot']) && $line['entrepot']>0) {
+					$TProdVentil[$line['fk_product']]['entrepot'] = $line['entrepot'];
+				}
+				
 				
 				if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
 				{
@@ -641,7 +648,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					$formproduct=new FormProduct($db);
 					$formproduct->loadWarehouses();
 					
-					print '<td align="right">'.$langs->trans("Warehouse").' : '.$formproduct->selectWarehouses(GETPOST('id_entrepot'), 'id_entrepot','',1,0,0,'',0,1).'</td>';
+					print '<td align="right">'.$langs->trans("Warehouse").' : '.$formproduct->selectWarehouses(GETPOST('id_entrepot'), 'id_entrepot','',0,0,0,'',0,1).'</td>';
 					print '<td align="right">'.$langs->trans("SerializedProduct").'</td>';
 					print "</tr>\n";
 
@@ -792,7 +799,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						/*print $form->checkbox1('', 'TOrderLine['.$objp->rowid.'][serialized]', 1, $serializedProduct); */
 						
 						if($serializedProduct) print $langs->trans('Yes').img_info('SerializedProductInfo');
-						else print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$remaintodispatch.']').img_info('SerializeThisProductInfo');
+						else print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$objp->rowid.']').img_info('SerializeThisProductInfo');
 						
 						print '</td>';
 						
