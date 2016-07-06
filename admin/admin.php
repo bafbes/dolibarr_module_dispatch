@@ -98,5 +98,23 @@
 	print '</td></tr>';
 
 	
+        $var=!$var;
+        print '<tr '.$bc[$var].'>';
+        print '<td>'.$langs->trans("DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION").'</td>';
+        print '<td align="center" width="20">&nbsp;</td>';
+        print '<td align="center" width="300">';
+        print ajax_constantonoff("DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION");
+        print '</td></tr>';
+
+        $var=!$var;
+        print '<tr '.$bc[$var].'>';
+        print '<td>'.$langs->trans("DISPATCH_SHOW_UNIT_RECEPTION").'</td>';
+        print '<td align="center" width="20">&nbsp;</td>';
+        print '<td align="center" width="300">';
+        print ajax_constantonoff("DISPATCH_SHOW_UNIT_RECEPTION");
+        print '</td></tr>';
 	
 	print "</table>";
+
+	dol_fiche_end();
+	llxFooter();

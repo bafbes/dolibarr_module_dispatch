@@ -1011,10 +1011,15 @@ global $langs, $db, $conf;
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
 			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
 				<td>DLUO</td>
-			<?php } ?>
+			<?php }
+			 if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+			?>
 			<td>Quantité</td>
-			<td>Unité</td>
 			<?php
+			if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) echo '<td>Unité</td>';
+
+			
+			}
 			if($conf->global->clinomadic->enabled){
 				?>
 				<td>IMEI</td>
@@ -1086,15 +1091,28 @@ global $langs, $db, $conf;
 					?></td>
 					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
 					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
-					<?php } ?>
-					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td>
-					<td><?php echo ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight');  ?></td>					<?php
+					<?php }
+
+					if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+						?>
+						<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td><?php
+
+						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
+							echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+						}
+					}
+					else{
+						echo $form->hidden('TLine['.$k.'][quantity]', $line['quantity']);
+						echo $form->hidden('TLine['.$k.'][quantity_unit]',$line['quantity_unit']);
+					}
+
 					if($conf->global->clinomadic->enabled){
 						?>
 						<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
 						<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
 						<?php
 					}
+
 					?>
 					<td>
 						<?php 
@@ -1148,10 +1166,18 @@ global $langs, $db, $conf;
 					?></td>
 					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
 						<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
-					<?php } ?>
-					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td>
-					<td><?php echo $formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight');   ?></td>
-					<?php
+					<?php }
+
+					 if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+					 ?>
+					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td><?php
+
+						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
+							echo '<td>'.$formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight').'</td>';
+						}
+					
+					}
+
 					if($conf->global->clinomadic->enabled){
 						?>
 						<td><?php echo $form->texte('','TLine[-1][imei]', '', 30);   ?></td>
