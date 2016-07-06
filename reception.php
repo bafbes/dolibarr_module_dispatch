@@ -295,6 +295,8 @@
 		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
 		$TProdVentil = array();
 
+		$TAssetVentil=array();
+
 		foreach($TImport as $k=>$line) {
 			
 			$asset =new TAsset;
@@ -365,8 +367,12 @@
 				$asset->etat = 0; //En stock
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
-				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
-				
+//				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
+				$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
+
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot]+=$line['quantity'];
+
+
 /*				$TImport[$k]['numserie'] = $asset->serial_number;
 				
 				$stock = new TAssetStock;
@@ -377,13 +383,23 @@
 					$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
 					$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
 					$receptDetailLine->save($PDOdb);
-				}
+				}                              
 				
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
 			//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
-			
+
 		}
+		
+		if(!empty($TAssetVentil)) {
+
+                                foreach($TAssetVentil as $fk_product=>$item) {
+                                        foreach($item as $fk_entrepot=>$qty) {
+                                                $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot,null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+                                        }
+                                }
+
+                }
 
 		// prise en compte des lignes non ventilés en réception simple
 		$TOrderLine=GETPOST('TOrderLine');
@@ -567,7 +583,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 		$TProductCount = array();
 		foreach($TImport as &$line) {
 			if(empty($TProductCount[$line['fk_product']]))$TProductCount[$line['fk_product']] = 0;
-			$TProductCount[$line['fk_product']] ++;
+			$TProductCount[$line['fk_product']] += $line['quantity'];
 		}
 		
 		?>
@@ -696,7 +712,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 								$remaintodispatch = $TProductCount[$objp->fk_product];
 								$serializedProduct = 1;	
 						}
-						else if(!empty($TOrderLine[$objp->rowid]['qty']) && !isset($_POST['bt_create'])) {
+						else if(isset($TOrderLine[$objp->rowid]['qty']) && !isset($_POST['bt_create'])) {
 							$remaintodispatch = $TOrderLine[$objp->rowid]['qty'];
 						}
 						else {
