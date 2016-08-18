@@ -849,7 +849,8 @@ function _list_already_dispatched(&$commande) {
 	// List of lines already dispatched
 		$sql = "SELECT p.ref, p.label,";
 		$sql.= " e.rowid as warehouse_id, e.label as entrepot,";
-		$sql.= " cfd.rowid as dispatchlineid, cfd.fk_product, cfd.qty, cfd.eatby, cfd.sellby, cfd.batch, cfd.comment, cfd.status";
+		$sql.= " cfd.rowid as dispatchlineid, cfd.fk_product, cfd.qty";
+		if ((float) DOL_VERSION > 3.7) $sql .= ", cfd.eatby, cfd.sellby, cfd.batch, cfd.comment, cfd.status";
 		$sql.= " FROM ".MAIN_DB_PREFIX."product as p,";
 		$sql.= " ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
 		$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."entrepot as e ON cfd.fk_entrepot = e.rowid";
@@ -873,7 +874,7 @@ function _list_already_dispatched(&$commande) {
 
 				print '<tr class="liste_titre">';
 				print '<td>'.$langs->trans("Description").'</td>';
-				if (! empty($conf->productbatch->enabled))
+				if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
 				{
 					print '<td>'.$langs->trans("batch_number").'</td>';
 					print '<td>'.$langs->trans("l_eatby").'</td>';
@@ -883,7 +884,7 @@ function _list_already_dispatched(&$commande) {
 				print '<td></td>';
 				print '<td>'.$langs->trans("Warehouse").'</td>';
 				print '<td>'.$langs->trans("Comment").'</td>';
-				if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS)) print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
+				if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7) print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
 				print "</tr>\n";
 
 				$var=false;
@@ -898,7 +899,7 @@ function _list_already_dispatched(&$commande) {
 					print ' - '.$objp->label;
 					print "</td>\n";
 
-					if (! empty($conf->productbatch->enabled))
+					if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
 					{
 						print '<td>'.$objp->batch.'</td>';
 						print '<td>'.dol_print_date($db->jdate($objp->eatby),'day').'</td>';
@@ -921,7 +922,7 @@ function _list_already_dispatched(&$commande) {
 					print '<td>'.dol_trunc($objp->comment).'</td>';
 
 					// Status
-					if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS))
+					if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7)
 					{
 						print '<td align="right">';
 						$supplierorderdispatch->status = (empty($objp->status)?0:$objp->status);
