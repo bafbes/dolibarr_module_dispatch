@@ -297,6 +297,10 @@
 
 		$TAssetVentil=array();
 
+		//Use to calculated corrected order status at the end of dispatch/serialize process
+		$TQtyDispatch=array();
+		$TQtyWished=array();
+
 		foreach($TImport as $k=>$line) {
 
 			$asset =new TAsset;
@@ -392,14 +396,15 @@
 		}
 
 		if(!empty($TAssetVentil)) {
+			foreach($TAssetVentil as $fk_product=>$item) {
+				foreach($item as $fk_entrepot=>$qty) {
+                	$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot,null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
 
-                                foreach($TAssetVentil as $fk_product=>$item) {
-                                        foreach($item as $fk_entrepot=>$qty) {
-                                                $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot,null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
-                                        }
-                                }
-
-                }
+                	//Build array with quantity serialze by product
+                	$TQtyDispatch[$fk_product]+=$qty;
+				}
+			}
+		}
 
 		// prise en compte des lignes non ventilés en réception simple
 		$TOrderLine=GETPOST('TOrderLine');
@@ -416,7 +421,6 @@
 					$TProdVentil[$line['fk_product']]['entrepot'] = $line['entrepot'];
 				}
 
-
 				if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
 				{
 					$TProdVentil[$line['fk_product']]['supplier_price']=$line['supplier_price'];
@@ -428,20 +432,23 @@
 					$TProdVentil[$line['fk_product']]['generate_supplier_tarif']=$line['generate_supplier_tarif'];
 				}
 
+				//Build array with quantity wished by product
+				if (array_key_exists('fk_product', $line) && !empty($line['fk_product']) && !array_key_exists($line['fk_product'], $TQtyDispatch)) {
+					$TQtyDispatch[$line['fk_product']]+=$line['qty'];
+				}
+
 			}
 
 		}
 
 
-		//pre($TProdVentil,true);
+		dol_syslog(__METHOD__.' $TProdVentil='.var_export($TProdVentil,true), LOG_DEBUG);
 
 		$status = $commandefourn->statut;
 
 		if(count($TProdVentil)>0) {
 
 			$status = $commandefourn->statut;
-
-			$totalementventile = true;
 
 			foreach($TProdVentil as $id_prod => $item){
 				//Fonction standard ventilation commande fournisseur
@@ -491,35 +498,37 @@
 					}
 				}
 				// END NEW CODE
-
+				dol_syslog(__METHOD__.' dispatchProduct idprod='.$id_prod.' qty='.$item['qty'], LOG_DEBUG);
 				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
-
-				foreach($commandefourn->lines as $line){
-					if($line->fk_product == $id_prod){ //TODO attention ! si un produit plusieurs fois dans la commande ça c'est de la merde
-						if($qte < $line->qty && $totalementventile){
-							$totalementventile = false;
-							$status = 4;
-						}
-					}
-				}
 			}
 
 			if($commandefourn->statut == 0){
 				$commandefourn->valid($user);
 			}
 
-			if($totalementventile){
+			foreach($commandefourn->lines as $l){
+				if (!empty($l->fk_product)) {
+					$TQtyWished[$l->fk_product]+=$l->qty;
+				}
+			}
+
+			//Compare array
+			dol_syslog(__METHOD__.' $TQtyDispatch='.var_export($TQtyDispatch,true), LOG_DEBUG);
+			dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
+			$diff_array=array_diff_assoc($TQtyDispatch,$TQtyWished);
+			if (count($diff_array)==0) {
+				//No diff => mean everythings is received
 				$status = 5;
+			} else {
+				//Diff => received partially
+				$status = 4;
 			}
 
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
 
 			setEventMessage('Equipements créés / produits ventilés');
-
 		}
-
-
 	}
 
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
