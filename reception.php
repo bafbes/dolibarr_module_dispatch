@@ -64,7 +64,7 @@
 	}
 
 	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null){
-		global $db, $conf;
+		global $db, $conf, $user;
 
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
@@ -526,6 +526,7 @@
 
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
+			$commandefourn->log($user, $status, time());
 
 			setEventMessage('Equipements créés / produits ventilés');
 		}
