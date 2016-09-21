@@ -22,7 +22,49 @@
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb, $expedition);
 	
-	function _loadDetail(&$PDOdb,&$expedition){
+	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
+		$f1  =file($_FILES['file1']['tmp_name']);
+
+		$TImport = array();
+
+		foreach($f1 as $line) {
+
+			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
+
+			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
+		}
+		
+	}
+	else if($action=='DELETE_LINE') {
+		unset($TImport[(int)GETPOST('k')]);
+		
+		$rowid = GETPOST('rowid');
+		
+		$dispatchdetail = new TDispatchDetail;
+		$dispatchdetail->load($PDOdb, $rowid);
+		$dispatchdetail->delete($PDOdb);
+		
+		setEventMessage('Ligne supprimée');
+	}
+	elseif(isset($_POST['btaddasset'])) {
+		//var_dump($_POST);exit;
+		$numserie = GETPOST('numserie');
+		
+		$asset = new TAsset;
+		if($asset->loadBy($PDOdb, $numserie, 'serial_number')){
+				
+			_addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
+
+			setEventMessage('Numéro de série enregistré');
+		}
+		else{
+			setEventMessage('Aucun équipement pour ce numéro de série','errors');
+		}		
+	}
+
+	fiche($PDOdb,$expedition, $TImport);
+
+function _loadDetail(&$PDOdb,&$expedition){
 		
 		$TImport = array();
 
@@ -66,10 +108,13 @@
 			$prodAsset = new Product($db);
 			$prodAsset->fetch($asset->fk_product);
 
-			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
-			foreach($expedition->lines as $expeline){
-				if($expeline->fk_product == $prodAsset->id){
-					$fk_line_expe = $expeline->line_id;
+			$fk_line_expe = (int)GETPOST('lineexpeditionid');
+			if( empty($fk_line_expe) ) { 
+				//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
+				foreach($expedition->lines as $expeline){
+					if($expeline->fk_product == $prodAsset->id){
+						$fk_line_expe = $expeline->line_id;
+					}
 				}
 			}
 			
@@ -113,50 +158,6 @@
 		return $TImport;
 
 	}
-	
-	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
-		$f1  =file($_FILES['file1']['tmp_name']);
-
-		$TImport = array();
-
-		foreach($f1 as $line) {
-
-			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
-
-			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
-		}
-		
-	}
-	else if($action=='DELETE_LINE') {
-		unset($TImport[(int)GETPOST('k')]);
-		
-		$rowid = GETPOST('rowid');
-		
-		$dispatchdetail = new TDispatchDetail;
-		$dispatchdetail->load($PDOdb, $rowid);
-		$dispatchdetail->delete($PDOdb);
-		
-		setEventMessage('Ligne supprimée');
-	}
-	elseif(isset($_POST['btaddasset'])) {
-		
-		$numserie = GETPOST('numserie');
-		
-		$asset = new TAsset;
-		if($asset->loadBy($PDOdb, $numserie, 'serial_number')){
-				
-			_addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
-
-			setEventMessage('Numéro de série enregistré');
-		}
-		else{
-			setEventMessage('Aucun équipement pour ce numéro de série','errors');
-		}		
-	}
-
-	fiche($PDOdb,$expedition, $TImport);
-
-
 function fiche(&$PDOdb,&$expedition, &$TImport) {
 global $langs, $db;
 
@@ -197,7 +198,7 @@ global $langs, $db;
 						method: 'GET',
 						data: {
 							lot_number: lot_number,
-							productid: $('#product').val(),
+							productid: $('#lineexpeditionid').find(':selected').attr('fk-product'),
 							type:'get',
 							get:'autocomplete_asset'
 						}
@@ -229,8 +230,8 @@ global $langs, $db;
 					});
 				});
 				
-				$('#product').change(function() {
-					var productid = $(this).val();
+				$('#lineexpeditionid').change(function() {
+					var productid = $(this).find(':selected').attr('fk-product');
 
 					$.ajax({
 						url: 'script/interface.php',
@@ -289,19 +290,28 @@ global $langs, $db;
 			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' / '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
 		}
 		*/
+		
+		echo 'Produit expédié<select id="lineexpeditionid" name="lineexpeditionid"><option value=""></option>';
+		
 		$TProduct = array('');
-		$sql = "SELECT DISTINCT(p.rowid),p.ref,p.label 
+		$sql = "SELECT DISTINCT(ed.rowid),p.rowid as fk_product,p.ref,p.label 
 				FROM ".MAIN_DB_PREFIX."product as p
 					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
 					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
 				WHERE ed.fk_expedition = ".$expedition->id."";
 		
 		$PDOdb->Execute($sql);
-		while ($PDOdb->Get_line()) {
-			$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
+		while ($obj = $PDOdb->Get_line()) {
+			//$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
+			
+ 			echo '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.'</option>';
+			
 		}
 		
-		echo $form->combo('Produit expédié', 'product', $TProduct, '').'<br>';
+		
+		echo '</select><br />';
+		
+		//echo $form->combo('Produit expédié', 'lineexpeditionid', $TProduct, '').'<br>';
 		echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
 		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
 		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
