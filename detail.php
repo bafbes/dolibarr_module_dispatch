@@ -294,7 +294,7 @@ global $langs, $db;
 		echo 'Produit expédié<select id="lineexpeditionid" name="lineexpeditionid"><option value=""></option>';
 		
 		$TProduct = array('');
-		$sql = "SELECT DISTINCT(ed.rowid),p.rowid as fk_product,p.ref,p.label 
+		$sql = "SELECT DISTINCT(ed.rowid),p.rowid as fk_product,p.ref,p.label ,ed.qty
 				FROM ".MAIN_DB_PREFIX."product as p
 					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
 					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
@@ -304,7 +304,7 @@ global $langs, $db;
 		while ($obj = $PDOdb->Get_line()) {
 			//$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
 			
- 			echo '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.'</option>';
+ 			echo '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
 			
 		}
 		
