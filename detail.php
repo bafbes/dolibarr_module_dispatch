@@ -65,14 +65,15 @@
 			//Charge le produit associé à l'équipement
 			$prodAsset = new Product($db);
 			$prodAsset->fetch($asset->fk_product);
-
+			$fk_line_expe = (int)GETPOST('lineexpeditionid');
+			if( empty($fk_line_expe) ) { 
 			//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
 			foreach($expedition->lines as $expeline){
 				if($expeline->fk_product == $prodAsset->id){
 					$fk_line_expe = $expeline->line_id;
 				}
 			}
-			
+			}
 			//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 			$dispatchdetail = new TDispatchDetail;
 			
@@ -197,7 +198,7 @@ global $langs, $db;
 						method: 'GET',
 						data: {
 							lot_number: lot_number,
-							productid: $('#product').val(),
+							productid: $('#lineexpeditionid').find(':selected').attr('fk-product'),
 							type:'get',
 							get:'autocomplete_asset'
 						}
@@ -229,9 +230,8 @@ global $langs, $db;
 					});
 				});
 				
-				$('#product').change(function() {
-					var productid = $(this).val();
-
+				$('#lineexpeditionid').change(function() {
+					var productid = $(this).find(':selected').attr('fk-product');
 					$.ajax({
 						url: 'script/interface.php',
 						method: 'GET',
@@ -288,6 +288,8 @@ global $langs, $db;
 			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' / '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
 		}
 		*/
+
+/*
 		$TProduct = array('');
 		$sql = "SELECT DISTINCT(p.rowid),p.ref,p.label 
 				FROM ".MAIN_DB_PREFIX."product as p
@@ -300,7 +302,28 @@ global $langs, $db;
 			$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
 		}
 		
-		echo $form->combo('Produit expédié', 'product', $TProduct, '').'<br>';
+		echo $form->combo('Produit expédié', 'product', $TProduct, '').'<br>';*/
+
+		echo 'Produit expédié<select id="lineexpeditionid" name="lineexpeditionid"><option value=""></option>';
+		
+		$TProduct = array('');
+		$sql = "SELECT DISTINCT(ed.rowid),p.rowid as fk_product,p.ref,p.label ,ed.qty
+				FROM ".MAIN_DB_PREFIX."product as p
+					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
+				WHERE ed.fk_expedition = ".$expedition->id."";
+		
+		$PDOdb->Execute($sql);
+		while ($obj = $PDOdb->Get_line()) {
+			//$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
+			
+ 			echo '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
+			
+		}
+		
+		
+		echo '</select><br />';
+
 		echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
 		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
 		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
