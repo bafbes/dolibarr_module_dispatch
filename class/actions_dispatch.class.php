@@ -18,6 +18,8 @@ class ActionsDispatch
 			dol_include_once('/asset/class/asset.class.php');
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 			
+			global $conf;
+			
 			if(isset($parameters['object']) && get_class($object) == 'Expedition'){
 				
 				$PDOdb = new TPDOdb;
@@ -40,7 +42,11 @@ class ActionsDispatch
 							
 							$unite = (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($dispatchDetail->weight_reel_unit, $asset->assetType->measuring_units));
 
-							$line->desc .= "<br>- ".$res->lot_number." x ".$dispatchDetail->weight_reel." ".$unite.' (DLUO : '.$asset->get_date('dluo').')';
+							$desc = "<br>- ".$res->lot_number." x ".$dispatchDetail->weight_reel." ".$unite;
+							if(empty($conf->global->DISPATCH_HIDE_DLUO_PDF)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
+							
+							$line->desc.=$desc;
+							
 						}	
 					}
 				}
