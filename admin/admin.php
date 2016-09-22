@@ -59,6 +59,14 @@
 	print ajax_constantonoff('DISPATCH_RECEP_AUTO_QUANTITY');
 	print '</td></tr>';
 	
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans("DISPATCH_HIDE_DLUO_PDF").'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_HIDE_DLUO_PDF');
+	print '</td></tr>';
+	
 	$form=new TFormCore;
 	
 	print '<tr class="liste_titre">';
