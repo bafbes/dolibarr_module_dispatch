@@ -57,8 +57,7 @@
 	print ajax_constantonoff('DISPATCH_RECEP_AUTO_QUANTITY');
 	print '</td></tr>';
 	
-	$var=!$var;
-	print '<tr '.$bc[$var].'>';
+	print '<tr >';
 	print '<td>'.$langs->trans("DISPATCH_HIDE_DLUO_PDF").'</td>';
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="300">';
@@ -88,3 +87,6 @@
 	$form->end();
 
 	print "</table>";
+
+
+	llxFooter();
