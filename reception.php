@@ -28,7 +28,7 @@
 
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
-
+//var_dump($TImport);exit;
 	function _loadDetail(&$PDOdb,&$commandefourn){
 
 		$TImport = array();
@@ -65,11 +65,11 @@
 
 	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null){
 		global $db, $conf, $user;
-
+//var_dump($_POST['TLine']);
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
 		$prodAsset->fetch('',$refproduit);
-
+//TODO incompréhensible
 		//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
 		foreach($commandefourn->lines as $commandeline){
 			if($commandeline->fk_product == $prodAsset->id){
@@ -266,6 +266,7 @@
 
 				//pre($commandefourn,true);exit;
 				if (!$error) {
+//var_dump($line);
 					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
 				}
 			}
@@ -300,14 +301,17 @@
 		//Use to calculated corrected order status at the end of dispatch/serialize process
 		$TQtyDispatch=array();
 		$TQtyWished=array();
-
+//var_dump($TImport);
 		foreach($TImport as $k=>$line) {
 
 			$asset =new TAsset;
 
 			//pre($line,true);
 
-			if(!$asset->loadReference($PDOdb, $line['numserie'])) {
+			if(empty($line['numserie'])) {
+				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour ".$line['ref'].". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ","errors");
+			}
+			else if(!$asset->loadReference($PDOdb, $line['numserie'])) {
 				// si inexistant
 				//Seulement si nouvelle ligne
 
@@ -507,23 +511,37 @@
 			}
 
 			foreach($commandefourn->lines as $l){
-				if (!empty($l->fk_product)) {
+				if (!empty($l->fk_product) && !empty( $l->qty ) ) {
 					$TQtyWished[$l->fk_product]+=$l->qty;
 				}
 			}
 
+
+			$TQtyDispatched = array();
+			$sql = "SELECT cfd.fk_product, sum(cfd.qty) as qty";
+			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
+			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."commande_fournisseurdet as l on l.rowid = cfd.fk_commandefourndet";
+			$sql.= " WHERE cfd.fk_commande = ".$commandefourn->id;
+			$sql.= " GROUP BY cfd.fk_product";
+			$resql = $db->query($sql);
+			while($objd = $db->fetch_object($resql)) {
+				$products_dispatched[$objd->fk_product] = $objd->qty;
+			}
+			
+			
 			//Compare array
-			dol_syslog(__METHOD__.' $TQtyDispatch='.var_export($TQtyDispatch,true), LOG_DEBUG);
+			dol_syslog(__METHOD__.' $TQtyDispatched='.var_export($TQtyDispatched,true), LOG_DEBUG);
 			dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
-			$diff_array=array_diff_assoc($TQtyDispatch,$TQtyWished);
-			if (count($diff_array)==0) {
+			$diff_array=array_diff_assoc($TQtyWished,$TQtyDispatched);
+			if (empty($diff_array)) {
 				//No diff => mean everythings is received
 				$status = 5;
 			} else {
 				//Diff => received partially
 				$status = 4;
 			}
-
+//var_dump($diff_array, $TQtyDispatched,$TQtyWished);
+//exit('la'.$status);
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
 			$commandefourn->log($user, $status, time());
