@@ -65,11 +65,12 @@
 
 	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null){
 		global $db, $conf, $user;
-//var_dump($_POST['TLine']);
+//var_dump($_POST['TLine']);exit;
 		//Charge le produit associé à l'équipement
 		$prodAsset = new Product($db);
 		$prodAsset->fetch('',$refproduit);
-//TODO incompréhensible
+		
+		//TODO incompréhensible - Cette notion est dispo depuis la 3.9 mettre à jour
 		//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
 		foreach($commandefourn->lines as $commandeline){
 			if($commandeline->fk_product == $prodAsset->id){
@@ -77,27 +78,23 @@
 			}
 		}
 
-		if (empty($_POST['TLine'][$k]) === false) {
+		if (!empty($_POST['TLine'][$k])) {
 			if ($numserie != $_POST['TLine'][$k]['numserie']) {
 				$line_update = true;
 			}
 		}
-
 		//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 		$recepdetail = new TRecepDetail;
 
 		//pre($TImport,true);
 
-		//Si déjà existant => MAj
-		$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset
-						WHERE fk_product = ".$prodAsset->id." AND serial_number = ".$PDOdb->quote($numserie)." AND fk_commandedet = ".$fk_line." AND rowid = ".$_POST['TLine'][$k]['commande_fournisseurdet_asset']);
-
-		$lineFound = false;
-		if($PDOdb->Get_line() || $line_update){
-			$rowid = ($line_exists ? $_POST['TLine'][$k]['commande_fournisseurdet_asset'] : $PDOdb->Get_field('rowid'));
-			$recepdetail->load($PDOdb, $rowid);
-
+		$fk_line_receipt = !empty($_POST['TLine'][$k]['commande_fournisseurdet_asset']) ? (int)$_POST['TLine'][$k]['commande_fournisseurdet_asset'] : 0;
+		if($fk_line_receipt>0){
+			$recepdetail->load($PDOdb, $fk_line_receipt);
 			$lineFound = true;
+		}
+		else {
+			$lineFound = false;
 		}
 
 		$keys = array_keys($TImport);
@@ -105,7 +102,7 @@
 
 		$recepdetail->fk_commandedet = $fk_line;
 		$recepdetail->fk_product = $prodAsset->id;
-		$recepdetail->rang = $rang;
+		$recepdetail->rang = $rang + 1;
 		$recepdetail->set_date('dluo', ($dluo) ? $dluo : date('Y-m-d H:i:s'));
 		$recepdetail->lot_number = $lot_number;
 		$recepdetail->weight_reel = $quantity;
@@ -123,41 +120,23 @@
 
 		$recepdetail->save($PDOdb);
 
+		$currentLine = array(
+				'ref'=>$prodAsset->ref
+				,'numserie'=>$numserie
+				,'lot_number'=>$lot_number
+				,'quantity'=>$quantity
+				,'quantity_unit'=>$quantity_unit
+				,'fk_product'=>$prodAsset->id
+				,'fk_warehouse'=>$entrepot
+				,'imei'=>$imei
+				,'firmware'=>$firmware
+				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
+				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
+		);
+
 		//Rempli le tableau utilisé pour l'affichage des lignes
-		if ($lineFound)
-		{
-			$TImport[$k] =array(
-				'ref'=>$prodAsset->ref
-				,'numserie'=>$numserie
-				,'lot_number'=>$lot_number
-				,'quantity'=>$quantity
-				,'quantity_unit'=>$quantity_unit
-				,'fk_product'=>$prodAsset->id
-				,'fk_warehouse'=>$entrepot
-				,'imei'=>$imei
-				,'firmware'=>$firmware
-				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
-				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
-			);
-		}
-		else
-		{
-			$TImport[] =array(
-				'ref'=>$prodAsset->ref
-				,'numserie'=>$numserie
-				,'lot_number'=>$lot_number
-				,'quantity'=>$quantity
-				,'quantity_unit'=>$quantity_unit
-				,'fk_product'=>$prodAsset->id
-				,'fk_warehouse'=>$entrepot
-				,'imei'=>$imei
-				,'firmware'=>$firmware
-				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
-				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
-			);
-		}
-
-
+		($lineFound) ? $TImport[$k] = $currentLine : $TImport[] =$currentLine ;
+		
 		return $TImport;
 
 	}
@@ -224,62 +203,47 @@
 	elseif(isset($_POST['bt_save'])) {
 
 		foreach($_POST['TLine']  as $k=>$line) {
-			unset($TImport[(int)$k]);
+			//unset($TImport[(int)$k]); //AA mais à quoi ça sert
 
 			// Modification
-			if (empty($line['fk_product']) === false) {
+			if (!empty($line['fk_product']) ) {
 				$fk_product = $line['fk_product'];
-			} else if (empty($_POST['new_line_fk_product']) === false) { // Ajout
+			} else if (!empty($_POST['new_line_fk_product']) ) { // Ajout
 				$fk_product = $_POST['new_line_fk_product'];
 			}
 
 			// Si aucun produit renseigné mais numéro de série renseigné
-			if ($k == -1 && $fk_product == -1 && empty($line['numserie']) === false) {
-				$error = true;
-				setEventMessage('Veuillez sélectioner un produit.', 'errors');
+			if ($k == -1 && $fk_product <0 && !empty($line['numserie']) ) {
+				setEventMessage('Veuillez sélectioner un produit pour '.$line['numserie'].'.', 'errors');
 			}
-
-			// Si un produit est renseigné, on sauvegarde
-			if (!$error && $fk_product > 0) {
-				$product = new Product($db);
-				$product->fetch($fk_product);
-
-				//On vérifie que le produit est bien présent dans la commande
-				$find = false;
-				$quantityOrdered = 0;
-				foreach ($commandefourn->lines as $key => $l) {
-					if($l->fk_product == $product->id){
-						$find = true;
-						$quantityOrdered += $l->qty;
+			else{
+				if ($fk_product > 0) {
+					$product = new Product($db);
+					$product->fetch($fk_product);
+	
+					//On vérifie que le produit est bien présent dans la commande
+					$find = false;
+					foreach ($commandefourn->lines as $key => $l) {
+						if($l->fk_product == $product->id){
+							$find = true; break;
+						}
+					}
+	
+					if (!$find) {
+						setEventMessage('Référence produit ('.$fk_product.') non présente dans la commande', 'errors');
+					}
+					else if (empty($product->id)) {
+						setEventMessage('Référence produit ('.$fk_product.') introuvable', 'errors');
+					}
+					else {
+						$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
 					}
 				}
-
-				if (!$find) {
-					$error = true;
-					setEventMessage('Référence produit non présente dans la commande', 'errors');
-				}
-
-				if (empty($product->id)) {
-					$error = true;
-					setEventMessage('Référence produit introuvable', 'errors');
-				}
-
-				//pre($commandefourn,true);exit;
-				if (!$error) {
-//var_dump($line);
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
-				}
 			}
+			// Si un produit est renseigné, on sauvegarde
+			
 
 			$fk_product = -1; // Reset de la variable contenant la référence produit
-
-/*
-			$asset = new TAsset;
-			if($asset->loadBy($PDOdb, $line['numserie'], 'serial_number')){
-
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['imei'],$line['firmware']);
-			}
- */
 
 		}
 
@@ -544,7 +508,7 @@
 //exit('la'.$status);
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
-			$commandefourn->log($user, $status, time());
+			if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
 
 			setEventMessage('Equipements créés / produits ventilés');
 		}
