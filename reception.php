@@ -281,6 +281,8 @@
 					$asset->load_asset_type($PDOdb);
 					$line['numserie'] = $asset->getNextValue($PDOdb);	
 					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");	
+					
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
 				}
 				
 			
