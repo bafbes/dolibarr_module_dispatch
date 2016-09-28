@@ -266,11 +266,25 @@
 		$TQtyDispatch=array();
 		$TQtyWished=array();
 //var_dump($TImport);
-		foreach($TImport as $k=>$line) {
+		foreach($TImport as $k=>&$line) {
 
 			$asset =new TAsset;
 
-			//pre($line,true);
+			if(!empty($conf->global->DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT) && empty($line['numserie']) && !empty($line['lot_number'])) {
+				
+				$product=new Product($db);
+				$product->fetch($line['fk_product']);
+				
+				$asset->fk_asset_type = $product->array_options['options_type_asset'];
+				
+				if($asset->fk_asset_type>0) {
+					$asset->load_asset_type($PDOdb);
+					$line['numserie'] = $asset->getNextValue($PDOdb);	
+					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");	
+				}
+				
+			
+			}
 
 			if(empty($line['numserie'])) {
 				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour ".$line['ref'].". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ","errors");
@@ -999,6 +1013,13 @@ global $langs, $db, $conf;
 	print count($TImport).' équipement(s) dans votre réception';
 
 	?>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$("#dispatchAsset").change(function() {
+				$("#actionVentilation").addClass("error").html("<?php echo $langs->trans('SaveBeforeVentil') ?>");
+			});
+		});
+	</script>
 	<table width="100%" class="border" id="dispatchAsset">
 		<tr class="liste_titre">
 			<td>Produit</td>
@@ -1202,11 +1223,13 @@ global $langs, $db, $conf;
 		?>
 		<hr />
 		<?php
+		echo '<div id="actionVentilation">';
 		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
 
 		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', $_POST["comment"]?GETPOST("comment"):$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 
 		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
+		echo '</div>';
 	}
 
 }
