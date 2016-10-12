@@ -23,11 +23,16 @@
 
 	$id = GETPOST('id');
 
+	$hookmanager->initHooks(array('receptionstockcard'));
+
 	$commandefourn = new CommandeFournisseur($db);
 	$commandefourn->fetch($id);
 
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
+	
+	$parameters=array();
+	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
 //var_dump($TImport);exit;
 	function _loadDetail(&$PDOdb,&$commandefourn){
 
@@ -585,7 +590,7 @@ global $langs, $db, $conf;
 }
 
 function _show_product_ventil(&$TImport, &$commande,&$form) {
-	global $langs, $db, $conf;
+	global $langs, $db, $conf, $hookmanager;
 		$langs->load('dispatch@dispatch');
 
 		$TProductCount = array();
@@ -670,7 +675,8 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 					print '<td align="right">'.$langs->trans("QtyOrdered").'</td>';
 					print '<td align="right">'.$langs->trans("QtyDispatchedShort").'</td>';
-					print '<td align="right">'.$langs->trans("QtyToDispatchShort").'</td>';
+					print '<td align="right" rel="QtyToDispatchShort">'.$langs->trans("QtyToDispatchShort");
+					print '</td>';
 
 					$formproduct=new FormProduct($db);
 					$formproduct->loadWarehouses();
@@ -843,7 +849,10 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			{
 				dol_print_error($db);
 			}
-
+			
+			$parameters=array('colspan'=>' colspan="4" ');
+			$hookmanager->executeHooks('formObjectOptions',$parameters, $commande, $action);
+	
 			print "</table>\n";
 			print "<br/>\n";
 
