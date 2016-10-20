@@ -510,7 +510,7 @@
 			$sql.= " GROUP BY cfd.fk_product";
 			$resql = $db->query($sql);
 			while($objd = $db->fetch_object($resql)) {
-				$products_dispatched[$objd->fk_product] = $objd->qty;
+				$TQtyDispatched[$objd->fk_product] = $objd->qty;
 			}
 			
 			
@@ -518,6 +518,7 @@
 			dol_syslog(__METHOD__.' $TQtyDispatched='.var_export($TQtyDispatched,true), LOG_DEBUG);
 			dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
 			$diff_array=array_diff_assoc($TQtyWished,$TQtyDispatched);
+			$diff_array=array_merge($diff_array, array_diff_assoc($TQtyDispatched,$TQtyWished));
 			if (empty($diff_array)) {
 				//No diff => mean everythings is received
 				$status = 5;
