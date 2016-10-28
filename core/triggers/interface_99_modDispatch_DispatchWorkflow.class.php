@@ -132,7 +132,7 @@ class InterfaceDispatchWorkflow
 						// Création des mouvements de stock de flacon
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
-							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,$object->fk_soc);
+							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,(empty($object->fk_soc)?$object->socid:$object->fk_soc));
 
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 
@@ -209,7 +209,7 @@ class InterfaceDispatchWorkflow
 		$asset->fk_societe_localisation = $fk_soc;
 		//Vas destocker l'équipement mais pas dolibarr
     	$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
-    	
+
     	/*$stock = new TAssetStock;
 		$stock->mouvement_stock($PDOdb, $user, $asset->getId(), -$poids_destocke, $langs->trans("ShipmentValidatedInDolibarr",$numref), $linedetail->fk_expeditiondet);
 */
