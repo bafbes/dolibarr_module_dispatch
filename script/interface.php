@@ -39,7 +39,8 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid) {
 	$sql = "SELECT DISTINCT(rowid)
 			FROM ".MAIN_DB_PREFIX."asset 
 			WHERE lot_number = '".$lot_number."'
-			AND fk_product = ".$productid;
+			AND fk_product = ".$productid."
+			AND contenancereel_value > 0";
 	$PDOdb->Execute($sql);
 	$TAssetIds = $PDOdb->Get_All();
 	
