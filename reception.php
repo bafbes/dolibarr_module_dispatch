@@ -726,17 +726,16 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 						$TOrderLine = GETPOST('TOrderLine');
 
-						if(!empty($TProductCount[$objp->fk_product])) {
-								$remaintodispatch = $TProductCount[$objp->fk_product];
+						if (!empty($TProductCount[$objp->fk_product])) {
 								$serializedProduct = 1;
 						}
-						else if(isset($TOrderLine[$objp->rowid]['qty']) && !isset($_POST['bt_create'])) {
+						
+						if(isset($TOrderLine[$objp->rowid]['qty']) && !isset($_POST['bt_create'])) {
 							$remaintodispatch = $TOrderLine[$objp->rowid]['qty'];
-						}
-						else {
+						} else {
 							$remaintodispatch=price2num($objp->qty - ((float) $products_dispatched[$objp->fk_product]), 5);	// Calculation of dispatched
 						}
-
+						
 						if ($remaintodispatch < 0) $remaintodispatch=0;
 
 						$nbproduct++;
@@ -796,10 +795,10 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						// Already dispatched
 						print '<td align="right">'.$products_dispatched[$objp->fk_product].'</td>';
 
-												// Dispatch
+						// Dispatch
 						print '<td align="right">';
 
-						if($serializedProduct) {
+						if($remaintodispatch==0) {
 							echo $form->texteRO('', 'TOrderLine['.$objp->rowid.'][qty]', $remaintodispatch, 5,30);
 						}
 						else {
@@ -832,8 +831,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						print '<td align="right">';
 						/*print $form->checkbox1('', 'TOrderLine['.$objp->rowid.'][serialized]', 1, $serializedProduct); */
 
-						if($serializedProduct) print $langs->trans('Yes').img_info('SerializedProductInfo');
-						else print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$objp->rowid.']').img_info('SerializeThisProductInfo');
+						if($remaintodispatch==0) {
+							print $langs->trans('Yes').img_info('SerializedProductInfo');
+						} else {
+							print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$objp->rowid.']').img_info($langs->trans('SerializeThisProductInfo'));
+						}
 
 						print '</td>';
 
