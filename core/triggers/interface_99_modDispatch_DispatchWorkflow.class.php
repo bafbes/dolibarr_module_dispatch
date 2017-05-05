@@ -132,7 +132,7 @@ class InterfaceDispatchWorkflow
 						// Création des mouvements de stock de flacon
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
-							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,$object->fk_soc);
+							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->newref,$object->fk_soc);
 
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 
