@@ -30,3 +30,6 @@ createNumSerieOnTheFly=Création du numérot de série %s à la volée
 
 DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Pouvoir ventiler la quantité
 DISPATCH_SHOW_UNIT_RECEPTION=Afficher l'unité sur l'écran de récéption
+
+QtyDispatchedShort=Déjà ventilé
+QtyToDispatchShort=Qté à ventiler
