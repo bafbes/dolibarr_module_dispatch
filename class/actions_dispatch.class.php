@@ -25,9 +25,9 @@ class ActionsDispatch
 				$PDOdb = new TPDOdb;
 				
 				foreach($object->lines as &$line){
-					$sql = 'SELECT DISTINCT(lot_number),rowid FROM '.MAIN_DB_PREFIX.'expeditiondet_asset WHERE fk_expeditiondet = '.$line->line_id;
+					$sql = 'SELECT DISTINCT(ea.lot_number),ea.rowid,a.serial_number FROM '.MAIN_DB_PREFIX.'expeditiondet_asset as ea LEFT JOIN '.MAIN_DB_PREFIX.'asset as a ON (a.rowid = ea.fk_asset) WHERE ea.fk_expeditiondet = '.$line->line_id;
 					$PDOdb->Execute($sql);
-					
+				
 					$TRes = $PDOdb->Get_All();
 					
 					if(count($TRes)>0){
@@ -41,8 +41,11 @@ class ActionsDispatch
 							$asset->load_asset_type($PDOdb);
 							
 							$unite = (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($dispatchDetail->weight_reel_unit, $asset->assetType->measuring_units));
-
-							$desc = "<br>- ".$res->lot_number." x ".$dispatchDetail->weight_reel." ".$unite;
+							if(empty($res->lot_number)){
+								$desc = "<br>- N° Serie : ".$res->serial_number;
+							}else{
+								$desc = "<br>- ".$res->lot_number." x ".$dispatchDetail->weight_reel." ".$unite;
+							}
 							if(empty($conf->global->DISPATCH_HIDE_DLUO_PDF)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
 							
 							$line->desc.=$desc;
