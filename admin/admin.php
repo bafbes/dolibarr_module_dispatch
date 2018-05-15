@@ -130,7 +130,15 @@
 	print '<td align="center" width="300">';
 	print ajax_constantonoff('DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT');
 	print '</td></tr>';
-	
+
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans('DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT').'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT');
+	print '</td></tr>';
+
 	
 	print "</table>";
 

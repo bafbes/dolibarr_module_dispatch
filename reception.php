@@ -281,10 +281,10 @@
 				$product->fetch($line['fk_product']);
 				
 				$asset->fk_asset_type = $product->array_options['options_type_asset'];
-				
+
 				if($asset->fk_asset_type>0) {
 					$asset->load_asset_type($PDOdb);
-					$line['numserie'] = $asset->getNextValue($PDOdb);	
+					$line['numserie'] = $asset->getNextValue($PDOdb);
 					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");	
 					
 					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
@@ -859,8 +859,83 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			print "</table>\n";
 			print "<br/>\n";
 
+			if(! empty($conf->global->DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT)) {
+				printJSSerialNumberAutoDeduce();
+			}
+}
 
+function printJSSerialNumberAutoDeduce() {
 
+	global $langs;
+?>
+<script>
+
+function setSerialNumbers(fkProduct, TMatches) {
+
+	var prefix = TMatches[1] ? TMatches[1] : ''; // Si undefined car nombre pur => chaine vide
+	var currentNum = TMatches[2];
+	var i = 1;
+	var numSize = currentNum.length;
+	var count = parseInt(currentNum);
+
+	$('table#dispatchAsset tr[data-fk-product='+fkProduct+']').not(':first').each(function() {
+		var lineID = $(this).attr('id').replace('dispatchAssetLine', '');
+		var elem = $(this).find('input#TLine\\['+lineID+'\\]\\[numserie\\]');
+		var suffixCount = count + i;
+		var suffix = (new String(suffixCount)).padStart(numSize, '0');
+		var newVal = prefix + suffix;
+
+		elem.val(newVal);
+
+		i++;
+	});
+}
+
+function setSerialNumberListener(fkProduct, TElemTR) {
+	var lineID = TElemTR.first().attr('id').replace('dispatchAssetLine', '');
+	var inputElem = $('input#TLine\\['+lineID+'\\]\\[numserie\\]'); // Doublement échapper les crochets faisant partie d'un ID ou d'une classe et non du sélecteur
+
+	inputElem.on('change', function() {
+
+		$('span#setSerialNumbers'+fkProduct).remove(); // On supprime le lien même s'il existe pour éventuellement le recréer avec un nouveau listener
+
+		var TMatches = $(this).val().match(/^(.*[^0-9])?([0-9]+)$/); // On détermine si le numéro de série finit par un nombre
+
+		if(TMatches instanceof Array && TMatches.length > 0) { // String.match() retourne un tableau si des correspondances sont trouvées
+
+			$('<span id="setSerialNumbers'+fkProduct+'"> <a href="javascript:;"><?php print dol_escape_js($langs->trans('CalculateFollowingSerialNumbers')); ?></a></span>')
+				.insertAfter('input#TLine\\['+lineID+'\\]\\[commande_fournisseurdet_asset\\]')
+				.on('click', function() {
+					setSerialNumbers(fkProduct, TMatches);
+				});
+		}
+	});
+}
+
+$(document).ready(function() {
+
+	var TProducts = [];
+
+	$('table#dispatchAsset tr.dispatchAssetLine').each(function() {
+		var fkProduct = parseInt($(this).data('fk-product'));
+
+		if(! TProducts.includes(fkProduct)) {
+			TProducts.push(fkProduct);
+		}
+	});
+
+	for(var fkProduct of TProducts) { // Equivalent JS de foreach($TProducts as $fkProduct) en PHP
+
+		var TElemTR = $('table#dispatchAsset tr[data-fk-product='+fkProduct+']');
+
+		if(TElemTR.length > 1) { // Si au moins 2 équipements à dispatcher issus du même produit
+			setSerialNumberListener(fkProduct, TElemTR);
+		}
+	}
+});
+</script>
+
+<?php
 }
 
 function _list_already_dispatched(&$commande) {
@@ -1081,7 +1156,7 @@ global $langs, $db, $conf;
 					}
 				}
 
-				?><tr>
+				?><tr class="dispatchAssetLine" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
 					<td><?php
 						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
