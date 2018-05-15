@@ -9,3 +9,7 @@ GenerateSupplierTarif=Create new price
 
 DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Update Supplier Order prices at products reception
 DISPATCH_CREATE_SUPPLIER_PRICE=Create supplier price at products reception to stock
+
+
+DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation with automatic serial numbers when dispatching, from the first input serial number for a product
+CalculateFollowingSerialNumbers=Calculate the others

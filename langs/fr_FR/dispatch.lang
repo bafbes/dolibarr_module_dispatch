@@ -33,3 +33,6 @@ DISPATCH_SHOW_UNIT_RECEPTION=Afficher l'unité sur l'écran de récéption
 
 QtyDispatchedShort=Déjà ventilé
 QtyToDispatchShort=Qté à ventiler
+
+DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Permettre de créer les équipements avec numéro de série automatique lors d'une réception à partir du premier numéro de série saisi pour chaque produit
+CalculateFollowingSerialNumbers=Calculer les suivants
