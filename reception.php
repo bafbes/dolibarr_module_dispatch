@@ -897,11 +897,11 @@ function setSerialNumberListener(fkProduct, TElemTR) {
 
 	inputElem.on('change', function() {
 
+		$('span#setSerialNumbers'+fkProduct).remove(); // On supprime le lien même s'il existe pour éventuellement le recréer avec un nouveau listener
+
 		var TMatches = $(this).val().match(/^(.*[^0-9])?([0-9]+)$/); // On détermine si le numéro de série finit par un nombre
 
 		if(TMatches instanceof Array && TMatches.length > 0) { // String.match() retourne un tableau si des correspondances sont trouvées
-
-			$('span#setSerialNumbers'+fkProduct).remove(); // On remplace le lien même s'il existe pour remettre un nouveau listener
 
 			$('<span id="setSerialNumbers'+fkProduct+'"> <a href="javascript:;"><?php print dol_escape_js($langs->trans('CalculateFollowingSerialNumbers')); ?></a></span>')
 				.insertAfter('input#TLine\\['+lineID+'\\]\\[commande_fournisseurdet_asset\\]')
