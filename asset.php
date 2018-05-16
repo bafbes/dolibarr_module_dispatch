@@ -224,7 +224,15 @@ function _header($id,$type_object) {
 		$head = ticketsup_prepare_head($object);
 		dol_fiche_head($head, 'dispatchAsset', $langs->trans("Ticket"), 0, 'ticketsup@ticketsup');
 	}
-	
+	else if($type_object=='commande') {
+		dol_include_once('/commande/class/commande.class.php');
+		dol_include_once('/core/lib/order.lib.php');
+		$object = new Commande($db);
+		$object->fetch($id);
+		$head = commande_prepare_head($object);
+		dol_fiche_head($head, 'dispatchAsset', $langs->trans("CustomerOrder"), 0, 'order');
+	}
+
 	return $object;
 	
 }
