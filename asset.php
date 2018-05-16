@@ -3,10 +3,11 @@
 	require 'config.php';
 	dol_include_once('/dispatch/class/dispatchasset.class.php');
 	dol_include_once('/contrat/class/contrat.class.php');
+	dol_include_once('/product/class/product.class.php');
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/fichinter/class/fichinter.class.php' );
 	dol_include_once('/asset/class/asset.class.php');
-	dol_include_once('/core/lib/product.lib.php');	
+	dol_include_once('/core/lib/product.lib.php');
 	
 	$PDOdb=new TPDOdb;
 	
