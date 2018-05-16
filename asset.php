@@ -33,7 +33,7 @@
 					$k=$dispatch->addChild($PDOdb, 'TDispatchAsset');
 					$dispatch->TDispatchAsset[$k]->fk_asset = $asset->getId();
 					$dispatch->TDispatchAsset[$k]->fk_object = $TLine[-1]['fk_object'];
-					$dispatch->TDispatchAsset[$k]->object_type = $type_object;
+					$dispatch->TDispatchAsset[$k]->type_object = $type_object;
 					$dispatch->TDispatchAsset[$k]->asset = $asset;
 					
 					$dispatch->save($PDOdb);
@@ -192,13 +192,13 @@ function _fiche(&$PDOdb,&$dispatch) {
 	
 	
 }
-function _header($id,$object_type) {
+function _header($id,$type_object) {
 	global $db,$langs;
 	
 	$langs->load('interventions');
 	$langs->load('contracts');
 	
-	if($object_type == 'contrat') {
+	if($type_object == 'contrat') {
 		$object=new Contrat($db);
 		$object->fetch($id);
 		dol_include_once('/core/lib/contract.lib.php');
@@ -208,14 +208,14 @@ function _header($id,$object_type) {
 		
 		
 	}
-	else if($object_type=='intervention') {
+	else if($type_object=='intervention') {
 		$object=new Fichinter($db);
 		$object->fetch($id);
 		dol_include_once('/core/lib/fichinter.lib.php');
 		$head = fichinter_prepare_head($object);
 		dol_fiche_head($head, 'dispatchAsset', $langs->trans("InterventionCard"), 0, 'intervention');
 	}
-	else if($object_type=='ticketsup') {
+	else if($type_object=='ticketsup') {
 		dol_include_once('/ticketsup/class/ticketsup.class.php');
 		dol_include_once('/ticketsup/lib/ticketsup.lib.php');
 		$object = new Ticketsup($db);
