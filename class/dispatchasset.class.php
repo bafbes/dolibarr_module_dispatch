@@ -43,9 +43,9 @@ class TDispatchAsset extends TObjetStd {
 		
 		$this->asset=new TAsset;
 	}
-	function load(&$PDOdb, $id) {
+	function load(&$PDOdb, $id, $withChildren = true) {
 		
-		parent::load($PDOdb, $id);
+		parent::load($PDOdb, $id, $withChildren);
 		
 		if($this->fk_asset>0) $this->asset->load($PDOdb, $this->fk_asset,false);
 		
