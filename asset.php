@@ -142,10 +142,11 @@ function _fiche(&$PDOdb,&$dispatch) {
 	
 	$formproduct=new FormProduct($db);
 	if($object->statut == 0 || $type_object == 'contrat') {
+		$newAssetSerialNumber = ! empty($_REQUEST['new-asset']) ? GETPOST('new-asset') : '';
 		
 	?><tr style="background-color: lightblue;">
 			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$form->combo('', 'TLine[-1][fk_object]', $pListe, '').'</td>'; ?>
-			<td><?php echo $form->texte('','TLine[-1][serial_number]', '', 30); ?></td>
+			<td><?php echo $form->texte('','TLine[-1][serial_number]', $newAssetSerialNumber, 30); ?></td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
 					?><td>&nbsp;</td><?php
