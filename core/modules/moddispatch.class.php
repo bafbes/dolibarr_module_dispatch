@@ -125,6 +125,7 @@ class moddispatch extends DolibarrModules
         	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/asset.php?id=__ID__&type_object=ticketsup'
         	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispatch:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
         	,'supplier_order:-dispatch'
+        	,'order:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/asset.php?id=__ID__&type_object=commande'
 		);
         
 		// where objecttype can be
