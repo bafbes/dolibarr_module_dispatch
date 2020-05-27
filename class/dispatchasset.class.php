@@ -40,7 +40,7 @@ class TDispatchAsset extends TObjetStd {
 		parent::add_champs('type_object',array('length'=>30, 'index'=>true));
 		parent::_init_vars();
 		parent::start();
-		
+        dol_include_once('/assetatm/class/asset.class.php');
 		$this->asset=new TAsset;
 	}
 	function load(&$PDOdb, $id) {
