@@ -159,7 +159,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 
 	}
 function fiche(&$PDOdb,&$expedition, &$TImport) {
-global $langs, $db;
+global $langs, $db,$conf;
 
 	llxHeader();
 
