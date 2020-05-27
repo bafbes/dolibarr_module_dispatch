@@ -119,10 +119,10 @@ class moddispatch extends DolibarrModules
         //                              'objecttype:-tabname':NU:conditiontoremove);                                                     						// To remove an existing tab identified by code tabname
         
         $this->tabs = array(
-        	'delivery:+dispatch:Détail expédition:dispatch@dispatch:/custom/dispatch/detail.php?id=__ID__'
-        	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=contrat'
-        	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=intervention'
-        	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/custom/dispatch/asset.php?id=__ID__&type_object=ticketsup'
+        	'delivery:+dispatch:Détail expédition:dispatch@dispatch:/dispatch/detail.php?id=__ID__'
+        	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
+        	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
+        	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset-enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'
         	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispacth:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
         	,'supplier_order:-dispatch'
 		);
