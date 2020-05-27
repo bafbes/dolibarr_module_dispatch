@@ -314,7 +314,7 @@ global $langs, $db,$conf;
 		//echo $form->combo('Produit expédié', 'lineexpeditionid', $TProduct, '').'<br>';
 		echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
 		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
-		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
+		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->selectMeasuringUnits('quantity_unit" id="quantity_unit','weight');
 		echo $form->btsubmit('Ajouter', 'btaddasset');
 		
 		$form->end();
